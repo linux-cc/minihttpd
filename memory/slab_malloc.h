@@ -1,9 +1,9 @@
-#ifndef MEMORY_SLAB_MALLOC_H_
-#define MEMORY_SLAB_MALLOC_H_
+#ifndef __MEMORY_SLAB_MALLOC_H__
+#define __MEMORY_SLAB_MALLOC_H__
 
 #include "buddy.h"
 
-namespace memory {
+BEGIN_NS(memory)
 
 class SlabMalloc {
 public:
@@ -32,6 +32,6 @@ private:
     Info *freeList[MAX_FREE_LIST];
 };
 
-}
+END_NS
 
 #endif

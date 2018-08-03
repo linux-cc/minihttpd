@@ -1,9 +1,7 @@
 #ifndef MEMORY_PUB_MACROS_H
 #define MEMORY_PUB_MACROS_H
 
-#include <sys/types.h>
-#include <cstdint>
-#include <cstdlib>
+#include "config.h"
 
 #define SIZE_BITS           32U
 #define MAX_FREE_LIST       16

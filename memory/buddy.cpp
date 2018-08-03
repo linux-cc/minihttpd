@@ -4,7 +4,7 @@
 #define PARENT(i)		((i - 1) >> 1)
 #define PAGES(n)        (1 << (n - 1))
 
-namespace memory {
+BEGIN_NS(memory)
 
 Buddy::Buddy(size_t pages):
 buf(NULL),
@@ -119,7 +119,7 @@ char *Buddy::dump() {
     return buf;
 }
 
-}
+END_NS
 
 #ifdef _BUDDY_MAIN_
 

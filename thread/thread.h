@@ -7,8 +7,7 @@
 
 typedef void (*DestroyNotify)(void *);
 
-namespace myframe {
-namespace thread {
+BEGIN_NS(thread)
 
 class Thread : public Runnable {
 public:
@@ -115,6 +114,5 @@ private:
 	bool _locked;
 };
 
-} /* namespace thread */
-} /* namespace myframe */
+END_NS
 #endif /* __THREAD_THREAD_H__ */

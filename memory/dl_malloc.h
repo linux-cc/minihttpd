@@ -1,9 +1,9 @@
-#ifndef MEMORY_DL_MALLOC_H_
-#define MEMORY_DL_MALLOC_H_
+#ifndef __MEMORY_DL_MALLOC_H__
+#define __MEMORY_DL_MALLOC_H__
 
 #include "buddy.h"
 
-namespace memory {
+BEGIN_NS(memory)
 
 class DlMalloc {
 public:
@@ -50,6 +50,6 @@ private:
     Segment seg;
 };
 
-}
+END_NS
 
 #endif

@@ -1,9 +1,9 @@
-#ifndef MEMORY_BUDDY_H_
-#define MEMORY_BUDDY_H_
+#ifndef __MEMORY_BUDDY_H__
+#define __MEMORY_BUDDY_H__
 
-#include "pub_macros.h"
+#include "memory/pub_macros.h"
 
-namespace memory {
+BEGIN_NS(memory)
 
 class Buddy {
 public:
@@ -22,6 +22,6 @@ private:
     uint8_t depth;
 };
 
-}
+END_NS
 
-#endif /* UTILS_BUDDY_H_ */
+#endif

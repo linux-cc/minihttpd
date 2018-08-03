@@ -1,7 +1,6 @@
 #include "mysql_impl.h"
 
-namespace myframe {
-namespace mysql {
+BEGIN_NS(mysql)
 
 Mysql::Row::Row(MYSQL_ROW row, int num) {
     for (int i = 0; i < num; ++i) {
@@ -63,9 +62,7 @@ string Mysql::dump() const {
     return result;
 }
 
-} /* namespace mysql */
-} /* namespace myframe */
-
+END_NS
 #ifdef __MYSQL_MAIN__
 
 #include <stdio.h>

@@ -1,9 +1,9 @@
 #ifndef __THREAD_RUNNABLE_H__
 #define __THREAD_RUNNABLE_H__ 
 
+#include "config.h"
 
-namespace myframe {
-namespace thread {
+BEGIN_NS(thread)
 
 class Runnable
 {
@@ -11,6 +11,5 @@ public:
 	virtual void run() = 0;
 };
 
-} /* namespace thread */
-} /* namespace myframe */
+END_NS
 #endif /* ifndef __THREAD_RUNNABLE_H__ */

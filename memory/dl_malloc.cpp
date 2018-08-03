@@ -52,7 +52,7 @@
 #define TOP_FOOT_SIZE               (PAD_REQUEST(sizeof(Segment))+MIN_CHUNK_SIZE)
 #define PAGES(n)                    (((n) + PAGE_MASK) / PAGE_SIZE)
 
-namespace memory {
+BEGIN_NS(memory)
 
 DlMalloc::DlMalloc(Buddy *_buddy):
 buddy(_buddy),
@@ -443,7 +443,7 @@ int DlMalloc::dumpChunk(char *buf, Chunk *chunk) {
     return pos;
 }
 
-}
+END_NS
 
 #ifdef _DL_MAIN_
 

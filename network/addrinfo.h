@@ -1,11 +1,11 @@
 #ifndef __NETWORK_ADDRINFO_H__
 #define __NETWORK_ADDRINFO_H__ 
 
+#include "config.h"
 #include <netdb.h>
 #include <string.h>
 
-namespace myframe {
-namespace network {
+BEGIN_NS(network)
 
 class Addrinfo {
 public:
@@ -79,7 +79,5 @@ private:
     addrinfo _hints;
 };
 
-} /* namespace network */
-} /* namespace myframe */
-
+END_NS
 #endif /* ifndef __NETWORK_ADDRINFO_H__ */

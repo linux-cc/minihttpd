@@ -1,12 +1,12 @@
 #ifndef __MYSQL_MYSQL_IMPL_H__
 #define __MYSQL_MYSQL_IMPL_H__
 
+#include "config.h"
 #include <mysql.h>
 #include <vector>
 #include <string>
 
-namespace myframe {
-namespace mysql {
+BEGIN_NS(mysql)
 
 using std::string;
 using std::vector;
@@ -94,7 +94,5 @@ private:
     vector<Row> _rows;
 };
 
-} /* namespace mysql */
-} /* namespace myframe */
-
+END_NS
 #endif /* ifndef __MYSQL_MYSQL_IMPL_H__ */

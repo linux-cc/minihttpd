@@ -3,8 +3,7 @@
 
 #include "addrinfo.h"
 
-namespace myframe {
-namespace network {
+BEGIN_NS(network)
 
 class TcpSocket {
 public:
@@ -59,7 +58,5 @@ private:
     socklen_t _len;
 };
 
-} /* namespace network */
-} /* namespace myframe */
-
+END_NS
 #endif /* ifndef __NETWORK_SOCKET_H__ */

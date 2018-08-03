@@ -1,13 +1,11 @@
 #include "socket.h"
-#include <stdio.h>
 #include <sys/socket.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 
-namespace myframe {
-namespace network {
+BEGIN_NS(network)
 
 static int wait(int socket, int ms);
 
@@ -229,9 +227,7 @@ bool UdpSocket::getpeername(char *addr, int addrlen, int *port) {
     return true;
 }
 
-} /* namespace network */
-} /* namespace myframe */
-
+END_NS
 #ifdef __SOCKET_SERVER_TCP__
 
 #include <vector>

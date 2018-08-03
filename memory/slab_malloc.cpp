@@ -4,7 +4,7 @@
 #define SLAB_MAX_SIZE       (MAX_FREE_LIST << ALIGN8_SHIFT)
 #define SLAB_FREE_IDX(n)    (((n) >> ALIGN8_SHIFT) - 1)
 
-namespace memory {
+BEGIN_NS(memory)
 
 SlabMalloc::SlabMalloc(Buddy *_buddy):
 buddy(_buddy) {
@@ -108,7 +108,7 @@ char *SlabMalloc::dump() {
     return buf;
 }
 
-}
+END_NS
 
 #ifdef _SLAB_MAIN_
 
