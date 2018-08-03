@@ -63,27 +63,3 @@ string Mysql::dump() const {
 }
 
 END_NS
-#ifdef __MYSQL_MAIN__
-
-#include <stdio.h>
-int main(int argc, char *argv[]) {
-    using myframe::mysql::Mysql;
-    Mysql mysql;
-    mysql.connectTimeout(3);
-    if (!mysql.connect("linshh", "linshh", "80.209.232.2", 3306)) {
-        printf("connect error: %d:%s\n", mysql.errno(), mysql.error());
-        return -1;
-    }
-    if (!mysql.selectDb(argv[1])) {
-        printf("selectDb error: %d:%s\n", mysql.errno(), mysql.error());
-        return -1;
-    }
-    int ret = mysql.execute(argv[2]);
-    if (ret == -1) {
-        printf("execute error: %d:%s\n", mysql.errno(), mysql.error());
-        return -1;
-    }
-    printf("%s\n", mysql.dump().c_str());
-    return 0;
-}
-#endif

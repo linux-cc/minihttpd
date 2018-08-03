@@ -6,5 +6,6 @@
 
 #define BEGIN_NS(name)      namespace myframe { namespace name {
 #define END_NS              }}
+#define USING_NS(name)      using namespace myframe::name
 
 #endif /* ifndef __CONFIG_H__ */
