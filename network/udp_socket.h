@@ -7,7 +7,8 @@ BEGIN_NS(network)
 
 class UdpSocket : public Socket {
 public:
-    UdpSocket(const char *host, const char *service): _host(host), _service(service) {}
+    UdpSocket(const char *host, const char *service, int family, bool local):
+        Socket(family, local), _host(host), _service(service) {}
     int recvfrom(void *buf, size_t size, char *addr, int addrlen, int *port, int flags = 0);
     int sendto(const void *buf, size_t size, int flags = 0);
 

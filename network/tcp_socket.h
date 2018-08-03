@@ -7,6 +7,7 @@ BEGIN_NS(network)
 
 class TcpSocket : public Socket {
 public:
+    TcpSocket(int family = PF_UNSPEC, bool local = false): Socket(family, local) {}
     bool create(const char *host, const char *service);
     bool connect(const char *host, const char *service);
     bool connect(const char *host, const char *service, int ms);

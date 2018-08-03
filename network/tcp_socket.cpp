@@ -8,8 +8,8 @@ BEGIN_NS(network)
 static int wait(int socket, int ms);
 
 bool TcpSocket::create(const char *host, const char *service) {
-    Addrinfo ai(PF_UNSPEC, SOCK_STREAM, 0);
-    if ((_errno = ai.getaddrinfo(host, service))) {
+    Addrinfo ai(_family, SOCK_STREAM, AI_PASSIVE);
+    if ((_errno = ai.getaddrinfo(host, service, _local))) {
         return false;
     }
 
@@ -25,8 +25,8 @@ bool TcpSocket::create(const char *host, const char *service) {
 }
 
 bool TcpSocket::connect(const char *host, const char *service) {
-    Addrinfo ai(PF_UNSPEC, SOCK_STREAM, 0);
-    if ((_errno = ai.getaddrinfo(host, service))) {
+    Addrinfo ai(_family, SOCK_STREAM);
+    if ((_errno = ai.getaddrinfo(host, service, _local))) {
         return false;
     }
 

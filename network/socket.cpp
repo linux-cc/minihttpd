@@ -1,9 +1,12 @@
+
 #include "network/socket.h"
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdio.h>
 
 BEGIN_NS(network)
 
@@ -123,11 +126,38 @@ void Socket::close() {
 	}
 }
 
-Addrinfo::Addrinfo(int family, int socktype, int protocol): _result(NULL) {
+Addrinfo::Addrinfo(int family, int socktype, int flags, int protocol): _result(NULL) {
     memset(&_hints, 0, sizeof(_hints));
     _hints.ai_family = family;
     _hints.ai_socktype = socktype;
+    _hints.ai_flags = flags;
     _hints.ai_protocol = protocol;
+}
+
+Addrinfo::~Addrinfo() {
+    if (_result) {
+        if (_hints.ai_family != PF_LOCAL) {
+            freeaddrinfo(_result);
+        } else {
+            free(_result);
+        }
+    }
+}
+
+int Addrinfo::getaddrinfo(const char *host, const char *service, bool isLocal) {
+    if (!isLocal) {
+        return ::getaddrinfo(host, service, &_hints, &_result);
+    }
+    _hints.ai_family = PF_LOCAL;
+    _result = (addrinfo*)malloc(sizeof(addrinfo) + sizeof(sockaddr_un));
+    _result->ai_next = NULL;
+    _result->ai_addr = (sockaddr*)(_result + 1);
+    sockaddr_un *sun = (sockaddr_un*)_result->ai_addr;
+    sun->sun_family = PF_LOCAL;
+    int n = sprintf(sun->sun_path, "/tmp/socket_local/%s_%s", host ? host : "null", service ? service : "null");
+    _result->ai_addrlen = ((intptr_t)&((sockaddr_un*)0)->sun_path) + n;
+
+    return 0;
 }
 
 END_NS

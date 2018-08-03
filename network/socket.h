@@ -37,13 +37,15 @@ public:
     }
 
 protected:
-    Socket(): _socket(-1), _errno(0) {}
+    Socket(int family, bool local): _family(family), _local(local), _socket(-1), _errno(0) {}
     virtual ~Socket() {}
     bool socket(int family, int socktype, int protocol);
     bool bind(sockaddr *addr, socklen_t len);
     bool listen(int backlog = 8);
     bool connect(sockaddr *addr, socklen_t len);
 
+    int _family;
+    bool _local;
     int _socket;
     int _errno;
 };
@@ -75,25 +77,10 @@ public:
         friend class Addrinfo;
     };     
 public:
-    Addrinfo(int family, int socktype, int protocol);
-    ~Addrinfo() {
-        if (_result) freeaddrinfo(_result);
-    }
-    int getaddrinfo(const char *host, const char *service) {
-        return ::getaddrinfo(host, service, &_hints, &_result);
-    }
-    void family(int family) {
-        _hints.ai_family = family;
-    }
-    void socktype(int socktype) {
-        _hints.ai_socktype = socktype;
-    }
-    void protocol(int protocol) {
-        _hints.ai_protocol = protocol;
-    }
-    void flags(int flags) {
-        _hints.ai_flags = flags;
-    }
+    Addrinfo(int family, int socktype, int flags = 0, int protocol = 0);
+    ~Addrinfo();
+    int getaddrinfo(const char *host, const char *service, bool isLocal);
+
     Iterator begin() const {
         return Iterator(_result);
     }
