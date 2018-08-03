@@ -1,4 +1,5 @@
-#include "network/socket.h"
+#include "network/tcp_socket.h"
+#include <sys/select.h>
 #include <vector>
 
 using std::vector;

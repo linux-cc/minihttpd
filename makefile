@@ -1,37 +1,42 @@
-CXX		= g++
-CCFLAG	= -g -D_DEBUG_ -fPIC
-SOFLAG	= -shared -o
-LKFLAG	= -o
-INCFLAG	= -I./
+MYFRAME	= myframe
+BINDIR	= bin
 LIBDIR	= lib
 OBJDIR	= obj
-BINDIR	= bin
+TMPDIR  = $(BINDIR) $(LIBDIR) $(OBJDIR)
 
-DIRS	= socket thread utils test
+CXX		= gcc
+CCFLAG	= -g -D_DEBUG_ -fPIC
+SOFLAG	= -shared -o
+INCFLAG	= -I./ $(shell mysql_config --cflags)
+SOLIBS  = -lstdc++ $(shell mysql_config --libs)
+APPLIBS = -L$(LIBDIR) -l$(MYFRAME) $(SOLIBS) -lpthread
+
+TEST	= $(foreach d,$(shell ls test),test/$(d))
+DIRS	= memory mysql network thread $(TEST)
 SRCS	= $(foreach d,$(DIRS),$(wildcard $(d)/*.cpp))
 OBJS	= $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRCS))
-
 SOOBJS	= $(filter-out $(OBJDIR)/test/%.o,$(OBJS))
 APPOBJS	= $(filter $(OBJDIR)/test/%.o,$(OBJS))
-FRAME	= frame
-TARGET	= $(LIBDIR)/lib$(FRAME).so
 
 NULLSTR =
 SPACE	= $(NULLSTR) #end of the line
 VPATH	= $(subst $(SPACE),:,$(DIRS))
 
-all : MKDIR $(TARGET) MKAPP
+TARGET	= $(LIBDIR)/lib$(MYFRAME).so
 
-MKDIR:
-	mkdir -p $(LIBDIR) $(BINDIR)
-	mkdir -p $(foreach d, $(DIRS), $(OBJDIR)/$(d))
+all : init so app
+so : $(TARGET)
+
+init:
+	@-rm -rf $(TMPDIR)
+	@-mkdir $(TMPDIR)
+	@-mkdir -p $(foreach d, $(DIRS), $(OBJDIR)/$(d))
 
 $(TARGET) : $(SOOBJS)	
-	$(CXX) $(SOFLAG) $@ $^
+	$(CXX) $(SOFLAG) $@ $^ $(SOLIBS)
 
-MKAPP: $(APPOBJS)
-	$(foreach a,$(APPOBJS),\
-	$(CXX) $(LKFLAG) $(BINDIR)/t-$(basename $(notdir $(a))) $(a) -L$(LIBDIR) -l$(FRAME) -lpthread;)
+app: $(APPOBJS)
+	$(foreach a,$(APPOBJS),$(CXX) -o $(BINDIR)/$(basename $(notdir $(a))) $(a) $(APPLIBS);)
 	
 $(OBJDIR)/%.o : %.cpp
 	$(CXX) $(CCFLAG) $(INCFLAG) -c $< -o $@
@@ -40,4 +45,4 @@ $(OBJDIR)/%.o : %.c
 
 .PHONY : clean
 clean :
-	-rm -rf $(OBJDIR)/* $(TARGET) $(BINDIR)/*
+	-rm -rf $(TMPDIR)

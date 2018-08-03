@@ -1,4 +1,4 @@
-#include "network/socket.h"
+#include "network/tcp_socket.h"
 #include <vector>
 
 using std::vector;
@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
         if (n <= 0)
             break;
         data[n] = 0;
-        printf("server: %s\n", data);
+        printf("server: %s", data);
     }
     client.close();
 
