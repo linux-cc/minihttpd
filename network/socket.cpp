@@ -149,15 +149,26 @@ void TcpSocket::close() {
 }
 
 bool TcpSocket::getpeername(char *addr, int addrlen, int *port) {
-    sockaddr peer;
+    sockaddr_storage peer;
     socklen_t len = sizeof(peer);
-    if (::getpeername(_socket, &peer, &len) < 0) {
+    if (::getpeername(_socket, (sockaddr*)&peer, &len) < 0) {
+        _errno = errno;
         return false;
     }
-    if (!inet_ntop(peer.sa_family, &peer, addr, addrlen)) {
+    void *inaddr;
+    if (peer.ss_family == PF_INET) {
+        inaddr = &((sockaddr_in*)&peer)->sin_addr;
+        *port = ntohs(((sockaddr_in*)&peer)->sin_port);
+    } else if (peer.ss_family == PF_INET6) {
+        inaddr = &((sockaddr_in6*)&peer)->sin6_addr;
+        *port = ntohs(((sockaddr_in6*)&peer)->sin6_port);
+    } else {
         return false;
     }
-    *port = ntohs(*(uint16_t*)peer.sa_data);
+    if (!inet_ntop(peer.ss_family, inaddr, addr, addrlen)) {
+        _errno = errno;
+        return false;
+    }
     return true;
 }
 
@@ -230,7 +241,7 @@ static bool __quit = false;
 
 int main(int argc, char *argv[]) {
     TcpSocket server;
-    if (!server.create(NULL, argv[1])) {
+    if (!server.create("localhost", argv[1])) {
         printf("server create error: %d:%s\n", server.errcode(), server.errinfo());
         return -1;
     }
@@ -300,7 +311,7 @@ static bool __quit = false;
 
 int main(int argc, char *argv[]) {
     TcpSocket client;
-    if (!client.connect(NULL, argv[1])) {
+    if (!client.connect("localhost", argv[1])) {
         printf("client connect error: %d:%s\n", client.errcode(), client.errinfo());
         return -1;
     }
