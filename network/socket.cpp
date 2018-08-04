@@ -1,22 +1,15 @@
-
 #include "network/socket.h"
 #include <sys/socket.h>
-#include <sys/un.h>
 #include <arpa/inet.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <stdio.h>
 
 BEGIN_NS(network)
-
-static int wait(int socket, int ms);
 
 bool Socket::socket(int family, int socktype, int protocol) {
     close();
     _socket = ::socket(family, socktype, protocol);
     if (_socket < 0) {
-        _errno = errno;
         return false;
     }
 
@@ -24,34 +17,37 @@ bool Socket::socket(int family, int socktype, int protocol) {
     return true;
 }
 
-bool Socket::bind(sockaddr *addr, socklen_t len) {
-    if (::bind(_socket, addr, len)) {
-        _errno = errno;
-        close();
+bool Socket::create(const char *host, const char *service, int family, int socktype, int protocol) {
+    Addrinfo ai(family, socktype, protocol, AI_PASSIVE);
+    if ((errno = ai.getaddrinfo(host, service))) {
         return false;
     }
 
-    return true;
+    for (Addrinfo::Iterator it = ai.begin(); it != ai.end(); ++it) {
+        if (socket(it->ai_family, it->ai_socktype, it->ai_protocol)
+                && bind(_socket, it->ai_addr, it->ai_addrlen) == 0) {
+            return socktype == SOCK_STREAM ? listen(_socket, 8) == 0 : true;
+        }
+    }
+    close();
+
+	return false;
 }
 
-bool Socket::listen(int backlog) {
-    if (::listen(_socket, backlog)) {
-        _errno = errno;
-        close();
+bool Socket::connect(const char *host, const char *service, int family, int socktype, int protocol) {
+    Addrinfo ai(family, socktype, protocol);
+    if ((errno = ai.getaddrinfo(host, service))) {
         return false;
     }
 
-    return true;
-}
-
-bool Socket::connect(sockaddr *addr, socklen_t len) {
-    if(::connect(_socket, addr, len)) {
-        _errno = errno;
-        close();
-        return false;
+    for (Addrinfo::Iterator it = ai.begin(); it != ai.end(); ++it) {
+        if (socket(it->ai_family, it->ai_socktype, it->ai_protocol)
+                && ::connect(_socket, it->ai_addr, it->ai_addrlen) == 0) {
+            return true;
+        }
     }
 
-    return true;
+    return false;
 }
 
 int Socket::recv(void *buf, size_t size, int flags) {
@@ -62,7 +58,7 @@ int Socket::recv(void *buf, size_t size, int flags) {
             break;
         }
     }
-    _errno = errno;
+
 	return n;
 }
 
@@ -74,90 +70,41 @@ int Socket::send(const void *buf, size_t size, int flags) {
             break;
         }
     }
-    _errno = errno;
+
 	return n;
-}
-
-int Socket::recvfrom(void *buf, size_t size, char *addr, int addrLen, int *port, int flags) {
-    sockaddr_storage peer;
-    socklen_t slen = sizeof(peer);
-    int len = ::recvfrom(_socket, buf, size, flags, (sockaddr*)&peer, &slen);
-    _errno = errno;
-    getnameinfo(&peer, addr, addrLen, port);
-    return len;
-}
-
-int Socket::sendto(const void *buf, size_t size, const sockaddr *addr, socklen_t addrlen, int flags) {
-    int len = ::sendto(_socket, buf, size, flags, addr, addrlen);
-    _errno = errno;
-    return len;
 }
 
 int Socket::setNonblock() {
 	int flags = fcntl(_socket, F_GETFL);
 	fcntl(_socket, F_SETFL, flags | O_NONBLOCK);
-    _errno = errno;
+
     return flags;
 }
 
-bool Socket::getnameinfo(const sockaddr_storage *srcAddr, char *dstAddr, int dstLen, int *port) {
-    void *inaddr;
-    if (srcAddr->ss_family == PF_INET) {
-        inaddr = &((sockaddr_in*)srcAddr)->sin_addr;
-        *port = ntohs(((sockaddr_in*)srcAddr)->sin_port);
-    } else if (srcAddr->ss_family == PF_INET6) {
-        inaddr = &((sockaddr_in6*)srcAddr)->sin6_addr;
-        *port = ntohs(((sockaddr_in6*)srcAddr)->sin6_port);
+bool Socket::getnameinfo(const Peer &addr, Peer &name) {
+    const void *inaddr;
+    int family = addr.family();
+    if (family == PF_INET) {
+        inaddr = &addr.addr<Peer::SA_I>()->sin_addr;
+        name.port(ntohs(addr.addr<Peer::SA_I>()->sin_port));
+    } else if (family == PF_INET6) {
+        inaddr = &addr.addr<Peer::SA_I6>()->sin6_addr;
+        name.port(ntohs(addr.addr<Peer::SA_I6>()->sin6_port));
     } else {
         return false;
     }
-    if (!inet_ntop(srcAddr->ss_family, inaddr, dstAddr, dstLen)) {
-        _errno = errno;
+    if (!inet_ntop(family, inaddr, name, name.namelen())) {
         return false;
     }
+
     return true;
 }
 
 void Socket::close() {
 	if(_socket != -1) {
 		::close(_socket);
-        _errno = errno;
 		_socket = -1;
 	}
-}
-
-Addrinfo::Addrinfo(int family, int socktype, int flags, int protocol): _result(NULL) {
-    memset(&_hints, 0, sizeof(_hints));
-    _hints.ai_family = family;
-    _hints.ai_socktype = socktype;
-    _hints.ai_flags = flags;
-    _hints.ai_protocol = protocol;
-}
-
-Addrinfo::~Addrinfo() {
-    if (_result) {
-        if (_hints.ai_family != PF_LOCAL) {
-            freeaddrinfo(_result);
-        } else {
-            free(_result);
-        }
-    }
-}
-
-int Addrinfo::getaddrinfo(const char *host, const char *service, bool isLocal) {
-    if (!isLocal) {
-        return ::getaddrinfo(host, service, &_hints, &_result);
-    }
-    _hints.ai_family = PF_LOCAL;
-    _result = (addrinfo*)malloc(sizeof(addrinfo) + sizeof(sockaddr_un));
-    _result->ai_next = NULL;
-    _result->ai_addr = (sockaddr*)(_result + 1);
-    sockaddr_un *sun = (sockaddr_un*)_result->ai_addr;
-    sun->sun_family = PF_LOCAL;
-    int n = sprintf(sun->sun_path, "/tmp/socket_local/%s_%s", host ? host : "null", service ? service : "null");
-    _result->ai_addrlen = ((intptr_t)&((sockaddr_un*)0)->sun_path) + n;
-
-    return 0;
 }
 
 END_NS

@@ -1,15 +1,16 @@
-MYFRAME	= myframe
+LIBNAME = myframe
+SUBFFIX	= .so
 BINDIR	= bin
 LIBDIR	= lib
 OBJDIR	= obj
 TMPDIR  = $(BINDIR) $(LIBDIR) $(OBJDIR)
 
 CXX		= gcc
-CCFLAG	= -g -D_DEBUG_ -fPIC
+CCFLAG	= -g -Wall -D_DEBUG_ -fPIC
 SOFLAG	= -shared -o
 INCFLAG	= -I./ $(shell mysql_config --cflags)
 SOLIBS  = -lstdc++ $(shell mysql_config --libs)
-APPLIBS = -L$(LIBDIR) -l$(MYFRAME) $(SOLIBS) -lpthread
+APPLIBS = -L$(LIBDIR) -l$(LIBNAME) $(SOLIBS) -lpthread
 
 TEST	= $(foreach d,$(shell ls test),test/$(d))
 DIRS	= memory mysql network thread $(TEST)
@@ -22,12 +23,12 @@ NULLSTR =
 SPACE	= $(NULLSTR) #end of the line
 VPATH	= $(subst $(SPACE),:,$(DIRS))
 
-TARGET	= $(LIBDIR)/lib$(MYFRAME).so
+TARGET	= $(LIBDIR)/lib$(LIBNAME)$(SUBFFIX)
 
-all : init so app
-so : $(TARGET)
+all : dir lib app
+lib : $(TARGET)
 
-init:
+dir:
 	@-rm -rf $(TMPDIR)
 	@-mkdir $(TMPDIR)
 	@-mkdir -p $(foreach d, $(DIRS), $(OBJDIR)/$(d))

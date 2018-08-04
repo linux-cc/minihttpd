@@ -7,49 +7,14 @@ BEGIN_NS(network)
 
 static int wait(int socket, int ms);
 
-bool TcpSocket::create(const char *host, const char *service) {
-    Addrinfo ai(_family, SOCK_STREAM, AI_PASSIVE);
-    if ((_errno = ai.getaddrinfo(host, service, _local))) {
-        return false;
-    }
-
-    for (Addrinfo::Iterator it = ai.begin(); it != ai.end(); ++it) {
-        if (socket(it->ai_family, it->ai_socktype, it->ai_protocol)
-                && bind(it->ai_addr, it->ai_addrlen)
-                && listen()) {
-            return true;
-        }
-    }
-
-	return false;
-}
-
-bool TcpSocket::connect(const char *host, const char *service) {
-    Addrinfo ai(_family, SOCK_STREAM);
-    if ((_errno = ai.getaddrinfo(host, service, _local))) {
-        return false;
-    }
-
-    for (Addrinfo::Iterator it = ai.begin(); it != ai.end(); ++it) {
-        if (socket(it->ai_family, it->ai_socktype, it->ai_protocol)
-                && Socket::connect(it->ai_addr, it->ai_addrlen)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool TcpSocket::connect(const char *host, const char *service, int ms) {
+bool TcpSocket::connect(const char *host, const char *service, int ms, int family) {
 	int oldFlags = setNonblock();
-	if(!connect(host, service)) {
+	if(!connect(host, service, family)) {
         if((errno != EINPROGRESS && errno != EWOULDBLOCK) || wait(_socket, ms) <= 0) {
-            _errno = errno;
 			return false;
         }
 	    int error = 0;
         if(getOpt(SO_ERROR, &error) < 0 || error) {
-            _errno = errno;
 			return false;
         }
 	}
@@ -61,7 +26,6 @@ bool TcpSocket::connect(const char *host, const char *service, int ms) {
 bool TcpSocket::accept(TcpSocket &client) {
 	int fd = ::accept(_socket, NULL, NULL);
 	if(fd < 0) {
-        _errno = errno;
 		return false;
     }
 	client.attach(fd);
@@ -99,15 +63,13 @@ int TcpSocket::sendn(const void *buf, size_t size, int flags) {
     return size - left;
 }
 
-bool TcpSocket::getpeername(char *addr, int addrLen, int *port) {
-    sockaddr_storage peer;
-    socklen_t len = sizeof(peer);
-    if (::getpeername(_socket, (sockaddr*)&peer, &len) < 0) {
-        _errno = errno;
+bool TcpSocket::getpeername(Peer &name) {
+    Peer addr;
+    if (::getpeername(_socket, addr.addr<Peer::SA>(), &addr.socklen()) < 0) {
         return false;
     }
 
-    return getnameinfo(&peer, addr, addrLen, port);
+    return getnameinfo(addr, name);
 }
 
 int wait(int socket, int ms) {

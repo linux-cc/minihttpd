@@ -1,0 +1,59 @@
+#ifndef __NETWORK_ADDRINFO_H__
+#define __NETWORK_ADDRINFO_H__
+
+#include "config.h"
+#include <netdb.h>
+
+BEGIN_NS(network)
+
+class Addrinfo {
+public:
+    class Iterator {
+    public:
+        Iterator &operator++() {
+            _cur = _cur->ai_next;
+            return *this;
+        }
+        const Iterator operator++(int) {
+            Iterator old = *this;
+            ++(*this);
+            return old;
+        }
+        bool operator!=(const Iterator &other) {
+            return _cur != other._cur;
+        }
+        const addrinfo *operator->() {
+            return _cur;
+        }
+
+    private:
+        Iterator(const addrinfo *result): _cur(result) {}
+        
+        const addrinfo *_cur;
+        friend class Addrinfo;
+    };     
+public:
+    Addrinfo(int family, int socktype, int protocol, int flags = 0);
+    ~Addrinfo();
+    int getaddrinfo(const char *host, const char *service);
+
+    Iterator begin() const {
+        return Iterator(_result);
+    }
+    Iterator end() const {
+        return Iterator(NULL);
+    }
+    const char *errinfo(int errno) const {
+        return gai_strerror(errno);
+    }
+
+private:
+    Addrinfo(const Addrinfo &);
+    Addrinfo &operator=(const Addrinfo &);
+
+    addrinfo *_result;
+    addrinfo _hints;
+};
+
+END_NS
+#endif /* ifndef __NETWORK_ADDRINFO_H__ */

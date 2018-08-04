@@ -2,31 +2,23 @@
 
 BEGIN_NS(network)
 
-int UdpSocket::recvfrom(void *buf, size_t size, char *addr, int addrLen, int *port, int flags) {
-    Addrinfo ai(_family, SOCK_DGRAM);
-    if ((_errno = ai.getaddrinfo(_host, _service, _local))) {
-        return -1;
-    }
-    for (Addrinfo::Iterator it = ai.begin(); it != ai.end(); ++it) {
-        if (!socket(it->ai_family, it->ai_socktype, it->ai_protocol)) {
-            continue;
-        }
-        return Socket::recvfrom(buf, size, addr, addrLen, port, flags);
-    }
-
-    return -1;
+int UdpSocket::recvfrom(void *buf, size_t size, Peer &peer, int flags) {
+    Peer addr;
+    int rlen = Socket::recvfrom(buf, size, addr, flags);
+    getnameinfo(addr, peer);
+    return rlen;
 }
 
-int UdpSocket::sendto(const void *buf, size_t size, int flags) {
-    Addrinfo ai(_family, SOCK_DGRAM);
-    if (ai.getaddrinfo(_host, _service, _local)) {
+int UdpSocket::sendto(const char *host, const char *service, const void *buf, size_t size, int family, int flags) {
+    Addrinfo ai(family, SOCK_DGRAM, 0);
+    if (ai.getaddrinfo(host, service)) {
         return -1;
     }
     for (Addrinfo::Iterator it = ai.begin(); it != ai.end(); ++it) {
         if (!socket(it->ai_family, it->ai_socktype, it->ai_protocol)) {
             continue;
         }
-        return Socket::sendto(buf, size, it->ai_addr, it->ai_addrlen, flags);
+        return Socket::sendto(buf, size, Peer(it->ai_addr, it->ai_addrlen), flags);
     }
 
     return -1;

@@ -7,14 +7,18 @@ BEGIN_NS(network)
 
 class TcpSocket : public Socket {
 public:
-    TcpSocket(int family = PF_UNSPEC, bool local = false): Socket(family, local) {}
-    bool create(const char *host, const char *service);
-    bool connect(const char *host, const char *service);
-    bool connect(const char *host, const char *service, int ms);
+    bool create(const char *host, const char *service, int family = PF_UNSPEC) {
+        return Socket::create(host, service, family, SOCK_STREAM, 0);
+    }
+    bool connect(const char *host, const char *service, int family) {
+        return Socket::connect(host, service, family, SOCK_STREAM, 0);
+    }
+
+    bool connect(const char *host, const char *service, int ms, int family);
     bool accept(TcpSocket &client);
     int recvn(void *buf, size_t size, int flags = 0);
     int sendn(const void *buf, size_t size, int flags = 0);
-    bool getpeername(char *addr, int addrLen, int *port);
+    bool getpeername(Peer &name);
 
 };
 

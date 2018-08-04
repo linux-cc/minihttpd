@@ -1,7 +1,6 @@
-#include "network/tcp_socket.h"
-#include <vector>
+#include "network/udp_socket.h"
+#include <stdio.h>
 
-using std::vector;
 USING_NS(network);
 
 static bool __quit = false;
@@ -14,11 +13,8 @@ int main(int argc, char *argv[]) {
     int ip = argv[2][0];
     int family = ip == '0' ? PF_UNSPEC : (ip == '1' ? PF_INET :
             (ip == '2' ? PF_INET6 : PF_LOCAL));
-    TcpSocket client;
-    if (!client.connect("localhost", argv[1], family)) {
-        printf("client connect error: %d:%s\n", client.errcode(), client.errinfo());
-        return -1;
-    }
+    UdpSocket client;
+    Socket::Peer peer;
     char data[1024];
     while (!__quit) {
         printf("client: ");
@@ -28,8 +24,8 @@ int main(int argc, char *argv[]) {
             printf("Done\n");
             break;
         }
-        client.send(data, strlen(data));
-        int n = client.recv(data, sizeof(data));
+        client.sendto(NULL, argv[1], data, strlen(data), family);
+        int n = client.recvfrom(data, sizeof(data), peer);
         if (n <= 0)
             break;
         data[n] = 0;
