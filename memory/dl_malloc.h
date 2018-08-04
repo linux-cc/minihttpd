@@ -1,7 +1,7 @@
 #ifndef __MEMORY_DL_MALLOC_H__
 #define __MEMORY_DL_MALLOC_H__
 
-#include "buddy.h"
+#include "memory/buddy.h"
 
 BEGIN_NS(memory)
 

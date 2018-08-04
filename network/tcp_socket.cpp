@@ -63,15 +63,6 @@ int TcpSocket::sendn(const void *buf, size_t size, int flags) {
     return size - left;
 }
 
-bool TcpSocket::getpeername(Peer &name) {
-    Peer addr;
-    if (::getpeername(_socket, addr.addr<Peer::SA>(), &addr.socklen()) < 0) {
-        return false;
-    }
-
-    return getnameinfo(addr, name);
-}
-
 int wait(int socket, int ms) {
 	fd_set rfds;
 	struct timeval tv;

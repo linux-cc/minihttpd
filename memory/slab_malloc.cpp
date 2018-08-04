@@ -1,5 +1,5 @@
-#include "slab_malloc.h"
-#include <cstdio>
+#include "memory/slab_malloc.h"
+#include <stdio.h>
 
 #define SLAB_MAX_SIZE       (MAX_FREE_LIST << ALIGN8_SHIFT)
 #define SLAB_FREE_IDX(n)    (((n) >> ALIGN8_SHIFT) - 1)

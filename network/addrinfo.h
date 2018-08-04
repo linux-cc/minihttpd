@@ -2,9 +2,60 @@
 #define __NETWORK_ADDRINFO_H__
 
 #include "config.h"
+#include <sys/un.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 
 BEGIN_NS(network)
+
+class Sockaddr {
+public:
+    Sockaddr() {
+        _len = sizeof(sockaddr_storage);
+    }
+    Sockaddr(const sockaddr *addr, socklen_t len): _len(len) {
+        memcpy(&_addr, addr, len);
+    }
+    int family() const {
+        return _addr.ss_family;
+    }
+    socklen_t &len() {
+        return _len;
+    }
+    socklen_t len() const {
+        return _len;
+    }
+
+#define OPERATOR(type)\
+    operator type *() { return (type*)&_addr; }\
+    operator const type *() const { return (type*)&_addr; }
+
+    OPERATOR(sockaddr)
+    OPERATOR(sockaddr_in)
+    OPERATOR(sockaddr_in6)
+    OPERATOR(sockaddr_storage)
+    OPERATOR(sockaddr_un)
+#undef OPERATOR
+
+private:
+    socklen_t _len;
+    sockaddr_storage _addr;
+};
+
+class Peername {
+public:
+    Peername(const Sockaddr &addr);
+    operator const char *() const {
+        return _name;
+    }
+    int port() const {
+        return _port;
+    }
+
+private:
+    char _name[sizeof(sockaddr_storage)];
+    int _port;
+};
 
 class Addrinfo {
 public:

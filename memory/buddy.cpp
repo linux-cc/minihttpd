@@ -1,4 +1,4 @@
-#include "buddy.h"
+#include "memory/buddy.h"
 
 #define LCHILD(i)		(((i) << 1) + 1)
 #define PARENT(i)		((i - 1) >> 1)

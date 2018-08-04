@@ -19,9 +19,9 @@ OBJS	= $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRCS))
 SOOBJS	= $(filter-out $(OBJDIR)/test/%.o,$(OBJS))
 APPOBJS	= $(filter $(OBJDIR)/test/%.o,$(OBJS))
 
-NULLSTR =
-SPACE	= $(NULLSTR) #end of the line
-VPATH	= $(subst $(SPACE),:,$(DIRS))
+#NULLSTR =
+#SPACE	= $(NULLSTR) #end of the line
+#VPATH	= $(subst $(SPACE),:,$(DIRS))
 
 TARGET	= $(LIBDIR)/lib$(LIBNAME)$(SUBFFIX)
 

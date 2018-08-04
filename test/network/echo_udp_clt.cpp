@@ -14,7 +14,11 @@ int main(int argc, char *argv[]) {
     int family = ip == '0' ? PF_UNSPEC : (ip == '1' ? PF_INET :
             (ip == '2' ? PF_INET6 : PF_LOCAL));
     UdpSocket client;
-    Socket::Peer peer;
+    if (family == PF_LOCAL && !client.create("client", "9000", family)) {
+        printf("client create error: %d:%s\n", client.errcode(), client.errinfo());
+        return -1;
+    }
+    Sockaddr addr;
     char data[1024];
     while (!__quit) {
         printf("client: ");
@@ -24,8 +28,8 @@ int main(int argc, char *argv[]) {
             printf("Done\n");
             break;
         }
-        client.sendto(NULL, argv[1], data, strlen(data), family);
-        int n = client.recvfrom(data, sizeof(data), peer);
+        client.sendto("localhost", argv[1], data, strlen(data), family);
+        int n = client.recvfrom(data, sizeof(data), addr);
         if (n <= 0)
             break;
         data[n] = 0;

@@ -20,17 +20,19 @@ int main(int argc, char *argv[]) {
     }
     printf("linsten in port %s\n", argv[1]);
     char buf[1024];
-    Socket::Peer name, addr;
     while (!__quit) {
+        Sockaddr addr;
         int n = server.recvfrom(buf, sizeof(buf), addr);
         if (n <= 0) {
             printf("recvfrom error: %d:%s\n", server.errcode(), server.errinfo());
             continue;
         }
         buf[n] = 0;
-        server.getnameinfo(addr, name);
-        printf("receive data[%s|%d]: %s", (char*)name, name.port(), buf);
-        server.sendto(buf, n, addr);
+        Peername peer(addr);
+        printf("receive data[%s|%d]: %s", (const char*)peer, peer.port(), buf);
+        if (server.sendto(buf, n, addr) <= 0) {
+            printf("sendto error: %d:%s\n", server.errcode(), server.errinfo());
+        }
     }
 
     return 0;

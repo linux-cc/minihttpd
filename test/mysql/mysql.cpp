@@ -1,4 +1,4 @@
-#include "mysql/mysql_impl.h"
+#include "mysql/mysql.h"
 #include <stdio.h>
 
 USING_NS(mysql);

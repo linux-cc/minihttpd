@@ -2,6 +2,7 @@
 #define __NETWORK_TCP_SOCKET_H__
 
 #include "network/socket.h"
+#include <stdio.h>
 
 BEGIN_NS(network)
 
@@ -18,7 +19,9 @@ public:
     bool accept(TcpSocket &client);
     int recvn(void *buf, size_t size, int flags = 0);
     int sendn(const void *buf, size_t size, int flags = 0);
-    bool getpeername(Peer &name);
+    bool getpeername(Sockaddr &addr) {
+        return ::getpeername(_socket, addr, &addr.len()) == 0; 
+    }
 
 };
 

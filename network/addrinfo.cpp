@@ -1,8 +1,30 @@
 #include "network/addrinfo.h"
-#include <sys/un.h>
+#include <unistd.h>
 #include <stdio.h>
 
 BEGIN_NS(network)
+
+Peername::Peername(const Sockaddr &addr) {
+    const void *inaddr;
+    int family = addr.family();
+    if (family == PF_INET) {
+        const sockaddr_in *si = addr;
+        inaddr = &si->sin_addr;
+        _port = ntohs(si->sin_port);
+    } else if (family == PF_INET6) {
+        const sockaddr_in6 *si6 = addr;
+        inaddr = &si6->sin6_addr;
+        _port = ntohs(si6->sin6_port);
+    } else {
+        if (family == PF_LOCAL) {
+            const sockaddr_un *un = addr;
+            sscanf(un->sun_path, "%*[^_]_%[^_]_%d", _name, &_port);
+        }
+        return;
+    }
+
+    inet_ntop(family, inaddr, _name, sizeof(_name));
+}
 
 Addrinfo::Addrinfo(int family, int socktype, int protocol, int flags): _result(NULL) {
     memset(&_hints, 0, sizeof(_hints));
@@ -38,9 +60,12 @@ int Addrinfo::getaddrinfo(const char *host, const char *service) {
     _result->ai_flags = _hints.ai_flags;
     sockaddr_un *sun = (sockaddr_un*)_result->ai_addr;
     sun->sun_family = _hints.ai_family;
-    int n = snprintf(sun->sun_path, sizeof(sun->sun_path), "/tmp/sock_local_%s_%s",
+    int n = snprintf(sun->sun_path, sizeof(sun->sun_path), "/tmp/localsock_%s_%s",
             host ? host : "null", service ? service : "null");
     _result->ai_addrlen = ((intptr_t)&((sockaddr_un*)0)->sun_path) + n;
+    if (_hints.ai_flags & AI_PASSIVE) {
+        unlink(sun->sun_path);
+    }
 
     return 0;
 }

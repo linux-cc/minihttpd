@@ -3,55 +3,21 @@
 
 #include "network/addrinfo.h"
 #include <errno.h>
+#include <stdio.h>
 
 BEGIN_NS(network)
 
 class Socket {
 public:
-    class Peer {
-    public:
-        typedef sockaddr SA;
-        typedef sockaddr_in SA_I;
-        typedef sockaddr_in6 SA_I6;
-        typedef sockaddr_storage SA_S;
-        
-        Peer() { _addr._l = sizeof(SA_S); }
-        Peer(const SA *addr, socklen_t len) { memcpy(&_addr._a, addr, len); _addr._l = len; }
-        int family() const { return _addr._a.ss_family; }
-        template <typename T> T *addr() { return (T*)&_addr._a; }
-        template <typename T> const T *addr() const { return (T*)&_addr._a; }
-        socklen_t &socklen() { return _addr._l; }
-        socklen_t socklen() const { return _addr._l; }
-
-        operator char *() { return _name._n; }
-        operator const char *() const { return _name._n; }
-        int namelen () const { return sizeof(SA_S); }
-        void port(int port) { _name._p = port; }
-        int port() const { return _name._p; }
-
-    private:
-        union {
-            struct {
-                int _p;
-                char _n[sizeof(SA_S)];
-            }_name;
-            struct {
-                socklen_t _l;
-                SA_S _a;
-            }_addr;
-        };
-    };
-    
     int recv(void *buf, size_t size, int flags = 0);
     int send(const void *buf, size_t size, int flags = 0);
-    int recvfrom(void *buf, size_t size, Peer &peer, int flags = 0) {
-        return ::recvfrom(_socket, buf, size, flags, peer.addr<Peer::SA>(), &peer.socklen());
+    int recvfrom(void *buf, size_t size, Sockaddr &addr, int flags = 0) {
+        return ::recvfrom(_socket, buf, size, flags, addr, &addr.len());
     }
-    int sendto(const void *buf, size_t size, const Peer &peer, int flags = 0) {
-        return ::sendto(_socket, buf, size, flags, peer.addr<Peer::SA>(), peer.socklen());
+    int sendto(const void *buf, size_t size, const Sockaddr &addr, int flags = 0) {
+        return ::sendto(_socket, buf, size, flags, addr, addr.len());
     }
     int setNonblock();
-    bool getnameinfo(const Peer &addr, Peer &name);
     void close();
 
     int setOpt(int cmd, int val) {

@@ -1,19 +1,19 @@
 #include "network/socket.h"
 #include <sys/socket.h>
-#include <arpa/inet.h>
 #include <fcntl.h>
 #include <unistd.h>
 
 BEGIN_NS(network)
 
 bool Socket::socket(int family, int socktype, int protocol) {
-    close();
-    _socket = ::socket(family, socktype, protocol);
-    if (_socket < 0) {
-        return false;
+    if (_socket == -1) {
+        _socket = ::socket(family, socktype, protocol);
+        if (_socket < 0) {
+            return false;
+        }
+        setOpt(SO_REUSEADDR, 1);
     }
 
-    setOpt(SO_REUSEADDR, 1);
     return true;
 }
 
@@ -79,25 +79,6 @@ int Socket::setNonblock() {
 	fcntl(_socket, F_SETFL, flags | O_NONBLOCK);
 
     return flags;
-}
-
-bool Socket::getnameinfo(const Peer &addr, Peer &name) {
-    const void *inaddr;
-    int family = addr.family();
-    if (family == PF_INET) {
-        inaddr = &addr.addr<Peer::SA_I>()->sin_addr;
-        name.port(ntohs(addr.addr<Peer::SA_I>()->sin_port));
-    } else if (family == PF_INET6) {
-        inaddr = &addr.addr<Peer::SA_I6>()->sin6_addr;
-        name.port(ntohs(addr.addr<Peer::SA_I6>()->sin6_port));
-    } else {
-        return false;
-    }
-    if (!inet_ntop(family, inaddr, name, name.namelen())) {
-        return false;
-    }
-
-    return true;
 }
 
 void Socket::close() {

@@ -33,13 +33,13 @@ int main(int argc, char *argv[]) {
     vfds.push_back(server);
     server.setNonblock();
     char buf[1024];
-    Socket::Peer peer;
     while (!__quit) {
         fd_set rfds = fds;
         int n = select(maxFd + 1, &rfds, NULL, NULL, &tv);
         for (int i = 0; n > 0 && i < (int)vfds.size(); ++i) {
             if (n == 0 || !FD_ISSET(vfds[i], &rfds))
                 continue;
+            Sockaddr addr;
             TcpSocket &sock = vfds[i];
             if (sock == server) {
                 TcpSocket client;
@@ -52,23 +52,25 @@ int main(int argc, char *argv[]) {
                 FD_SET(client, &fds);
                 if (client > maxFd) 
                     maxFd = client;
-                if (!client.getpeername(peer)) {
+                if (!client.getpeername(addr)) {
                     printf("server getpeername error: %d:%s\n", client.errcode(), client.errinfo());
                 }
-                printf("server accept: [%s|%d]\n", (char*)peer, peer.port());
+                Peername peer(addr);
+                printf("server accept: [%s|%d]\n", (const char*)peer, peer.port());
             } else {
-                if (!sock.getpeername(peer)) {
+                if (!sock.getpeername(addr)) {
                     printf("server getpeername error: %d:%s\n", sock.errcode(), sock.errinfo());
                 }
+                Peername peer(addr);
                 int len = sock.recv(buf, 1024);
                 if (len <= 0) {
-                    printf("client[%s|%d]: close\n", (char*)peer, peer.port());
+                    printf("client[%s|%d]: close, len:%d\n", (const char*)peer, peer.port(), len);
                     FD_CLR(sock, &fds);
                     sock.close();
                     vfds.erase(vfds.begin() + i);
                 } else {
                     buf[len] = 0;
-                    printf("receive data[%s|%d]: %s", (char*)peer, peer.port(), buf);
+                    printf("receive data[%s|%d]: %s", (const char*)peer, peer.port(), buf);
                     sock.send(buf, len);
                 }
             }
