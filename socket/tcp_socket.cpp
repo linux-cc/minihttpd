@@ -1,9 +1,9 @@
-#include "network/tcp_socket.h"
+#include "socket/tcp_socket.h"
 #include <sys/select.h>
 #include <fcntl.h>
 #include <errno.h>
 
-BEGIN_NS(network)
+BEGIN_NS(socket)
 
 static int wait(int socket, int ms);
 

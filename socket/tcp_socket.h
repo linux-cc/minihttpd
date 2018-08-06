@@ -1,10 +1,9 @@
 #ifndef __NETWORK_TCP_SOCKET_H__
 #define __NETWORK_TCP_SOCKET_H__
 
-#include "network/socket.h"
-#include <stdio.h>
+#include "socket/socket.h"
 
-BEGIN_NS(network)
+BEGIN_NS(socket)
 
 class TcpSocket : public Socket {
 public:

@@ -1,9 +1,9 @@
-#include "network/socket.h"
+#include "socket/socket.h"
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <unistd.h>
 
-BEGIN_NS(network)
+BEGIN_NS(socket)
 
 bool Socket::socket(int family, int socktype, int protocol) {
     if (_socket == -1) {

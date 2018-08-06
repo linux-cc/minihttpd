@@ -6,7 +6,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-BEGIN_NS(network)
+BEGIN_NS(socket)
 
 class Sockaddr {
 public:

@@ -1,8 +1,8 @@
-#include "network/tcp_socket.h"
+#include "socket/tcp_socket.h"
 #include <vector>
 
 using std::vector;
-USING_NS(network);
+USING_NS(socket);
 
 static bool __quit = false;
 

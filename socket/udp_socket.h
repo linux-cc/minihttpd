@@ -1,9 +1,9 @@
 #ifndef __NETWORK_UDP_SOCKET_H__
 #define __NETWORK_UDP_SOCKET_H__
 
-#include "network/socket.h"
+#include "socket/socket.h"
 
-BEGIN_NS(network)
+BEGIN_NS(socket)
 
 class UdpSocket : public Socket {
 public:

@@ -1,8 +1,8 @@
-#include "network/addrinfo.h"
+#include "socket/addrinfo.h"
 #include <unistd.h>
 #include <stdio.h>
 
-BEGIN_NS(network)
+BEGIN_NS(socket)
 
 Peername::Peername(const Sockaddr &addr) {
     const void *inaddr;

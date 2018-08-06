@@ -1,6 +1,6 @@
-#include "network/udp_socket.h"
+#include "socket/udp_socket.h"
 
-BEGIN_NS(network)
+BEGIN_NS(socket)
 
 int UdpSocket::sendto(const char *host, const char *service, const void *buf, size_t size, int family, int flags) {
     Addrinfo ai(family, SOCK_DGRAM, 0);

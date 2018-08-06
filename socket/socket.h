@@ -1,11 +1,11 @@
 #ifndef __NETWORK_SOCKET_H__
 #define __NETWORK_SOCKET_H__
 
-#include "network/addrinfo.h"
+#include "socket/addrinfo.h"
 #include <errno.h>
 #include <stdio.h>
 
-BEGIN_NS(network)
+BEGIN_NS(socket)
 
 class Socket {
 public:

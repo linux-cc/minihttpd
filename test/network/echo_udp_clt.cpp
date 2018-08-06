@@ -1,7 +1,7 @@
-#include "network/udp_socket.h"
+#include "socket/udp_socket.h"
 #include <stdio.h>
 
-USING_NS(network);
+USING_NS(socket);
 
 static bool __quit = false;
 
