@@ -14,8 +14,8 @@ public:
     bool init(int bufSize = 8192);
     int recv(void *buf, int size);
     int send(const void *buf, int size); 
-    void release();
     int doPollout();
+    void release();
 
     operator int() {
         return _socket;
@@ -32,6 +32,7 @@ public:
 
 private:
     int copy(void *buf, int size);
+    int copy(const void *buf, int size);
 
     int _socket;
     int _recvIndex;
