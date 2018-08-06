@@ -13,7 +13,7 @@ SOLIBS  = -lstdc++ $(shell mysql_config --libs)
 APPLIBS = -L$(LIBDIR) -l$(LIBNAME) $(SOLIBS) -lpthread
 
 TEST	= $(foreach d,$(shell ls test),test/$(d))
-DIRS	= memory mysql network thread $(TEST)
+DIRS	= memory mysql socket thread $(TEST)
 SRCS	= $(foreach d,$(DIRS),$(wildcard $(d)/*.cpp))
 OBJS	= $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRCS))
 SOOBJS	= $(filter-out $(OBJDIR)/test/%.o,$(OBJS))
