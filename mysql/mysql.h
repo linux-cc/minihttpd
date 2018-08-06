@@ -23,10 +23,10 @@ public:
         }
         typedef vector<string>::const_iterator Iterator;
         Iterator begin() const {
-            return _fields.cbegin();
+            return _fields.begin();
         }
         Iterator end() const {
-            return _fields.cend();
+            return _fields.end();
         }
         string dump() const;
         vector<string> _fields;
@@ -73,10 +73,10 @@ public:
     }
     typedef vector<Row>::const_iterator Iterator;
     Iterator begin() const {
-        return _rows.cbegin();
+        return _rows.begin();
     }
     Iterator end() const {
-        return _rows.cend();
+        return _rows.end();
     }
     int execute(const char *sql);
     string dump() const;

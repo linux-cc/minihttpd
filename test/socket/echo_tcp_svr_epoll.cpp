@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
                     if (!server.accept(client)) {
                         if (server.errcode() != EWOULDBLOCK && server.errcode() != EAGAIN)
                             printf("server accept error: %d:%s\n", server.errcode(), server.errinfo());
+                        poller.mod(server);
                         break;
                     }
                     client.setNonblock();
