@@ -6,13 +6,6 @@
 
 BEGIN_NS(memory)
 
-Buddy::Buddy(size_t pages):
-_buffer(NULL),
-_tree(NULL),
-_depth(0) {
-    init(pages);
-}
-
 Buddy::~Buddy() {
     delete[] _buffer;
     delete[] _tree;

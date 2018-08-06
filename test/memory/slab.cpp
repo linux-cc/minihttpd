@@ -1,5 +1,6 @@
 #include "memory/slab_malloc.h"
 #include <vector>
+#include <stdio.h>
 
 USING_NS(memory);
 
@@ -29,7 +30,7 @@ int main(int argc, char *argv[]) {
             printf("free : %p\n", p);
         }
         printf("alloc list: ");
-        for (int i = 0; i < v.size(); ++i)
+        for (size_t i = 0; i < v.size(); ++i)
             printf("%p, ", v[i]);
         printf("\nbuddy dump: %s\n", buddy.dump());
         printf("slab dump:\n%s\n", slab.dump());

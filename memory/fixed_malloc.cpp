@@ -26,7 +26,7 @@ void *FixedMalloc::alloc(size_t size) {
 
 void FixedMalloc::free(void *addr) {
 	char *p = (char *)addr;
-	if(p >= _buffer && p <= _buffer + _size) {
+	if(p >= _buffer && p <= _buffer + _size * _elem) {
         *(uint16_t*)p = _free;
         _free = (p - _buffer) / _elem;
         --_used;

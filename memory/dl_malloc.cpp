@@ -34,9 +34,9 @@
 #define CLEAR_FREEMAP(i)            (_freeMap  &= ~IDX2BIT(i))
 #define GET_FOOT(p, s)              (NEXT_CHUNK2(p, s)->prev_foot)
 #define SET_FOOT(p, s)              (NEXT_CHUNK2(p, s)->prev_foot = (s))
-#define SET_CPP_BITS(p, s)          ((p)->head = (s|CP_BITS), NEXT_CHUNK2(p, s)->head |= P_BIT)
-#define SET_SIZE_P_FOOT(p, s)       ((p)->head = (s|P_BIT), SET_FOOT(p, s))
-#define SET_SIZE_CP(p, s)           ((p)->head = (s|CP_BITS))
+#define SET_CPP_BITS(p, s)          ((p)->head = ((s)|CP_BITS), NEXT_CHUNK2(p, s)->head |= P_BIT)
+#define SET_SIZE_P_FOOT(p, s)       ((p)->head = ((s)|P_BIT), SET_FOOT(p, s))
+#define SET_SIZE_CP(p, s)           ((p)->head = ((s)|CP_BITS))
 #define CLEAR_P_BIT(p)              ((p)->head &= ~P_BIT)
 #define SET_FREE_WITH_P(p, s, n)    (CLEAR_P_BIT(n), SET_SIZE_P_FOOT(p, s))
 #define CHUNK2MEM(p)                ((void*)((char*)(p) + TWO_SIZE_T_SIZES))
@@ -67,7 +67,7 @@ _topSize(0)
 
 void *DlMalloc::alloc(size_t size) {
     size_t nb = PAD_REQUEST(size);
-    printf("requst size:%lu, aligin:%lu\n", size, nb);
+    printf("requst size:%u, aligin:%u\n", size, nb);
     if (_freeMap) {
         size_t rsize = -nb;
         uint32_t idx = computeFreeIndex(nb);
@@ -111,18 +111,18 @@ DlMalloc::Chunk *DlMalloc::getFitChunk(size_t nb, size_t idx, size_t &rsize) {
     printf("chunk:%p\n", t);
     if (t) {
         size_t sizebits = nb << LSH_FOR_TREE_IDX(idx);
-        printf("sizebits:%lu\n", sizebits);
+        printf("sizebits:%u\n", sizebits);
         Chunk *rst = NULL;
         for (;;) {
             size_t trem = CHUNK_SIZE(t) - nb;
-            printf("trem:%lu\n", trem);
+            printf("trem:%u\n", trem);
             if (trem < rsize) {
                 v = t;
                 if ((rsize = trem) == 0)
                     break;
             }
             Chunk *rt = t->child[1];
-            printf("child:%lu\n", (sizebits >> (SIZE_T_BITSIZE-SIZE_T_ONE)) & 1);
+            printf("child:%u\n", (sizebits >> (SIZE_T_BITSIZE-SIZE_T_ONE)) & 1);
             t = t->child[(sizebits >> (SIZE_T_BITSIZE-SIZE_T_ONE)) & 1];
             if (rt && rt != t)
                 rst = rt;
@@ -145,7 +145,7 @@ DlMalloc::Chunk *DlMalloc::getFitChunk(size_t nb, size_t idx, size_t &rsize) {
     }
     while (t) {
         size_t trem = CHUNK_SIZE(t) - nb;
-        printf("chunk:%p, trem:%lu\n", t, trem);
+        printf("chunk:%p, trem:%u\n", t, trem);
         if (trem < rsize) {
             rsize = trem;
             v = t;
@@ -261,7 +261,7 @@ void *DlMalloc::sysAlloc(size_t nb) {
         _seg.size = size; 
         _seg.next = NULL;
         INIT_TOP(base, size);
-        printf("init _top:%p, size:%lu\n", base, size);
+        printf("init _top:%p, size:%u\n", base, size);
     } else {
         void *mem = mergeSeg(base, size, nb);
         if (mem)
@@ -368,11 +368,11 @@ void DlMalloc::free(void *addr) {
     Chunk *p = MEM2CHUNK(addr);
     size_t psize = CHUNK_SIZE(p);
     Chunk *next = CHUNK_PLUS_OFFSET(p, psize);
-    printf("free chunk:%p, size:%lu\n", p, psize);
+    printf("free chunk:%p, size:%u\n", p, psize);
     if (!P_INUSE(p)) {
         size_t prevsize = p->prev_foot;
         Chunk *prev = CHUNK_MINUS_OFFSET(p, prevsize);
-        printf("merge prev chunk:%p, size:%lu\n", prev, prevsize);
+        printf("merge prev chunk:%p, size:%u\n", prev, prevsize);
         psize += prevsize;
         p = prev;
         unlinkChunk(p);
@@ -408,13 +408,13 @@ char *DlMalloc::dump() {
     }
     pos += sprintf(buf + pos, "%s", "\n");
     if (_top) {
-        pos += sprintf(buf + pos, "_top:%p, size:%u, head:%lu, C:%u, P:%u, prev:%p, next:%p\n", 
+        pos += sprintf(buf + pos, "_top:%p, size:%u, head:%u, C:%u, P:%u, prev:%p, next:%p\n", 
                 _top, _topSize, _top->head, C_INUSE(_top) ? 1:0, P_INUSE(_top) ? 1:0, _top->prev, _top->next);
     }
-    pos += sprintf(buf + pos, "segment base:%p, size:%lu, next:%p\n", _seg.base, _seg.size, _seg.next);
+    pos += sprintf(buf + pos, "segment base:%p, size:%u, next:%p\n", _seg.base, _seg.size, _seg.next);
     Segment *s = _seg.next;
     while (s) {
-        pos += sprintf(buf + pos, "segment base:%p, size:%lu, next:%p\n", s->base, s->size, s->next);
+        pos += sprintf(buf + pos, "segment base:%p, size:%u, next:%p\n", s->base, s->size, s->next);
         s = s->next;
     }
     dumpChunk(buf + pos);

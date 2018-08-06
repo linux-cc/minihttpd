@@ -1,24 +1,22 @@
+#include "memory/fixed_malloc.h"
 #include "memory/buddy.h"
-#include <cstdio>
-#include <cstring>
 #include <vector>
+#include <stdio.h>
 
 USING_NS(memory);
-using std::vector;
 
 int main(int argc, char *argv[]) {
+    using std::vector;
     vector<void*> v;
-    Buddy *b = new Buddy(32);
-    char *buf = b->dump();
-    printf("\ndump: %s\n", buf);
-    delete []buf;
-    printf("buffer: %p\n", b->buffer());
+    Buddy buddy(8);
+    FixedMalloc fixed(buddy);
+    fixed.init(16, 2048);
     for (;;) {
         int cmd, size;
         printf("enter command:");
         scanf("%d %d", &cmd, &size);
         if (cmd == 1) {
-            void *p = b->alloc(size);
+            void *p = fixed.alloc(size);
             if (p) {
                 v.push_back(p);
                 printf("alloc: %p, %d\n", p, size);
@@ -29,16 +27,15 @@ int main(int argc, char *argv[]) {
                 continue;
             vector<void*>::iterator it = v.begin();
             void *p = *(it + size);
-            b->free(p);
+            fixed.free(p);
             v.erase(it + size);
             printf("free : %p\n", p);
         }
         printf("alloc list: ");
         for (size_t i = 0; i < v.size(); ++i)
             printf("%p, ", v[i]);
-        buf = b->dump();
-        printf("\ndump: %s\n", buf);
-        delete []buf;
+        printf("\nbuddy dump: %s\n", buddy.dump());
+        //printf("slab dump:\n%s\n", slab.dump());
     }
     return 0;
 }

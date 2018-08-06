@@ -20,12 +20,15 @@ BEGIN_NS(memory)
 
 class Buddy {
 public:
-    Buddy(size_t pages = 1024);
+    Buddy(): _buffer(NULL), _tree(NULL), _depth(0) {}
+    explicit Buddy(size_t pages): _buffer(NULL), _tree(NULL), _depth(0) {
+        init(pages);
+    }
     ~Buddy();
-	void init(size_t pages);
-	void *alloc(size_t pages);
-	void free(void *addr);
-	char *dump();
+    void init(size_t pages);
+    void *alloc(size_t pages);
+    void free(void *addr);
+    char *dump();
     char *buffer() { return _buffer; }
 
 private:
