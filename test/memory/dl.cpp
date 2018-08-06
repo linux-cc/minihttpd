@@ -7,7 +7,7 @@ int main(int argc, char *argv[]) {
     using std::vector;
     vector<void*> v;
     Buddy buddy(32);
-    DlMalloc dl(&buddy);
+    DlMalloc dl(buddy);
     for (;;) {
         int cmd, size;
         printf("enter command:");

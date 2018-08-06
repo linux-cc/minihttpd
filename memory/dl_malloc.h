@@ -7,7 +7,7 @@ BEGIN_NS(memory)
 
 class DlMalloc {
 public:
-    DlMalloc(Buddy *_buddy);
+    DlMalloc(Buddy &buddy);
     void *alloc(size_t size);
     void free(void *addr);
     char *dump();
@@ -42,12 +42,12 @@ private:
         size_t size;
         Segment *next;
     };
-    Buddy *buddy;
-    uint32_t freeMap;
-    Chunk *top;
-    uint32_t topSize;
-    Chunk *freeList[MAX_FREE_LIST];
-    Segment seg;
+    Buddy &_buddy;
+    uint32_t _freeMap;
+    Chunk *_top;
+    uint32_t _topSize;
+    Chunk *_free[MAX_FREE_NUM];
+    Segment _seg;
 };
 
 END_NS

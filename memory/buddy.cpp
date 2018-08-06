@@ -7,94 +7,94 @@
 BEGIN_NS(memory)
 
 Buddy::Buddy(size_t pages):
-buf(NULL),
-tree(NULL),
-depth(0) {
+_buffer(NULL),
+_tree(NULL),
+_depth(0) {
     init(pages);
 }
 
 Buddy::~Buddy() {
-    delete[] buf;
-    delete[] tree;
-    buf = NULL;
-    tree = NULL;
+    delete[] _buffer;
+    delete[] _tree;
+    _buffer = NULL;
+    _tree = NULL;
 }
 
 void Buddy::init(size_t pages) {
-    if (buf) {
+    if (_buffer) {
         return;
     }
-    depth = LOG2PLUS1(pages);
-    pages = 1 << depth;
+    _depth = LOG2PLUS1(pages);
+    pages = 1 << _depth;
     size_t nodes = (pages << 1) - 1;
-    pageAddr = buf = new char[(pages + 1) * PAGE_SIZE];
-    intptr_t addr = ALIGN_PAGE((intptr_t)pageAddr);
-    if (addr != (intptr_t)pageAddr) {
-        pageAddr = (char*)addr;
+    _pages = _buffer = new char[(pages + 1) * PAGE_SIZE];
+    intptr_t addr = ALIGN_PAGE((intptr_t)_pages);
+    if (addr != (intptr_t)_pages) {
+        _pages = (char*)addr;
     }
-    tree = new uint8_t[nodes];
-    tree[0] = depth;
+    _tree = new uint8_t[nodes];
+    _tree[0] = _depth;
     for (size_t i = 1; i < nodes; ++i) {
-        tree[i] = tree[PARENT(i)] - 1;
+        _tree[i] = _tree[PARENT(i)] - 1;
     }
 }
 
 void *Buddy::alloc(size_t pages) {
     uint8_t n1 = LOG2PLUS1(pages);
     size_t idx = 0;
-	if (pages == 0 || tree[idx] < n1) {
+	if (pages == 0 || _tree[idx] < n1) {
 	    return NULL;
 	}
-    uint8_t n2 = depth + 1;
+    uint8_t n2 = _depth + 1;
     while (n1 != --n2) {
         idx = LCHILD(idx);
-        if (tree[idx] < n1) {
+        if (_tree[idx] < n1) {
             ++idx;
         }
 	}
-    tree[idx] = 0;
-	size_t offset = (idx + 1) * PAGES(n2) - PAGES(depth);
+    _tree[idx] = 0;
+	size_t offset = (idx + 1) * PAGES(n2) - PAGES(_depth);
     while (idx) {
         idx = PARENT(idx);
         size_t child = LCHILD(idx);
-        tree[idx] = MAX(tree[child], tree[child + 1]);
+        _tree[idx] = MAX(_tree[child], _tree[child + 1]);
     }
 
-    return pageAddr + offset * PAGE_SIZE;
+    return _pages + offset * PAGE_SIZE;
 }
 
 void Buddy::free(void *addr) {
     char *paddr = (char*)addr;
-    size_t pages = PAGES(depth);
-    char *end = pageAddr + pages * PAGE_SIZE;
-    if (paddr < pageAddr || paddr > end) {
+    size_t pages = PAGES(_depth);
+    char *end = _pages + pages * PAGE_SIZE;
+    if (paddr < _pages || paddr > end) {
         return;
     }
 
-    size_t offset = (paddr - pageAddr) / PAGE_SIZE;
+    size_t offset = (paddr - _pages) / PAGE_SIZE;
     size_t idx = offset + pages - 1;
     uint8_t n = 1;
-    for (; tree[idx]; idx = PARENT(idx)) {
+    for (; _tree[idx]; idx = PARENT(idx)) {
         ++n;
         if (idx == 0)
             return;
     }
-    tree[idx] = n;
+    _tree[idx] = n;
 
     while(idx) {
         idx = PARENT(idx);
         ++n;
-        uint8_t left = tree[LCHILD(idx)];
-        uint8_t right = tree[LCHILD(idx) + 1];
+        uint8_t left = _tree[LCHILD(idx)];
+        uint8_t right = _tree[LCHILD(idx) + 1];
         if (left == n - 1 && right == n - 1)
-            tree[idx] = n;
+            _tree[idx] = n;
         else
-            tree[idx] = MAX(left, right);
+            _tree[idx] = MAX(left, right);
     }
 }
 
 char *Buddy::dump() {
-    size_t pages = PAGES(depth);
+    size_t pages = PAGES(_depth);
     size_t nodes = (pages << 1) - 1;
     size_t n = LOG2PLUS1(pages) + 1;
     char *buf = new char[pages + 1];
@@ -104,11 +104,11 @@ char *Buddy::dump() {
     for (size_t i = 0; i < nodes; ++i) {
         if (IS_POW2(i+1))
             --n;
-        if (tree[i]) 
+        if (_tree[i]) 
             continue;
         if (i >= pages - 1) {
             buf[i - pages + 1] = '*';
-        } else if (tree[LCHILD(i)] && tree[LCHILD(i) + 1]) {
+        } else if (_tree[LCHILD(i)] && _tree[LCHILD(i) + 1]) {
             size_t nsize = PAGES(n);
             size_t offset = (i + 1) * nsize - pages;
             for (size_t j = offset; j < offset + nsize; ++j)

@@ -31,7 +31,7 @@
 #define RIGHTMOST_CHILD(t)          ((t)->child[1] ? (t)->child[1] : (t)->child[0])
 #define CHUNK_PLUS_OFFSET(p, s)     ((Chunk*)(((char*)(p)) + (s)))
 #define CHUNK_MINUS_OFFSET(p, s)    ((Chunk*)(((char*)(p)) - (s)))
-#define CLEAR_FREEMAP(i)            (freeMap  &= ~IDX2BIT(i))
+#define CLEAR_FREEMAP(i)            (_freeMap  &= ~IDX2BIT(i))
 #define GET_FOOT(p, s)              (NEXT_CHUNK2(p, s)->prev_foot)
 #define SET_FOOT(p, s)              (NEXT_CHUNK2(p, s)->prev_foot = (s))
 #define SET_CPP_BITS(p, s)          ((p)->head = (s|CP_BITS), NEXT_CHUNK2(p, s)->head |= P_BIT)
@@ -41,34 +41,34 @@
 #define SET_FREE_WITH_P(p, s, n)    (CLEAR_P_BIT(n), SET_SIZE_P_FOOT(p, s))
 #define CHUNK2MEM(p)                ((void*)((char*)(p) + TWO_SIZE_T_SIZES))
 #define MEM2CHUNK(p)                ((Chunk*)((char*)(p) - TWO_SIZE_T_SIZES))
-#define MARK_FREEMAP(i)             (freeMap |=  IDX2BIT(i))
-#define CLEAR_FREEMAP(i)            (freeMap &= ~IDX2BIT(i))
-#define FREEMAP_IS_MARKED(i)        (freeMap &   IDX2BIT(i))
+#define MARK_FREEMAP(i)             (_freeMap |=  IDX2BIT(i))
+#define CLEAR_FREEMAP(i)            (_freeMap &= ~IDX2BIT(i))
+#define FREEMAP_IS_MARKED(i)        (_freeMap &   IDX2BIT(i))
 #define SEGMENT_HOLDS(s, t)         ((char*)(t) >= s->base && (char*)(t) < s->base + s->size)
 #define C_INUSE(p)                  ((p)->head & C_BIT)
 #define P_INUSE(p)                  ((p)->head & P_BIT)
-#define INIT_TOP(p, s)              top = (Chunk*)(p); topSize = (s); top->head = (topSize | P_BIT);\
+#define INIT_TOP(p, s)              _top = (Chunk*)(p); _topSize = (s); _top->head = (_topSize | P_BIT);\
                                     CHUNK_PLUS_OFFSET((p), (s))->head = TOP_FOOT_SIZE
 #define TOP_FOOT_SIZE               (PAD_REQUEST(sizeof(Segment))+MIN_CHUNK_SIZE)
 #define PAGES(n)                    (((n) + PAGE_MASK) / PAGE_SIZE)
 
 BEGIN_NS(memory)
 
-DlMalloc::DlMalloc(Buddy *_buddy):
-buddy(_buddy),
-freeMap(0),
-top(NULL),
-topSize(0)
+DlMalloc::DlMalloc(Buddy &buddy):
+_buddy(buddy),
+_freeMap(0),
+_top(NULL),
+_topSize(0)
 {
-    for (int i = 0; i < MAX_FREE_LIST; ++i) {
-        freeList[i] = NULL;
+    for (int i = 0; i < MAX_FREE_NUM; ++i) {
+        _free[i] = NULL;
     }
 }
 
 void *DlMalloc::alloc(size_t size) {
     size_t nb = PAD_REQUEST(size);
     printf("requst size:%lu, aligin:%lu\n", size, nb);
-    if (freeMap) {
+    if (_freeMap) {
         size_t rsize = -nb;
         uint32_t idx = computeFreeIndex(nb);
         printf("chunk index:%u\n", idx);
@@ -87,10 +87,10 @@ void *DlMalloc::alloc(size_t size) {
             return CHUNK2MEM(v);
         }
     }
-    if (nb < topSize) {
-        size_t rsize = topSize -= nb;
-        Chunk *oldTop = top;
-        Chunk *newTop = top = CHUNK_PLUS_OFFSET(oldTop, nb);
+    if (nb < _topSize) {
+        size_t rsize = _topSize -= nb;
+        Chunk *oldTop = _top;
+        Chunk *newTop = _top = CHUNK_PLUS_OFFSET(oldTop, nb);
         newTop->head = rsize | P_BIT;
         SET_SIZE_CP(oldTop, nb);
         return CHUNK2MEM(oldTop);
@@ -107,7 +107,7 @@ size_t DlMalloc::computeFreeIndex(size_t nb) {
 }
 
 DlMalloc::Chunk *DlMalloc::getFitChunk(size_t nb, size_t idx, size_t &rsize) {
-    Chunk *v = NULL, *t = freeList[idx];
+    Chunk *v = NULL, *t = _free[idx];
     printf("chunk:%p\n", t);
     if (t) {
         size_t sizebits = nb << LSH_FOR_TREE_IDX(idx);
@@ -134,12 +134,12 @@ DlMalloc::Chunk *DlMalloc::getFitChunk(size_t nb, size_t idx, size_t &rsize) {
         }
     }
     if (!t && !v) {
-        uint32_t leftbits = LEFT_BITS(IDX2BIT(idx)) & freeMap;
+        uint32_t leftbits = LEFT_BITS(IDX2BIT(idx)) & _freeMap;
         printf("leftbits:%x, %u\n", LEFT_BITS(IDX2BIT(idx)), leftbits);
         if (leftbits) {
             uint32_t leastbit = LEAST_BIT(leftbits);
             uint32_t i = COMPUTE_BIT2IDX(leastbit);
-            t = freeList[i];
+            t = _free[i];
             printf("leastbit:%u, index:%u, chunk:%p\n", leastbit, i, t);
         }
     }
@@ -181,7 +181,7 @@ void DlMalloc::unlinkChunk(Chunk *chunk) {
         }
     }
     if (cp) {
-        Chunk **head = &freeList[chunk->index];
+        Chunk **head = &_free[chunk->index];
         printf("chunk head:%p, index:%u, hold:%p\n", *head, chunk->index, hold);
         if (chunk == *head) {
             printf("chunk == *head\n");
@@ -211,7 +211,7 @@ void DlMalloc::unlinkChunk(Chunk *chunk) {
 
 void DlMalloc::insertChunk(Chunk *chunk, size_t nb) {
     uint32_t i = computeFreeIndex(nb);
-    Chunk **head = &freeList[i];
+    Chunk **head = &_free[i];
     chunk->index = i;
     chunk->child[0] = chunk->child[1] = NULL;
     if (!FREEMAP_IS_MARKED(i)) {
@@ -247,30 +247,30 @@ void DlMalloc::insertChunk(Chunk *chunk, size_t nb) {
 }
 
 void *DlMalloc::sysAlloc(size_t nb) {
-    Segment *sp = top ? getTopSeg() : NULL;
+    Segment *sp = _top ? getTopSeg() : NULL;
     void *base;
     if (!sp) {
-        base = buddy->alloc(SEGMENT_PAGES);
+        base = _buddy.alloc(SEGMENT_PAGES);
         printf("buddy allloc:%p\n", base);
         if (!base)
             return NULL;
     }
     size_t size = SEGMENT_PAGES * PAGE_SIZE - TOP_FOOT_SIZE;
-    if (!top) {
-        seg.base = (char*)base;
-        seg.size = size; 
-        seg.next = NULL;
+    if (!_top) {
+        _seg.base = (char*)base;
+        _seg.size = size; 
+        _seg.next = NULL;
         INIT_TOP(base, size);
-        printf("init top:%p, size:%lu\n", base, size);
+        printf("init _top:%p, size:%lu\n", base, size);
     } else {
         void *mem = mergeSeg(base, size, nb);
         if (mem)
             return mem;
     }
-    if (nb < topSize) {
-        size_t rsize = topSize -= nb;
-        Chunk *p = top;
-        Chunk *r = top = CHUNK_PLUS_OFFSET(p, nb);
+    if (nb < _topSize) {
+        size_t rsize = _topSize -= nb;
+        Chunk *p = _top;
+        Chunk *r = _top = CHUNK_PLUS_OFFSET(p, nb);
         r->head = rsize | P_BIT;
         SET_SIZE_CP(p, nb);
         return CHUNK2MEM(p);
@@ -279,8 +279,8 @@ void *DlMalloc::sysAlloc(size_t nb) {
 }
 
 DlMalloc::Segment *DlMalloc::getTopSeg() {
-    Segment *sp = &seg;
-    char *addr = (char*)top;
+    Segment *sp = &_seg;
+    char *addr = (char*)_top;
     for (;;) {
         if (addr >= sp->base && addr < sp->base + sp->size)
             return sp;
@@ -290,15 +290,15 @@ DlMalloc::Segment *DlMalloc::getTopSeg() {
 }
 
 void *DlMalloc::mergeSeg(void *base, size_t size, size_t nb) {
-    Segment *sp = &seg;
+    Segment *sp = &_seg;
     char *cbase = (char*)base;
     while (sp && cbase != sp->base + sp->size)
         sp = sp->next;
-    if (sp && SEGMENT_HOLDS(sp, top)) {
+    if (sp && SEGMENT_HOLDS(sp, _top)) {
         sp->size += size;
-        INIT_TOP(top, topSize + size);
+        INIT_TOP(_top, _topSize + size);
     } else {
-        sp = &seg;
+        sp = &_seg;
         while (sp && sp->base != cbase + size)
             sp = sp->next;
         if (sp) {
@@ -321,10 +321,10 @@ void *DlMalloc::prependSeg(void *newBase, void *oldBase, size_t nb) {
     size_t newSize = size - nb;
     SET_SIZE_CP(pUse, nb);
 
-    if (pOld == top) {
-        topSize += newSize;
-        top = pNew;
-        top->head = topSize | P_BIT;
+    if (pOld == _top) {
+        _topSize += newSize;
+        _top = pNew;
+        _top->head = _topSize | P_BIT;
     } else {
         if (!C_INUSE(pOld)) {
             size_t nsize = CHUNK_SIZE(pOld);
@@ -341,17 +341,17 @@ void *DlMalloc::prependSeg(void *newBase, void *oldBase, size_t nb) {
 
 void DlMalloc::addSegment(void *base, size_t size) {
     Segment *oldsp = getTopSeg();
-    char *oldtop = (char*)top;
+    char *oldtop = (char*)_top;
     char *oldend = oldsp->base + oldsp->size;
     Chunk *cp = (Chunk*)oldend;
     Segment *newsp = (Segment*)CHUNK2MEM(cp);
 
     INIT_TOP(base, size);
     SET_SIZE_CP(cp, PAD_REQUEST(sizeof(Segment)));
-    *newsp = seg;
-    seg.base = (char*)base;
-    seg.size = size;
-    seg.next = newsp;
+    *newsp = _seg;
+    _seg.base = (char*)base;
+    _seg.size = size;
+    _seg.next = newsp;
 
     if (oldend - MIN_CHUNK_SIZE > oldtop) {
         Chunk *p = (Chunk*)oldtop;
@@ -379,9 +379,9 @@ void DlMalloc::free(void *addr) {
     }
 
     if (!C_INUSE(next)) {
-        if (next == top) {
-            size_t tsize = topSize += psize;
-            top = p;
+        if (next == _top) {
+            size_t tsize = _topSize += psize;
+            _top = p;
             p->head = tsize | P_BIT;
             return;
         } else {
@@ -400,19 +400,19 @@ void DlMalloc::free(void *addr) {
 char *DlMalloc::dump() {
     char *buf = new char[4096];
     int pos = 0;
-    int bits = sizeof(freeMap) * __CHAR_BIT__;
-    pos += sprintf(buf + pos, "%s", "freeMap:");
+    int bits = sizeof(_freeMap) * __CHAR_BIT__;
+    pos += sprintf(buf + pos, "%s", "_freeMap:");
     for (int i = 0; i < bits; ++i) {
-        int b = (freeMap >> (bits - 1 - i)) & 1;
+        int b = (_freeMap >> (bits - 1 - i)) & 1;
         pos += sprintf(buf + pos, "%d", b);
     }
     pos += sprintf(buf + pos, "%s", "\n");
-    if (top) {
-        pos += sprintf(buf + pos, "top:%p, size:%u, head:%lu, C:%u, P:%u, prev:%p, next:%p\n", 
-                top, topSize, top->head, C_INUSE(top) ? 1:0, P_INUSE(top) ? 1:0, top->prev, top->next);
+    if (_top) {
+        pos += sprintf(buf + pos, "_top:%p, size:%u, head:%lu, C:%u, P:%u, prev:%p, next:%p\n", 
+                _top, _topSize, _top->head, C_INUSE(_top) ? 1:0, P_INUSE(_top) ? 1:0, _top->prev, _top->next);
     }
-    pos += sprintf(buf + pos, "segment base:%p, size:%lu, next:%p\n", seg.base, seg.size, seg.next);
-    Segment *s = seg.next;
+    pos += sprintf(buf + pos, "segment base:%p, size:%lu, next:%p\n", _seg.base, _seg.size, _seg.next);
+    Segment *s = _seg.next;
     while (s) {
         pos += sprintf(buf + pos, "segment base:%p, size:%lu, next:%p\n", s->base, s->size, s->next);
         s = s->next;
@@ -423,9 +423,9 @@ char *DlMalloc::dump() {
 
 void DlMalloc::dumpChunk(char *buf) {
     int pos = 0;
-    for (int i = 0; i < MAX_FREE_LIST; ++i) {
+    for (int i = 0; i < MAX_FREE_NUM; ++i) {
         pos += sprintf(buf + pos, "free list[%d]:", i);
-        pos += dumpChunk(buf + pos, freeList[i]);
+        pos += dumpChunk(buf + pos, _free[i]);
         buf[pos++] = '\n';
     }
 }

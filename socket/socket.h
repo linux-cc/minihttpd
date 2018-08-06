@@ -1,5 +1,5 @@
-#ifndef __NETWORK_SOCKET_H__
-#define __NETWORK_SOCKET_H__
+#ifndef __SOCKET_SOCKET_H__
+#define __SOCKET_SOCKET_H__
 
 #include "socket/addrinfo.h"
 #include <errno.h>
@@ -41,7 +41,7 @@ public:
     }
 
 protected:
-    Socket(): _socket(-1) {}
+    explicit Socket(int socket): _socket(socket) {}
     virtual ~Socket() {}
     bool socket(int family, int socktype, int protocol);
     bool create(const char *host, const char *service, int family, int socktype, int protocol);

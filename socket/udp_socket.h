@@ -1,5 +1,5 @@
-#ifndef __NETWORK_UDP_SOCKET_H__
-#define __NETWORK_UDP_SOCKET_H__
+#ifndef __SOCKET_UDP_SOCKET_H__
+#define __SOCKET_UDP_SOCKET_H__
 
 #include "socket/socket.h"
 
@@ -7,6 +7,7 @@ BEGIN_NS(socket)
 
 class UdpSocket : public Socket {
 public:
+    explicit UdpSocket(int socket = -1): Socket(socket) {}
     bool create(const char *host, const char *service, int family = PF_UNSPEC) {
         return Socket::create(host, service, family, SOCK_DGRAM, 0);
     }

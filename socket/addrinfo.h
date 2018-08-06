@@ -1,5 +1,5 @@
-#ifndef __NETWORK_ADDRINFO_H__
-#define __NETWORK_ADDRINFO_H__
+#ifndef __SOCKET_ADDRINFO_H__
+#define __SOCKET_ADDRINFO_H__
 
 #include "config.h"
 #include <sys/un.h>

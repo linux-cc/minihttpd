@@ -1,5 +1,5 @@
-#ifndef __HTTPD_EPOLL_H__
-#define __HTTPD_EPOLL_H__
+#ifndef __SOCKET_EPOLL_H__
+#define __SOCKET_EPOLL_H__
 
 #include "config.h"
 #include <unistd.h>

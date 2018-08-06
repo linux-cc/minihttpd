@@ -1,15 +1,15 @@
 #include "memory/slab_malloc.h"
 #include <stdio.h>
 
-#define SLAB_MAX_SIZE       (MAX_FREE_LIST << ALIGN8_SHIFT)
+#define SLAB_MAX_SIZE       (MAX_FREE_NUM << ALIGN8_SHIFT)
 #define SLAB_FREE_IDX(n)    (((n) >> ALIGN8_SHIFT) - 1)
 
 BEGIN_NS(memory)
 
-SlabMalloc::SlabMalloc(Buddy *_buddy):
-buddy(_buddy) {
-    for (int i = 0; i < MAX_FREE_LIST; ++i) {
-        freeList[i] = NULL;
+SlabMalloc::SlabMalloc(Buddy &buddy):
+_buddy(buddy) {
+    for (int i = 0; i < MAX_FREE_NUM; ++i) {
+        _free[i] = NULL;
     }
 }
 
@@ -19,19 +19,19 @@ void *SlabMalloc::alloc(size_t size) {
         return NULL;
     }
     size_t idx = SLAB_FREE_IDX(size);
-    if (!freeList[idx] || !freeList[idx]->free) {
-        void *page = buddy->alloc(1);
+    if (!_free[idx] || !_free[idx]->free) {
+        void *page = _buddy.alloc(1);
         if (!page) {
             return NULL;
         }
         initPage(idx, page);
     }
-    Info *slab = freeList[idx];
+    Info *slab = _free[idx];
     Chunk *chunk = slab->free;
     slab->free = chunk->next;
     ++slab->allocated;
     if (!slab->free) {
-        freeList[idx] = slab->next;
+        _free[idx] = slab->next;
     }
 
     return chunk;
@@ -53,7 +53,7 @@ void SlabMalloc::initPage(size_t idx, void *page) {
 }
 
 void SlabMalloc::linkSlab(size_t idx, Info *slab) {
-    Info *header = freeList[idx];
+    Info *header = _free[idx];
     if (!header) {
         slab->next = slab;
         slab->prev = slab;
@@ -63,7 +63,7 @@ void SlabMalloc::linkSlab(size_t idx, Info *slab) {
         slab->next = header;
         slab->next->prev = slab;
     }
-    freeList[idx] = slab;
+    _free[idx] = slab;
 }
 
 void SlabMalloc::free(void *addr) {
@@ -79,13 +79,13 @@ void SlabMalloc::free(void *addr) {
         prev->next = next;
         next->prev = prev;
         size_t idx = SLAB_FREE_IDX(slab->chunkSize);
-        if (freeList[idx] == slab) {
-            freeList[idx] = next == slab ? NULL : next;
+        if (_free[idx] == slab) {
+            _free[idx] = next == slab ? NULL : next;
         }
         if (wasEmpty) {
             linkSlab(idx, slab);
         } else {
-            buddy->free(slab);
+            _buddy.free(slab);
         }
     }
 }
@@ -93,8 +93,8 @@ void SlabMalloc::free(void *addr) {
 char *SlabMalloc::dump() {
     char *buf = new char[4096];
     int pos = 0;
-    for (int i = 0; i < MAX_FREE_LIST; ++i) {
-        Info *slab = freeList[i];
+    for (int i = 0; i < MAX_FREE_NUM; ++i) {
+        Info *slab = _free[i];
         if (slab) {
             int chunksize = (i + 1) * ALIGN8_SIZE;
             pos += sprintf(buf + pos, "[%d][%p]free: %p\n", chunksize, slab, slab->free);
