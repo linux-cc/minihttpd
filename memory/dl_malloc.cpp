@@ -67,13 +67,13 @@ _topSize(0)
 
 void *DlMalloc::alloc(size_t size) {
     size_t nb = PAD_REQUEST(size);
-    printf("requst size:%u, aligin:%u\n", size, nb);
+    //printf("requst size:%u, aligin:%u\n", size, nb);
     if (_freeMap) {
         size_t rsize = -nb;
         uint32_t idx = computeFreeIndex(nb);
-        printf("chunk index:%u\n", idx);
+        //printf("chunk index:%u\n", idx);
         Chunk *v = getFitChunk(nb, idx, rsize);
-        printf("getFitChunk:%p\n", v);
+        //printf("getFitChunk:%p\n", v);
         if (v) {
             unlinkChunk(v);
             if (rsize < MIN_CHUNK_SIZE) {
@@ -108,21 +108,21 @@ size_t DlMalloc::computeFreeIndex(size_t nb) {
 
 DlMalloc::Chunk *DlMalloc::getFitChunk(size_t nb, size_t idx, size_t &rsize) {
     Chunk *v = NULL, *t = _free[idx];
-    printf("chunk:%p\n", t);
+    //printf("chunk:%p\n", t);
     if (t) {
         size_t sizebits = nb << LSH_FOR_TREE_IDX(idx);
-        printf("sizebits:%u\n", sizebits);
+        //printf("sizebits:%u\n", sizebits);
         Chunk *rst = NULL;
         for (;;) {
             size_t trem = CHUNK_SIZE(t) - nb;
-            printf("trem:%u\n", trem);
+            //printf("trem:%u\n", trem);
             if (trem < rsize) {
                 v = t;
                 if ((rsize = trem) == 0)
                     break;
             }
             Chunk *rt = t->child[1];
-            printf("child:%u\n", (sizebits >> (SIZE_T_BITSIZE-SIZE_T_ONE)) & 1);
+            //printf("child:%u\n", (sizebits >> (SIZE_T_BITSIZE-SIZE_T_ONE)) & 1);
             t = t->child[(sizebits >> (SIZE_T_BITSIZE-SIZE_T_ONE)) & 1];
             if (rt && rt != t)
                 rst = rt;
@@ -135,24 +135,24 @@ DlMalloc::Chunk *DlMalloc::getFitChunk(size_t nb, size_t idx, size_t &rsize) {
     }
     if (!t && !v) {
         uint32_t leftbits = LEFT_BITS(IDX2BIT(idx)) & _freeMap;
-        printf("leftbits:%x, %u\n", LEFT_BITS(IDX2BIT(idx)), leftbits);
+        //printf("leftbits:%x, %u\n", LEFT_BITS(IDX2BIT(idx)), leftbits);
         if (leftbits) {
             uint32_t leastbit = LEAST_BIT(leftbits);
             uint32_t i = COMPUTE_BIT2IDX(leastbit);
             t = _free[i];
-            printf("leastbit:%u, index:%u, chunk:%p\n", leastbit, i, t);
+            //printf("leastbit:%u, index:%u, chunk:%p\n", leastbit, i, t);
         }
     }
     while (t) {
         size_t trem = CHUNK_SIZE(t) - nb;
-        printf("chunk:%p, trem:%u\n", t, trem);
+        //printf("chunk:%p, trem:%u\n", t, trem);
         if (trem < rsize) {
             rsize = trem;
             v = t;
         }
-        printf("child[%u]:", t->child[0] ? 0:1);
+        //printf("child[%u]:", t->child[0] ? 0:1);
         t = LEFTMOST_CHILD(t);
-        printf("%p\n", t);
+        //printf("%p\n", t);
     }
     return v;
 }
@@ -160,7 +160,7 @@ DlMalloc::Chunk *DlMalloc::getFitChunk(size_t nb, size_t idx, size_t &rsize) {
 void DlMalloc::unlinkChunk(Chunk *chunk) {
     Chunk *cp = chunk->parent;
     Chunk *hold;
-    printf("unlink chunk:%p, next:%p, parent:%p\n", chunk, chunk->next, cp);
+    //printf("unlink chunk:%p, next:%p, parent:%p\n", chunk, chunk->next, cp);
     if (chunk->next != chunk) {
         Chunk *next = chunk->next;
         hold = chunk->prev;
@@ -170,11 +170,11 @@ void DlMalloc::unlinkChunk(Chunk *chunk) {
         }
     } else {
         Chunk **rmcp = &RIGHTMOST_CHILD(chunk);
-        printf("right most child:%p,%p\n", rmcp, *rmcp);
+        //printf("right most child:%p,%p\n", rmcp, *rmcp);
         if ((hold = *rmcp)) {
             Chunk **rmcr;
             while (*(rmcr = &RIGHTMOST_CHILD(hold))) {
-                printf("%p right most child:%p,%p\n", hold, rmcr, *rmcr);
+                //printf("%p right most child:%p,%p\n", hold, rmcr, *rmcr);
                 hold = *(rmcp = rmcr);
             }
             *rmcp = NULL;
@@ -182,15 +182,15 @@ void DlMalloc::unlinkChunk(Chunk *chunk) {
     }
     if (cp) {
         Chunk **head = &_free[chunk->index];
-        printf("chunk head:%p, index:%u, hold:%p\n", *head, chunk->index, hold);
+        //printf("chunk head:%p, index:%u, hold:%p\n", *head, chunk->index, hold);
         if (chunk == *head) {
-            printf("chunk == *head\n");
+            //printf("chunk == *head\n");
             if (!(*head = hold)) {
-                printf("clean map index:%u\n", chunk->index);
+                //printf("clean map index:%u\n", chunk->index);
                 CLEAR_FREEMAP(chunk->index);
             } 
         } else {
-            printf("chunk != *head\n");
+            //printf("chunk != *head\n");
             int child = cp->child[0] == chunk ? 0 : 1;
             cp->child[child] = hold;
         }
@@ -251,7 +251,7 @@ void *DlMalloc::sysAlloc(size_t nb) {
     void *base;
     if (!sp) {
         base = _buddy.alloc(SEGMENT_PAGES);
-        printf("buddy allloc:%p\n", base);
+        ////printf("buddy allloc:%p\n", base);
         if (!base)
             return NULL;
     }
@@ -261,7 +261,7 @@ void *DlMalloc::sysAlloc(size_t nb) {
         _seg.size = size; 
         _seg.next = NULL;
         INIT_TOP(base, size);
-        printf("init _top:%p, size:%u\n", base, size);
+        //printf("init _top:%p, size:%u\n", base, size);
     } else {
         void *mem = mergeSeg(base, size, nb);
         if (mem)
@@ -368,11 +368,11 @@ void DlMalloc::free(void *addr) {
     Chunk *p = MEM2CHUNK(addr);
     size_t psize = CHUNK_SIZE(p);
     Chunk *next = CHUNK_PLUS_OFFSET(p, psize);
-    printf("free chunk:%p, size:%u\n", p, psize);
+    //printf("free chunk:%p, size:%u\n", p, psize);
     if (!P_INUSE(p)) {
         size_t prevsize = p->prev_foot;
         Chunk *prev = CHUNK_MINUS_OFFSET(p, prevsize);
-        printf("merge prev chunk:%p, size:%u\n", prev, prevsize);
+        //printf("merge prev chunk:%p, size:%u\n", prev, prevsize);
         psize += prevsize;
         p = prev;
         unlinkChunk(p);
@@ -401,20 +401,20 @@ char *DlMalloc::dump() {
     char *buf = new char[4096];
     int pos = 0;
     int bits = sizeof(_freeMap) * __CHAR_BIT__;
-    pos += sprintf(buf + pos, "%s", "_freeMap:");
+    //pos += sprintf(buf + pos, "%s", "_freeMap:");
     for (int i = 0; i < bits; ++i) {
-        int b = (_freeMap >> (bits - 1 - i)) & 1;
-        pos += sprintf(buf + pos, "%d", b);
+        //int b = (_freeMap >> (bits - 1 - i)) & 1;
+        //pos += sprintf(buf + pos, "%d", b);
     }
-    pos += sprintf(buf + pos, "%s", "\n");
+    //pos += sprintf(buf + pos, "%s", "\n");
     if (_top) {
-        pos += sprintf(buf + pos, "_top:%p, size:%u, head:%u, C:%u, P:%u, prev:%p, next:%p\n", 
-                _top, _topSize, _top->head, C_INUSE(_top) ? 1:0, P_INUSE(_top) ? 1:0, _top->prev, _top->next);
+        //pos += sprintf(buf + pos, "_top:%p, size:%u, head:%u, C:%u, P:%u, prev:%p, next:%p\n", 
+        //        _top, _topSize, _top->head, C_INUSE(_top) ? 1:0, P_INUSE(_top) ? 1:0, _top->prev, _top->next);
     }
-    pos += sprintf(buf + pos, "segment base:%p, size:%u, next:%p\n", _seg.base, _seg.size, _seg.next);
+    //pos += sprintf(buf + pos, "segment base:%p, size:%u, next:%p\n", _seg.base, _seg.size, _seg.next);
     Segment *s = _seg.next;
     while (s) {
-        pos += sprintf(buf + pos, "segment base:%p, size:%u, next:%p\n", s->base, s->size, s->next);
+        //pos += sprintf(buf + pos, "segment base:%p, size:%u, next:%p\n", s->base, s->size, s->next);
         s = s->next;
     }
     dumpChunk(buf + pos);

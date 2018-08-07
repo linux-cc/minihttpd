@@ -22,52 +22,80 @@ bool Connection::init(int bufSize) {
 }
 
 int Connection::recv(void *buf, int size) {
-    if (_recvIndex >= size) {
-        return copy(buf, size);
+    int _size = MIN(_recvBufSize, size);
+    if (_recvIndex < _size) {
+        int len = TcpSocket(_socket).recv(_recvBuf + _recvIndex, _recvBufSize - _recvIndex);
+        if (len <= 0) {
+            return len;
+        }
+        _recvIndex += len;
     }
-    int len = TcpSocket(_socket).recv(_recvBuf + _recvIndex, _recvBufSize - _recvIndex);
-    if (len <= 0) {
-        return len;
+    _size = MIN(_recvIndex, size);
+    memcpy(buf, _recvBuf, _size);
+    _recvIndex -= _size;
+    if (_recvIndex) {
+        memmove(_recvBuf, _recvBuf + _size, _recvIndex);
     }
-    _recvIndex += len;
+    
+    return _size;
+}
 
-    return copy(buf, MIN(_recvIndex, size));
+int Connection::recvline(void *buf, int size) {
+    if (_recvIndex < size) {
+        int len = TcpSocket(_socket).recv(_recvBuf + _recvIndex, _recvBufSize - _recvIndex);
+        if (len <= 0) {
+            return len;
+        }
+        _recvIndex += len;
+    }
+    int i = 0, _size = MIN(_recvIndex, size) - 1;
+    char *p = (char*)buf;
+    for (; i < _size; ++i) {
+        if ((p[i] = _recvBuf[i]) == '\n') {
+            ++i;
+            break;
+        }
+    }
+    p[i] = '\0';
+    _recvIndex -= i;
+    memmove(_recvBuf, _recvBuf + i, _recvIndex);
+    
+    return i;
 }
 
 int Connection::send(const void *buf, int size) {
-    if (_sendIndex) {
-        return copy(buf, size);
-    }
-    int len = TcpSocket(_socket).send(buf, size);
-    if (len <= 0) {
-        if (errno == EINTR || errno == EAGAIN) {
-            return copy(buf, size);
+    if (!_sendIndex) {
+        int len = TcpSocket(_socket).send(buf, size);
+        if (len == size) {
+            return len;
         }
-        return -1;
-    }
-    if (len < size) {
-        copy((const char*)buf + len, size - len);
-        return len;
+        if (len <= 0) {
+            if (errno == EINTR || errno == EAGAIN) {
+                return copy(buf, size);
+            }
+            return len;
+        }
+        return copy((char*)buf + len, size - len);
     }
 
-    return size;
+    return copy(buf, size);
 }
 
-int Connection::doPollout() {
-    if (!_sendIndex) {
-        return 0;
+bool Connection::doPollOut() {
+    if (_sendIndex) {
+        int len = TcpSocket(_socket).send(_sendBuf, _sendIndex);
+        if (len <= 0) {
+            return errno == EINTR && errno == EAGAIN;
+        }
+        if (len < _sendIndex) {
+            memmove(_sendBuf, _sendBuf + len, _sendIndex - len);
+        } else if (_observer) {
+            _observer->notifyPollOutFinish(this);
+        }
+        _sendIndex -= len;
     }
-    int len = TcpSocket(_socket).send(_sendBuf, _sendIndex);
-    if (len <= 0 && errno != EINTR && errno != EAGAIN) {
-        return len;
-    }
-    if (len < _sendIndex) {
-        int left = _sendIndex - len;
-        memmove(_sendBuf, _sendBuf + len, left);
-    }
-    _sendIndex -= len;
 
-    return _sendIndex;
+    return true;
 }
 
 void Connection::release() {
@@ -83,25 +111,17 @@ void Connection::release() {
     _sendBuf = NULL;
 }
 
-int Connection::copy(void *buf, int size) {
-    memcpy(buf, _recvBuf, size);
-    _recvIndex -= size;
-    if (_recvIndex) {
-        memmove(_recvBuf, _recvBuf + size, _recvIndex);
-    }
-
-    return size;
-}
-
 int Connection::copy(const void *buf, int size) {
-    if (_sendIndex + size > _sendBudSize) {
-        errno = ENOMEM;
-        return -1;
+    int _size = MIN(_sendBudSize - _sendIndex, size);
+    if (_size) {
+        memcpy(_sendBuf + _sendIndex, buf, _size);
+        _sendIndex += _size;
     }
-    memcpy(_sendBuf + _sendIndex, buf, size);
-    _sendIndex += size;
+    if (_observer) {
+        _observer->notifyPollOut(this);
+    }
 
-    return size;
+    return _size;
 }
 
 END_NS

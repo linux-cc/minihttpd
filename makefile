@@ -5,11 +5,11 @@ LIBDIR	= lib
 OBJDIR	= obj
 TMPDIR  = $(BINDIR) $(LIBDIR) $(OBJDIR)
 
-CXX		= gcc
+CXX		= g++
 CCFLAG	= -g -Wall -D_DEBUG_ -fPIC
 SOFLAG	= -shared -o
 INCFLAG	= -I./ $(shell mysql_config --cflags)
-SOLIBS  = -lstdc++ $(shell mysql_config --libs)
+SOLIBS  = $(shell mysql_config --libs)
 APPLIBS = -L$(LIBDIR) -l$(LIBNAME) $(SOLIBS) -lpthread
 
 TEST	= $(foreach d,$(shell ls test),test/$(d))
