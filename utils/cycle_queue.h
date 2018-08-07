@@ -1,14 +1,15 @@
-#ifndef __HTTPD_CYCLE_QUEUE_H__
-#define __HTTPD_CYCLE_QUEUE_H__
+#ifndef __UTILS_CYCLE_QUEUE_H__
+#define __UTILS_CYCLE_QUEUE_H__
 
 #include "config.h"
 
 BEGIN_NS(memory)
 class FixedMalloc;
 END_NS
-USING_CLASS(memory, FixedMalloc);
 
-BEGIN_NS(httpd)
+BEGIN_NS(utils)
+
+USING_CLASS(memory, FixedMalloc);
 
 class CycleQueue {
 public:
@@ -61,4 +62,4 @@ private:
 };
 
 END_NS
-#endif /* ifndef __HTTPD_CYCLE_QUEUE_H__ */
+#endif /* ifndef __UTILS_CYCLE_QUEUE_H__ */

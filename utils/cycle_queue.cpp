@@ -1,7 +1,7 @@
-#include "httpd/cycle_queue.h"
+#include "utils/cycle_queue.h"
 #include "memory/fixed_malloc.h"
 
-BEGIN_NS(httpd)
+BEGIN_NS(utils)
 
 bool CycleQueue::enQueue(const void *buf, int size) {
     if (!full() && _alloc.canAlloc(size)) {

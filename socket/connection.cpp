@@ -87,6 +87,9 @@ bool Connection::doPollOut() {
         }
         if (len < _sendIndex) {
             memmove(_sendBuf, _sendBuf + len, _sendIndex - len);
+            if (_observer) {
+                _observer->notifyPollOut(this);
+            }
         } else if (_observer) {
             _observer->notifyPollOutFinish(this);
         }
