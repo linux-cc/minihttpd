@@ -19,7 +19,7 @@ public:
 class Connection {
 public:
     explicit Connection(int socket = -1);
-    bool init(int bufSize = 8192);
+    void init(int bufSize = 8192);
     int recv(void *buf, int size);
     int recvline(void *buf, int size);
     int send(const void *buf, int size); 
@@ -56,7 +56,4 @@ private:
 };
 
 END_NS
-#endif /* ifndef __SOCKET_CONNECT_H
-
-
- */
+#endif /* ifndef __SOCKET_CONNECT_H */

@@ -52,4 +52,4 @@ inline uint32_t __buildin_clz(uint32_t x) {
 }
 
 END_NS
-#endif
+#endif /* ifndef __MEMORY_BUDDY_H__ */

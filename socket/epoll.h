@@ -32,9 +32,10 @@ public:
     }
     int events() const;
     int fd() const;
+    void *data() const;
 
 private:
-    void init(int fd, int events);
+    void init(int fd, int events, void *data);
 
     epoll_event _event;
     friend class EPoller;
@@ -46,13 +47,13 @@ public:
     ~EPoller();
 
     bool create(int size);
-    int add(int fd);
-    int mod(int fd);
+    int add(int fd, void *data = NULL);
+    int mod(int fd, void *data = NULL);
     int del(int fd);
     EPollResult wait(int timeout);
 
 private:
-    int ctl(int fd, int action, int events);
+    int ctl(int fd, int action, int events, void *data);
 
     int _fd;
     int _size;
@@ -117,4 +118,4 @@ private:
 };
 
 END_NS
-#endif /* __HTTPD_EPOLL_H__ */
+#endif /* ifndef __SOCKET_EPOLL_H__ */

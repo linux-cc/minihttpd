@@ -51,5 +51,4 @@ private:
 };
 
 END_NS
-
-#endif
+#endif /* ifndef __MEMORY_DL_MALLOC_H__ */

@@ -27,4 +27,4 @@ public:
 
 END_NS
 
-#endif /* __NETWORK_TCP_SOCKET_H__ */
+#endif /* ifndef __SOCKET_TCP_SOCKET_H__ */

@@ -115,4 +115,4 @@ private:
 };
 
 END_NS
-#endif /* __THREAD_THREAD_H__ */
+#endif /* ifndef __THREAD_THREAD_H__ */

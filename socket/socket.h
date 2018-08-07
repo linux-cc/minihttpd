@@ -51,4 +51,4 @@ protected:
 };
 
 END_NS
-#endif /* ifndef __NETWORK_SOCKET_H__ */
+#endif /* ifndef __SOCKET_SOCKET_H__ */

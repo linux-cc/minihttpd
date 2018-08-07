@@ -33,5 +33,4 @@ private:
 };
 
 END_NS
-
-#endif
+#endif /* ifndef __MEMORY_SLAB_MALLOC_H__ */

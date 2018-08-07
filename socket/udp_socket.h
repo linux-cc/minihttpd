@@ -20,4 +20,4 @@ public:
 };
 
 END_NS
-#endif
+#endif /* ifndef __SOCKET_UDP_SOCKET_H__ */

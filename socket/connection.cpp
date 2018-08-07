@@ -13,12 +13,10 @@ _recvBuf(NULL),
 _sendBuf(NULL) {
 }
 
-bool Connection::init(int bufSize) {
+void Connection::init(int bufSize) {
     _recvBufSize = _sendBudSize = bufSize;
     _recvBuf = new char[_recvBufSize];
     _sendBuf = new char[_sendBudSize];
-    
-    return _recvBuf && _sendBuf;
 }
 
 int Connection::recv(void *buf, int size) {
