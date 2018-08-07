@@ -11,10 +11,10 @@ class FixedMalloc {
 public:
     FixedMalloc(Buddy &buddy);
 
-	void *alloc(size_t size);
-	void *alloc() { return alloc(_elem); }
-	void free(void *addr);
-	bool init(size_t size, size_t elem);
+    void *alloc(size_t size);
+    void *alloc() { return alloc(_elem); }
+    void free(void *addr);
+    bool init(size_t size, size_t elem);
     void destroy();
 
 private:

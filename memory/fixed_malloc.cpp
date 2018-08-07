@@ -13,24 +13,24 @@ _buffer(NULL) {
 }
 
 void *FixedMalloc::alloc(size_t size) {
-	if(size > _elem || _used >= _size) {
+    if(size > _elem || _used >= _size) {
         return NULL;
-	}
+    }
 
-	char *addr = _buffer + _free * _elem;
-	_free = *(uint16_t*)addr;
-	++_used;
-	
+    char *addr = _buffer + _free * _elem;
+    _free = *(uint16_t*)addr;
+    ++_used;
+
     return addr;
 }
 
 void FixedMalloc::free(void *addr) {
-	char *p = (char *)addr;
-	if(p >= _buffer && p <= _buffer + _size * _elem) {
+    char *p = (char *)addr;
+    if(p >= _buffer && p <= _buffer + _size * _elem) {
         *(uint16_t*)p = _free;
         _free = (p - _buffer) / _elem;
         --_used;
-	}
+    }
 }
 
 bool FixedMalloc::init(size_t size, size_t elem) {
@@ -39,25 +39,25 @@ bool FixedMalloc::init(size_t size, size_t elem) {
     if (total % PAGE_SIZE) {
         ++pages;
     }
-	_buffer = (char*)_buddy.alloc(pages);
+    _buffer = (char*)_buddy.alloc(pages);
     if(!_buffer) {
-	    return false;
+        return false;
     }
     _elem = elem;
-	_size = pages * PAGE_SIZE / _elem;
+    _size = pages * PAGE_SIZE / _elem;
 
-	char *p = _buffer;
-	for(size_t i = 1; i < _size ; ++i) {
+    char *p = _buffer;
+    for(size_t i = 1; i < _size ; ++i) {
         *(uint16_t*)p = i;
         p += _elem;
-	}
+    }
 
-	return true;
+    return true;
 }
 
 void FixedMalloc::destroy() {
-	_buddy.free(_buffer);
-	_buffer = NULL;
+    _buddy.free(_buffer);
+    _buffer = NULL;
     _elem = 0;
     _size = 0;
     _free = 0;
