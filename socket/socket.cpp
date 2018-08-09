@@ -2,6 +2,7 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
 BEGIN_NS(socket)
 
@@ -83,9 +84,58 @@ int Socket::setNonblock() {
 
 void Socket::close() {
 	if(_socket != -1) {
-		::close(_socket);
-		_socket = -1;
+        ::close(_socket);
+        _socket = -1;
 	}
+}
+
+static int wait(int socket, int ms);
+bool TcpSocket::connect(const char *host, const char *service, int ms, int family) {
+	int oldFlags = setNonblock();
+	if(!connect(host, service, family)) {
+        if((errno != EINPROGRESS && errno != EWOULDBLOCK) || wait(_socket, ms) <= 0) {
+            return false;
+        }
+	    int error = 0;
+        if(getOpt(SO_ERROR, &error) < 0 || error) {
+            return false;
+        }
+	}
+	fcntl(_socket, F_SETFL, oldFlags);
+
+	return true;
+}
+
+int wait(int socket, int ms) {
+    fd_set rfds;
+    struct timeval tv;
+
+    tv.tv_sec = ms/1000;
+    tv.tv_usec = (ms % 1000) * 1000;
+    FD_ZERO(&rfds);
+    FD_SET(socket, &rfds);
+
+    int result = select(socket + 1, &rfds, NULL, NULL, &tv);
+
+    if (FD_ISSET(socket, &rfds))
+        return result;
+
+    return 0;
+}
+
+int UdpSocket::sendto(const char *host, const char *service, const void *buf, size_t size, int family, int flags) {
+    Addrinfo ai(family, SOCK_DGRAM, 0);
+    if (ai.getaddrinfo(host, service)) {
+        return -1;
+    }
+    for (Addrinfo::Iterator it = ai.begin(); it != ai.end(); ++it) {
+        if (!socket(it->ai_family, it->ai_socktype, it->ai_protocol)) {
+            continue;
+        }
+        return Socket::sendto(buf, size, Sockaddr(it->ai_addr, it->ai_addrlen), flags);
+    }
+
+    return -1;
 }
 
 END_NS

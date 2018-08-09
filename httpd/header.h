@@ -24,23 +24,23 @@ public:
         Warning,
     };
 
-    Header() {}
-    Header(const string &field, const string &value): _field(field), _value(value) {}
-    Header(Field field, const string &value): _value(value) {
-        _field = _fields[field];
+    Header() {
+        init();
     }
+    Header(const string &line);
+    Header(const string &field, const string &value);
+    Header(Field field, const string &value);
     virtual ~Header() {}
-    void set(const string &field, const string &value) {
-        _field = field, _value = value;
-    }
-    void set(Field field, const string &value) {
-        _field = _fields[field], _value = value;
-    }
+    void set(const string &field, const string &value);
+    void set(Field field, const string &value);
     const string &field() const {
         return _field;
     }
     const string &value() const {
         return _value;
+    }
+    bool empty() const {
+        return _field.empty() && _value.empty();
     }
     static void init();
 protected:
@@ -48,23 +48,6 @@ protected:
     string _value;
     static map<int, string> _fields;
 };
-
-void Header::init() {
-#define INIT_FIELD(field)       _fields[field] = #field
-    if (!_fields.empty()) {
-        return;
-    }
-    _fields[Cache_Control] = "Cache-Control";
-    _fields[Transfer_Encoding] = "Transfer-Encoding",
-        INIT_FIELD(Connection);
-    INIT_FIELD(Date);
-    INIT_FIELD(Pragma);
-    INIT_FIELD(Trailer);
-    INIT_FIELD(Upgrade);
-    INIT_FIELD(Via);
-    INIT_FIELD(Warning);
-#undef INIT_FIELD
-}
 
 END_NS
 #endif /* ifndef __HTTPD_HEADER_H__ */

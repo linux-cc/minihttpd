@@ -1,5 +1,6 @@
-#include "socket/tcp_socket.h"
+#include "socket/socket.h"
 #include <vector>
+#include <errno.h>
 
 using std::vector;
 USING_NS(socket);
@@ -16,7 +17,7 @@ int main(int argc, char *argv[]) {
             (ip == '2' ? PF_INET6 : PF_LOCAL));
     TcpSocket client;
     if (!client.connect("localhost", argv[1], family)) {
-        printf("client connect error: %d:%s\n", client.errcode(), client.errinfo());
+        printf("client connect error: %d:%s\n", errno, strerror(errno));
         return -1;
     }
     char data[1024];

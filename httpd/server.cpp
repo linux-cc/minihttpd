@@ -1,5 +1,7 @@
 #include "httpd/server.h"
+#include "httpd/request.h"
 #include "socket/addrinfo.h"
+#include <errno.h>
 
 BEGIN_NS(httpd)
 
@@ -37,10 +39,8 @@ bool Worker::onInit() {
     int i = 1;
     for (; i < _maxClients; ++i) {
         _nodes[i - 1].next = &_nodes[i];
-        _nodes[i - 1].conn.init();
     }
     _nodes[i - 1].next = NULL;
-    _nodes[i - 1].conn.init();
 
     return true;
 }
@@ -78,13 +78,13 @@ void Worker::run() {
     while (!_quit) {
         enableAccept();
         EPollResult result = _poller.wait(100);
+        disableAccept();
         for (EPollResult::Iterator it = result.begin(); it != result.end(); ++it) {
-            if (it->fd() == _server && _holdLock) {
+            if (it->fd() == _server) {
                 onAccept();
-                disableAccept();
                 continue;
             }
-            onPollIn(*it);
+            onRequest(*it);
         }
     }
 }
@@ -94,25 +94,24 @@ void Worker::onAccept() {
         if (!_free) {
             break;
         } 
-        TcpSocket client;
-        if (!_server.accept(client)) {
+        int fd = _server.accept();
+        if (fd < 0) {
 #ifdef _DEBUG_
-            if (_server.errcode() != EWOULDBLOCK && _server.errcode() != EAGAIN) {
-                __LOG__("Worker onAccept error: %d:%s\n", _server.errcode(), _server.errinfo());
+            if (errno != EWOULDBLOCK && errno != EAGAIN) {
+                __LOG__("Worker onAccept error: %d:%s\n", errno, strerror(errno));
             }
 #endif
             _poller.mod(_server);
             break;
         }
-        client.setNonblock();
-        Connection *conn = &_free->conn;
-        conn->attach(client);
+        Node *n = _free;
+        n->conn.attach(fd);
         _free = _free->next;
-        _poller.add(client, conn);
+        _poller.add(fd, n);
 #ifdef _DEBUG_
         Sockaddr addr;
-        if (!client.getpeername(addr)) {
-            __LOG__("Worker getpeername error: %d:%s\n", client.errcode(), client.errinfo());
+        if (!TcpSocket(fd).getpeername(addr)) {
+            __LOG__("Worker getpeername error: %d:%s\n", errno, strerror(errno));
         }
         Peername peer(addr);
         __LOG__("server accept: [%s|%d]\n", (const char*)peer, peer.port());
@@ -120,8 +119,36 @@ void Worker::onAccept() {
     }
 }
 
-void Worker::onPollIn(EPollEvent &event) {
+void Worker::onRequest(EPollEvent &event) {
+    Node *n = (Node*)event.data();
+    char buf[1024];
+    int len = n->conn.recvline(buf, sizeof(buf));
+    if (len <= 0) {
+        close(n);
+        return;
+    }
+    Request request;
+    request.parseStatusLine(buf);
+    while (true) {
+        len = n->conn.recvline(buf, sizeof(buf));
+        if (len <= 0) {
+            close(n);
+            break;
+        }
+        Header header(buf);
+        if (header.empty()) {
+            break;
+        }
+    }
+}
 
+void Worker::close(Node *node) {
+#ifdef _DEBUG_
+        __LOG__("Worker onPollIn error:%d:%s, fd:%d\n", errno, strerror(errno), (int)node->conn);
+#endif
+    node->conn.close();
+    node->next = _free;
+    _free = node;
 }
 
 END_NS

@@ -1,7 +1,7 @@
-#include "socket/tcp_socket.h"
+#include "socket/socket.h"
 #include "socket/epoll.h"
 #include <vector>
-#include <unistd.h>
+#include <errno.h>
 
 using std::vector;
 USING_NS(socket);
@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     TcpSocket server;
     EPoller poller;
     if (!server.create("localhost", argv[1], family)) {
-        printf("server create error: %d:%s\n", server.errcode(), server.errinfo());
+        printf("server create error: %d:%s\n", errno, strerror(errno));
         return -1;
     }
     if (!poller.create(1024)) {
@@ -34,27 +34,28 @@ int main(int argc, char *argv[]) {
         EPollResult result = poller.wait(1000);
         for (EPollResult::Iterator it = result.begin(); it != result.end(); ++it) {
             Sockaddr addr;
-            TcpSocket client;
             if (it->fd() == server) {
                 while (1) {
-                    if (!server.accept(client)) {
-                        if (server.errcode() != EWOULDBLOCK && server.errcode() != EAGAIN)
-                            printf("server accept error: %d:%s\n", server.errcode(), server.errinfo());
+                    int fd = server.accept();
+                    if (fd < 0) {
+                        if (errno != EWOULDBLOCK && errno != EAGAIN)
+                            printf("server accept error: %d:%s\n", errno, strerror(errno));
                         poller.mod(server);
                         break;
                     }
+                    TcpSocket client(fd);
                     client.setNonblock();
                     poller.add(client);
                     if (!client.getpeername(addr)) {
-                        printf("server getpeername error: %d:%s\n", client.errcode(), client.errinfo());
+                        printf("server getpeername error: %d:%s\n", errno, strerror(errno));
                     }
                     Peername peer(addr);
                     printf("server accept: [%s|%d]\n", (const char*)peer, peer.port());
                 }
             } else {
-                client.attach(it->fd());
+                TcpSocket client(it->fd());
                 if (!client.getpeername(addr)) {
-                    printf("server getpeername error: %d:%s\n", client.errcode(), client.errinfo());
+                    printf("server getpeername error: %d:%s\n", errno, strerror(errno));
                 }
                 Peername peer(addr);
                 int len = client.recv(buf, 1024);

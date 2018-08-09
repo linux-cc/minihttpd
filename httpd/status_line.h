@@ -11,9 +11,6 @@ USING_CLASS(utils, StringUtils);
 
 class RequestStatusLine {
 public:
-    RequestStatusLine(const string &line = "") {
-        parse(line);
-    }
     void parse(const string &line) {
         string *strs[] = { &_method, &_uri, &_version };
         StringUtils::split(line, ' ', strs, 3);
@@ -27,6 +24,17 @@ public:
     void version(const string &version) {
         _version = version;
     }
+    bool isValid() const {
+        return (_method == "GET" || _method == "POST")
+            && (_version == "HTTP/1.0" || _version == "HTTP/1.1");
+    }
+    bool isGet() const {
+        return _method == "GET";
+    }
+    bool isPost() const {
+        return _method == "POST";
+    }
+
 private:
     string _method;
     string _uri;

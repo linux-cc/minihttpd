@@ -1,5 +1,6 @@
-#include "socket/udp_socket.h"
+#include "socket/socket.h"
 #include <stdio.h>
+#include <errno.h>
 
 USING_NS(socket);
 
@@ -15,7 +16,7 @@ int main(int argc, char *argv[]) {
             (ip == '2' ? PF_INET6 : PF_LOCAL));
     UdpSocket client;
     if (family == PF_LOCAL && !client.create("client", "9000", family)) {
-        printf("client create error: %d:%s\n", client.errcode(), client.errinfo());
+        printf("client create error: %d:%s\n", errno, strerror(errno));
         return -1;
     }
     Sockaddr addr;

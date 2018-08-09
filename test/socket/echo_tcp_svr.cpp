@@ -1,7 +1,7 @@
-#include "socket/tcp_socket.h"
-#include <sys/select.h>
+#include "socket/socket.h"
 #include <vector>
 #include <unistd.h>
+#include <errno.h>
 
 using std::vector;
 USING_NS(socket);
@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
             (ip == '2' ? PF_INET6 : PF_LOCAL));
     TcpSocket server;
     if (!server.create("localhost", argv[1], family)) {
-        printf("server create error: %d:%s\n", server.errcode(), server.errinfo());
+        printf("server connect error: %d:%s\n", errno, strerror(errno));
         return -1;
     }
     printf("listen in port %s\n", argv[1]);
@@ -42,24 +42,25 @@ int main(int argc, char *argv[]) {
             Sockaddr addr;
             TcpSocket &sock = vfds[i];
             if (sock == server) {
-                TcpSocket client;
-                if (!server.accept(client)) {
-                    printf("server accept error: %d:%s\n", server.errcode(), server.errinfo());
+                int fd = server.accept();
+                if (fd < 0) {
+                    printf("server accept error: %d:%s\n", errno, strerror(errno));
                     continue;
                 }
+                TcpSocket client(fd);
                 client.setNonblock();
                 vfds.push_back(client);
                 FD_SET(client, &fds);
                 if (client > maxFd) 
                     maxFd = client;
                 if (!client.getpeername(addr)) {
-                    printf("server getpeername error: %d:%s\n", client.errcode(), client.errinfo());
+                    printf("server getpeername error: %d:%s\n", errno, strerror(errno));
                 }
                 Peername peer(addr);
                 printf("server accept: [%s|%d]\n", (const char*)peer, peer.port());
             } else {
                 if (!sock.getpeername(addr)) {
-                    printf("server getpeername error: %d:%s\n", sock.errcode(), sock.errinfo());
+                    printf("server getpeername error: %d:%s\n", errno, strerror(errno));
                 }
                 Peername peer(addr);
                 int len = sock.recv(buf, 1024);

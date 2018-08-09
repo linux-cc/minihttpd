@@ -1,5 +1,6 @@
-#include "socket/udp_socket.h"
+#include "socket/socket.h"
 #include <stdio.h>
+#include <errno.h>
 
 USING_NS(socket);
 
@@ -15,7 +16,7 @@ int main(int argc, char *argv[]) {
             (ip == '2' ? PF_INET6 : PF_LOCAL));
     UdpSocket server;
     if (!server.create("localhost", argv[1], family)) {
-        printf("server create error: %d:%s\n", server.errcode(), server.errinfo());
+        printf("server create error: %d:%s\n", errno, strerror(errno));
         return -1;
     }
     printf("linsten in port %s\n", argv[1]);
@@ -24,14 +25,14 @@ int main(int argc, char *argv[]) {
         Sockaddr addr;
         int n = server.recvfrom(buf, sizeof(buf), addr);
         if (n <= 0) {
-            printf("recvfrom error: %d:%s\n", server.errcode(), server.errinfo());
+            printf("server recvfrom error: %d:%s\n", errno, strerror(errno));
             continue;
         }
         buf[n] = 0;
         Peername peer(addr);
         printf("receive data[%s|%d]: %s", (const char*)peer, peer.port(), buf);
         if (server.sendto(buf, n, addr) <= 0) {
-            printf("sendto error: %d:%s\n", server.errcode(), server.errinfo());
+            printf("server sendto error: %d:%s\n", errno, strerror(errno));
         }
     }
 

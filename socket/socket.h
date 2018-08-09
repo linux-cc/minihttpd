@@ -2,8 +2,6 @@
 #define __SOCKET_SOCKET_H__
 
 #include "socket/addrinfo.h"
-#include <errno.h>
-#include <stdio.h>
 
 BEGIN_NS(socket)
 
@@ -33,12 +31,6 @@ public:
     operator int() const {
         return _socket;
     }
-    int errcode() const {
-        return errno;
-    }
-    const char *errinfo() const {
-        return strerror(errno);
-    }
 
 protected:
     explicit Socket(int socket): _socket(socket) {}
@@ -48,6 +40,40 @@ protected:
     bool connect(const char *host, const char *service, int family, int socktype, int protocol);
 
     int _socket;
+};
+
+class TcpSocket : public Socket {
+public:
+    explicit TcpSocket(int socket = -1): Socket(socket) {}
+    bool create(const char *host, const char *service, int family = PF_UNSPEC) {
+        return Socket::create(host, service, family, SOCK_STREAM, 0);
+    }
+    bool connect(const char *host, const char *service, int family) {
+        return Socket::connect(host, service, family, SOCK_STREAM, 0);
+    }
+
+    bool connect(const char *host, const char *service, int ms, int family);
+    int accept() {
+	    return ::accept(_socket, NULL, NULL);
+    }
+    bool getpeername(Sockaddr &addr) {
+        return ::getpeername(_socket, addr, &addr.len()) == 0; 
+    }
+
+};
+
+class UdpSocket : public Socket {
+public:
+    explicit UdpSocket(int socket = -1): Socket(socket) {}
+    bool create(const char *host, const char *service, int family = PF_UNSPEC) {
+        return Socket::create(host, service, family, SOCK_DGRAM, 0);
+    }
+    bool connect(const char *host, const char *service, int family = PF_UNSPEC) {
+        return Socket::connect(host, service, family, SOCK_DGRAM, 0);
+    }
+    using Socket::sendto;
+    /* functions used by client */
+    int sendto(const char *host, const char *service, const void *buf, size_t size, int family = PF_UNSPEC, int flags = 0);
 };
 
 END_NS
