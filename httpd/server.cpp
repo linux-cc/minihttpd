@@ -127,6 +127,7 @@ void Worker::onAccept() {
 void Worker::onHandleEvent() {
     while (!_eventQ.empty()) {
         onRequest(*_eventQ.popFront());
+        sleep(1);
     }
 }
 
@@ -200,7 +201,6 @@ void Worker::onResponse(Connection *conn, Request &request) {
 }
 
 void Worker::close(Connection *conn) {
-    __LOG__("close fd:%d, conn:%p\n", (int)*conn, conn);
     _poller.del(*conn);
     conn->close();
     _connsQ.pushBack(conn);

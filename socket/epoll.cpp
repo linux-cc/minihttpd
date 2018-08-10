@@ -1,7 +1,7 @@
 #include "socket/epoll.h"
 #include <unistd.h>
 #include <errno.h>
-#include <pthread.h>
+
 BEGIN_NS(socket)
 
 #ifdef __linux__
@@ -114,11 +114,7 @@ EPollResult EPoller::wait(int timeout) {
 int EPoller::ctl(int fd, int action, int events, void *data) {
     EPollEvent ev;
     ev.init(fd, events, data);
-    int ret = epoll_ctl(_fd, action, fd, ev);
-    if (ret) {
-        __LOG__("ret:%d, errno:%d:%s\n", ret, errno, strerror(errno));
-    }
-    return ret;
+    return epoll_ctl(_fd, action, fd, ev);
 }
 
 EPollResult &EPollResult::operator=(const EPollResult &other) {

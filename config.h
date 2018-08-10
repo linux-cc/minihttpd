@@ -4,10 +4,15 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <pthread.h>
 
 #ifdef _DEBUG_
 #include <stdio.h>
-#define __LOG__(fmt, ...)   printf("[%ld]"fmt, (intptr_t)pthread_self(), ##__VA_ARGS__)
+#ifdef __linux__
+#define __LOG__(fmt, ...)   printf("[%lu]"fmt, pthread_self(), ##__VA_ARGS__)
+#else
+#define __LOG__(fmt, ...)   printf("[%lu]"fmt, (intptr_t)pthread_self(), ##__VA_ARGS__)
+#endif
 #else
 #define __LOG__(...)    
 #endif
@@ -26,7 +31,6 @@
 #define atomic_fetch_and_sub(atomic, value)     __sync_fetch_and_sub((atomic), (value))
 #define atomic_bool_cas(atomic, oldval, newval) __sync_bool_compare_and_swap((atomic), (oldval), (newval))
 #else
-#include <pthread.h>
 static pthread_mutex_t __lock = PTHREAD_MUTEX_INITIALIZER;
 template<typename T>
 inline T atomic_add_and_fetch(volatile T *atomic, T value) {
