@@ -2,7 +2,6 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <errno.h>
 
 BEGIN_NS(socket)
 

@@ -12,6 +12,7 @@ public:
     int recvn(void *buf, int size);
     int recvline(void *buf, int size);
     int sendn(const void *buf, size_t size);
+    void close();
     void release();
 
     operator int() {
@@ -19,9 +20,6 @@ public:
     }
     void attach(int fd) {
         _socket = fd;
-    }
-    void close() {
-        ::close(_socket);
     }
 
 private:

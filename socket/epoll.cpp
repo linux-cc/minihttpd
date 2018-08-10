@@ -22,6 +22,9 @@ inline void *epoll_get_data(const epoll_event &ev) {
 inline int epoll_create(int) {
     return kqueue();
 }
+inline int epoll_create1(int) {
+    return kqueue();
+}
 inline int epoll_wait(int fd, epoll_event *events, int size, int timeout) {
     timespec ts;
     ts.tv_sec = timeout / 1000;
@@ -30,7 +33,7 @@ inline int epoll_wait(int fd, epoll_event *events, int size, int timeout) {
 }
 inline int epoll_ctl(int efd, int action, int fd, epoll_event *ev) {
     timespec ts = { 0, 0 };
-    EV_SET(ev, fd, ev->filter, action, 0, 0, NULL);
+    EV_SET(ev, fd, ev->filter, action, 0, 0, ev->udata);
     return kevent(efd, ev, 1, NULL, 0, &ts);
 }
 inline void epoll_set_event(int fd, int events, void *data, epoll_event &ev) {
@@ -73,7 +76,7 @@ EPoller::~EPoller() {
 }
 
 bool EPoller::create(int size) {
-    _fd = epoll_create(1024);
+    _fd = epoll_create1(0);
     if (_fd == -1) {
         return false;
     }

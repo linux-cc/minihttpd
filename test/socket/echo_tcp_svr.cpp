@@ -1,7 +1,6 @@
 #include "socket/socket.h"
 #include <vector>
 #include <unistd.h>
-#include <errno.h>
 
 using std::vector;
 USING_NS(socket);

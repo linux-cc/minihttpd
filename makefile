@@ -6,7 +6,7 @@ OBJDIR	= obj
 TMPDIR  = $(BINDIR) $(LIBDIR) $(OBJDIR)
 
 CXX		= g++
-CCFLAG	= -g -Wall -D_DEBUG_ -fPIC
+CCFLAG	= -g -Wall -fPIC -D_DEBUG_
 SOFLAG	= -shared -o
 INCFLAG	= -I./ $(shell mysql_config --cflags)
 SOLIBS  = $(shell mysql_config --libs)

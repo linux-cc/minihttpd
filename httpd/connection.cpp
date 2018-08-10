@@ -31,14 +31,14 @@ int Connection::recvn(void *buf, int size) {
 }
 
 int Connection::recvline(void *buf, int size) {
-    if (_recvIndex < size) {
-        int len = TcpSocket(_socket).recv(_recvBuf + _recvIndex, _recvBufSize - _recvIndex);
+    if (!_recvIndex) {
+        int len = TcpSocket(_socket).recv(_recvBuf, _recvBufSize);
         if (len <= 0) {
             return len;
         }
         _recvIndex += len;
     }
-    int i = 0, _size = MIN(_recvIndex, size) - 1;
+    int i = 0, _size = MIN(_recvIndex, size - 1);
     char *p = (char*)buf;
     for (; i < _size; ++i) {
         if ((p[i] = _recvBuf[i]) == '\n') {
@@ -68,10 +68,16 @@ int Connection::sendn(const void *buf, size_t size) {
     return size - left;
 }
 
+void Connection::close() {
+    if (_socket != -1) {
+        ::close(_socket);
+        _socket = -1;
+        _recvIndex = 0;
+    }
+}
+
 void Connection::release() {
     close();
-    _socket = -1;
-    _recvIndex = 0;
     _recvBufSize = 0;
     delete []_recvBuf;
     _recvBuf = NULL;

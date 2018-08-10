@@ -15,14 +15,14 @@ public:
         string *strs[] = { &_method, &_uri, &_version };
         StringUtils::split(line, ' ', strs, 3);
     }
-    void method(const string &method) {
-        _method = method;
+    const string &method() const {
+        return _method;
     }
-    void uri(const string &uri) {
-        _uri = uri;
+    const string &uri() const {
+        return _uri;
     }
-    void version(const string &version) {
-        _version = version;
+    const string &version() const {
+        return _version;
     }
     bool isValid() const {
         return (_method == "GET" || _method == "POST")
@@ -47,7 +47,7 @@ public:
         parse(line);
     }
     void parse(const string &line) {
-        string *strs[] = { &_version, &_status, &_cause };
+        string *strs[] = { &_version, &_status, &_result};
         StringUtils::split(line, ' ', strs, 3);
     }
     void version(const string &version) {
@@ -56,13 +56,13 @@ public:
     void status(const string &status) {
         _status = status;
     }
-    void cause(const string &cause) {
-        _cause = cause;
+    void result(const string &result) {
+        _result = result;
     }
 private:
     string _version;
     string _status;
-    string _cause;
+    string _result;
 };
 END_NS
 #endif /* ifndef __HTTPD_STATUS_LINE_H__ */

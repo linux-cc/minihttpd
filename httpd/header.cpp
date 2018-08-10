@@ -5,27 +5,21 @@ BEGIN_NS(httpd)
 
 USING_CLASS(utils, StringUtils);
 
-map<int, string> Header::_fields;
-
-void Header::init() {
-#define INIT_FIELD(field)       _fields[field] = #field
-    if (!_fields.empty()) {
-        return;
-    }
-    _fields[Cache_Control] = "Cache-Control";
-    _fields[Transfer_Encoding] = "Transfer-Encoding",
-        INIT_FIELD(Connection);
-    INIT_FIELD(Date);
-    INIT_FIELD(Pragma);
-    INIT_FIELD(Trailer);
-    INIT_FIELD(Upgrade);
-    INIT_FIELD(Via);
-    INIT_FIELD(Warning);
-#undef INIT_FIELD
-}
+static const char *const __fieldNames[] = {
+    // general headers
+    "Cache-Control", "Connection", "Date", "Pragma", "Trailer", "Transfer-Encoding", "Upgrade", "Via", "Warning",
+    // request headers
+    "Accept", "Accept-Charset", "Accept-Encoding", "Accept-Language", "Authorization", "Expect", "From", "Host",
+    "If-Match", "If-Modified-Since", "If-None-Match", "If-Range", "If-Unmodified-Since", "Max-Forwards",
+    "Proxy-Authorization", "Range", "Referer", "TE", "User-Agent",
+    // response headers
+    "Accept-Ranges", "Age", "ETag", "Location", "Proxy-Authenticate", "Retry-After", "Server", "Vary", "WWW-Authenticate",
+    // entity headers
+    "Allow", "Content-Encoding", "Content-Language", "Content-Length", "Content-Location", "Content-MD5", "Content-Range",
+    "Content-Type", "Expires", "Last-Modified", 
+};
 
 Header::Header(const string &line) {
-    init();
     string *strs[] = { &_field, &_value };
     StringUtils::split(line, ':', strs, 2);
     StringUtils::trim(_field);
@@ -35,14 +29,12 @@ Header::Header(const string &line) {
 Header::Header(const string &field, const string &value):
 _field(field),
 _value(value) {
-    init();
     StringUtils::trim(_field);
     StringUtils::trim(_value);
 }
 
 Header::Header(Field field, const string &value): _value(value) {
-    init();
-    _field = _fields[field];
+    _field = __fieldNames[field];
     StringUtils::trim(_value);
 }
 
@@ -52,8 +44,12 @@ void Header::set(const string &field, const string &value) {
 }
 
 void Header::set(Field field, const string &value) {
-    _field = _fields[field];
+    _field = __fieldNames[field];
     StringUtils::trim(_value = value);
+}
+
+string Header::field(int filed) {
+    return __fieldNames[filed];
 }
 
 END_NS

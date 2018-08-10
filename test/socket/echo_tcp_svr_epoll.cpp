@@ -1,7 +1,6 @@
 #include "socket/socket.h"
 #include "socket/epoll.h"
 #include <vector>
-#include <errno.h>
 
 using std::vector;
 USING_NS(socket);

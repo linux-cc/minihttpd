@@ -2,6 +2,7 @@
 #define __SOCKET_SOCKET_H__
 
 #include "socket/addrinfo.h"
+#include <errno.h>
 
 BEGIN_NS(socket)
 

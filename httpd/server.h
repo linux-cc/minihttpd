@@ -6,6 +6,7 @@
 #include "socket/socket.h"
 #include "socket/epoll.h"
 #include "httpd/connection.h"
+#include "utils/cycle_queue.h"
 
 BEGIN_NS(httpd)
 
@@ -13,50 +14,56 @@ USING_CLASS(thread, Thread);
 USING_CLASS(socket, EPoller);
 USING_CLASS(socket, EPollEvent);
 USING_CLASS(socket, TcpSocket);
+USING_CLASS(utils, CycleQueue);
+class Request;
+class Worker;
 
 class Server {
 public:
-    bool onInit();
-
+    Server(): _workers(NULL), _quit(false) {}
+    bool start(int workers, int maxClients = 1024);
     int accept() {
         return _server.accept();
     }
     operator int () {
         return _server;
     }
+    void quit() {
+        _quit = true;
+    }
+    bool isQuit() {
+        return _quit;
+    }
 private:
     TcpSocket _server;
+    Worker **_workers;
+    bool _quit;
 };
 
 class Worker: public Thread {
 public:
-    Worker(Server &server, int maxClients = 256);
+    Worker(Server &server, int maxClients): _server(server), _maxClients(maxClients) {}
     bool onInit();
     void run();
     void onCancel();
     
-    void quit() {
-        _quit = true;
-    }
-
 private:
-    struct Node {
-        Connection conn;
-        Node *next;
-    };
-    void enableAccept();
-    void disableAccept();
+    void tryLockAccept(bool &holdLock);
+    void unlockAccept();
     void onAccept();
+    void onHandleEvent();
     void onRequest(EPollEvent &event);
-    void close(Node *node);
+    bool readHeader(Connection *conn, Request &request);
+    bool readContent(Connection *conn, Request &request);
+    void onResponse(Connection *conn, Request &request);
+    void close(Connection *conn);
 
     Server &_server;
     EPoller _poller; 
-    Node *_free;
-    Node *_nodes;
+    CycleQueue<Connection> _connsQ;
+    CycleQueue<EPollEvent> _eventQ;
+    Connection *_conns;
     int _maxClients;
-    bool _quit;
-    bool _holdLock;
 };
 
 END_NS

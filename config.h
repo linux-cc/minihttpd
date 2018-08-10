@@ -7,7 +7,9 @@
 
 #ifdef _DEBUG_
 #include <stdio.h>
-#define __LOG__         printf
+#define __LOG__(fmt, ...)   printf("[%ld]"fmt, (intptr_t)pthread_self(), ##__VA_ARGS__)
+#else
+#define __LOG__(...)    
 #endif
 
 #define BEGIN_NS(name)      namespace myframe { namespace name {
@@ -26,37 +28,42 @@
 #else
 #include <pthread.h>
 static pthread_mutex_t __lock = PTHREAD_MUTEX_INITIALIZER;
-
-inline int atomic_add_and_fetch(volatile int *atomic, int value) {
+template<typename T>
+inline T atomic_add_and_fetch(volatile T *atomic, T value) {
 	pthread_mutex_lock(&__lock);
 	*atomic += value;
 	pthread_mutex_unlock(&__lock);
     return *atomic;
 }
 
-inline int atomic_fetch_and_add(volatile int *atomic, int value) {
-    int old = *atomic;
+template<typename T>
+inline T atomic_fetch_and_add(volatile T *atomic, T value) {
+    T old = *atomic;
 	pthread_mutex_lock(&__lock);
 	*atomic += value;
 	pthread_mutex_unlock(&__lock);
     return old;
 }
 
-inline int atomic_sub_and_fetch(volatile int *atomic, int value) {
+template<typename T>
+inline T atomic_sub_and_fetch(volatile T *atomic, T value) {
 	pthread_mutex_lock(&__lock);
 	*atomic -= value;
 	pthread_mutex_unlock(&__lock);
     return *atomic;
 }
 
-inline int atomic_fetch_and_sub(volatile int *atomic, int value) {
-    int old = *atomic;
+template<typename T>
+inline T atomic_fetch_and_sub(volatile T *atomic, T value) {
+    T old = *atomic;
 	pthread_mutex_lock(&__lock);
 	*atomic -= value;
 	pthread_mutex_unlock(&__lock);
     return old;
 }
-inline bool atomic_bool_cas(volatile int *atomic, int oldval, int newval) {
+
+template<typename T>
+inline bool atomic_bool_cas(volatile T *atomic, T oldval, T newval) {
     bool success;
     pthread_mutex_lock(&__lock);
     if((success = (*atomic == oldval)))

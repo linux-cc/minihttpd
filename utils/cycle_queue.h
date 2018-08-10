@@ -3,38 +3,46 @@
 
 #include "config.h"
 
-BEGIN_NS(memory)
-class FixedMalloc;
-END_NS
-
 BEGIN_NS(utils)
 
-USING_CLASS(memory, FixedMalloc);
-
+template<typename Type>
 class CycleQueue {
 public:
-    class ItemList {
-    public:
-        int length() const { return _length; }
-        const void *data() const { return _data; }
-        const ItemList *next() const { return _next; }
-    private:
-        int _length;
-        ItemList *_next;
-        char _data[1];
-        friend class CycleQueue;
-    };
-
-    CycleQueue(FixedMalloc &alloc, int capacity = 1024):
-        _alloc(alloc), _capacity(capacity), _items(NULL), _size(0), _head(0), _tail(0) {
-        _items = new Node[capacity];
-    }
+    CycleQueue(): _items(NULL), _capacity(0), _size(0), _head(0), _tail(0) {}
     ~CycleQueue() {
-        delete []_items;
+        if (_items) {
+            delete []_items;
+        }
     }
-    bool enQueue(const void *buf, int size);
-    ItemList *deQueue();
-    void freeItemList(ItemList *list);
+    void init(Type *items, int nitem) {
+        _capacity = nitem;
+        _items = new Item[_capacity];
+        for (int i = 0; items && i < _capacity; ++i) {
+            pushBack(items + i);
+        }
+    }
+    void pushBack(Type *item) {
+        if (!full()) {
+            _items[_tail++].item = item;
+            if (_tail == _capacity) {
+                _tail = 0;
+            }
+            ++_size;
+            __LOG__("push: %p, tail: %d, size: %d\n", item, _tail, _size);
+        }
+    }
+    Type *popFront() {
+        Type *t = NULL;
+        if (!empty()) {
+            t = _items[_head++].item;
+            if (_head == _capacity) {
+                _head = 0;
+            }
+            --_size;
+            __LOG__("pop: %p, head: %d, size: %d\n", t, _head, _size);
+        }
+        return t;
+    }
 
     bool empty() const {
         return _size == 0;
@@ -47,18 +55,14 @@ public:
     }
     
 private:
-    void enQueueSingle(const void *buf, int size);
-    void enQueueMultiple(const void *buf, int size);
-
-    struct Node {
-        ItemList *head;
+    struct Item {
+        Type *item;
     };
-    FixedMalloc &_alloc;
+    Item *_items;
     int _capacity;
-    Node *_items;
     int _size;
-    volatile int _head;
-    volatile int _tail;
+    int _head;
+    int _tail;
 };
 
 END_NS

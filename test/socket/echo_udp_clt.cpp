@@ -1,6 +1,5 @@
 #include "socket/socket.h"
 #include <stdio.h>
-#include <errno.h>
 
 USING_NS(socket);
 
