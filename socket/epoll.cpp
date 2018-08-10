@@ -1,13 +1,17 @@
 #include "socket/epoll.h"
 #include <unistd.h>
 #include <errno.h>
-
+#include <pthread.h>
 BEGIN_NS(socket)
 
 #ifdef __linux__
-inline void epoll_set_event(int, int events, void *data, epoll_event &ev) {
+inline void epoll_set_event(int fd, int events, void *data, epoll_event &ev) {
     ev.events = events;
-    ev.data.ptr = data;
+    if (data) {
+        ev.data.ptr = data;
+    } else {
+        ev.data.fd = fd;
+    }
 }
 inline int epoll_get_events(const epoll_event &ev) {
     return ev.events;
@@ -42,7 +46,7 @@ inline void epoll_set_event(int fd, int events, void *data, epoll_event &ev) {
     ev.udata = data;
 }
 inline int epoll_get_events(const epoll_event &ev) {
-    return ev.filter;
+    return ev.flags;
 }
 inline int epoll_get_fd(const epoll_event &ev) {
     return ev.ident;
@@ -95,7 +99,7 @@ int EPoller::mod(int fd, void *data) {
 }
 
 int EPoller::del(int fd) {
-    return ctl(fd, EPOLL_CTL_DEL, 0, NULL);
+    return ctl(fd, EPOLL_CTL_DEL, EPOLLIN | EPOLLONESHOT | EPOLLET, NULL);
 }
 
 EPollResult EPoller::wait(int timeout) {
@@ -110,7 +114,11 @@ EPollResult EPoller::wait(int timeout) {
 int EPoller::ctl(int fd, int action, int events, void *data) {
     EPollEvent ev;
     ev.init(fd, events, data);
-    return epoll_ctl(_fd, action, fd, ev);
+    int ret = epoll_ctl(_fd, action, fd, ev);
+    if (ret) {
+        __LOG__("ret:%d, errno:%d:%s\n", ret, errno, strerror(errno));
+    }
+    return ret;
 }
 
 EPollResult &EPollResult::operator=(const EPollResult &other) {

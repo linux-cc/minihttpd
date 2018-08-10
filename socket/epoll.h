@@ -9,10 +9,11 @@
 #include <sys/event.h>
 #include <sys/time.h>
 #define EPOLL_CTL_ADD               (EV_ADD | EV_ONESHOT)
-#define EPOLL_CTL_DEL               (EV_DELETE | EV_DISABLE | EV_CLEAR)
+#define EPOLL_CTL_DEL               (EV_DELETE)
 #define EPOLL_CTL_MOD               (EV_ADD | EV_ONESHOT)
 #define EPOLLIN                     EVFILT_READ
 #define EPOLLOUT                    EVFILT_WRITE
+#define EPOLLERR                    EV_ERROR
 #define EPOLLONESHOT                0
 #define EPOLLET                     0
 typedef struct kevent epoll_event;

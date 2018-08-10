@@ -4,7 +4,7 @@
 
 BEGIN_NS(httpd)
 
-static volatile intptr_t __accept_lock = 0;
+static volatile int __accept_lock = 0;
 USING_CLASS(socket, EPollResult);
 USING_CLASS(socket, Sockaddr);
 USING_CLASS(socket, Peername);
@@ -48,24 +48,22 @@ void Worker::onCancel() {
 }
 
 void Worker::tryLockAccept(bool &holdLock) {
-    bool locked = atomic_bool_cas(&__accept_lock, 0, (intptr_t)pid()); 
+    bool locked = atomic_bool_cas(&__accept_lock, 0, 1); 
     if (locked) {
         if (!holdLock) {
             holdLock = true;
             _poller.add(_server);
-            __LOG__("add server\n");
         }
     } else {
         if (holdLock) {
             holdLock = false;
             _poller.del(_server);
-            __LOG__("del server\n");
         }
     }
 }
 
 void Worker::unlockAccept() {
-    atomic_bool_cas(&__accept_lock, (intptr_t)pid(), 0);
+    atomic_bool_cas(&__accept_lock, 1, 0);
 }
 
 void Worker::run() {
@@ -74,15 +72,21 @@ void Worker::run() {
         tryLockAccept(holdLock);
         EPollResult result = _poller.wait(100);
         for (EPollResult::Iterator it = result.begin(); it != result.end(); ++it) {
-            if (it->fd() == _server) {
-                __LOG__("enter onAccept\n");
-                onAccept();
-                continue;
-            }
-            if (holdLock) {
-                _eventQ.pushBack(&*it);
+            if (it->events() & EPOLLIN) {
+                if (it->fd() == _server) {
+                    __LOG__("=======================enter onAccept========================\n");
+                    onAccept();
+                    continue;
+                }
+                if (holdLock) {
+                    _eventQ.pushBack(&*it);
+                } else {
+                    onRequest(*it);
+                }
+            } else if (it->events() & EPOLLOUT) {
+
             } else {
-                onRequest(*it);
+                __LOG__("unknown event happen\n");
             }
         }
         if (holdLock) {
@@ -94,9 +98,7 @@ void Worker::run() {
 
 void Worker::onAccept() {
     while (true) {
-        printf("[%ld]onAccept\n", (intptr_t)pid());
         int fd = _server.accept();
-        printf("[%ld]onAccept: %d\n", (intptr_t)pid(), fd);
         if (fd < 0) {
             if (errno != EWOULDBLOCK && errno != EAGAIN) {
                 __LOG__("Worker onAccept error: %d:%s\n", errno, strerror(errno));
@@ -105,7 +107,6 @@ void Worker::onAccept() {
             break;
         }
         Connection *conn = _connsQ.popFront();
-        printf("[%ld]onAccept:%p\n", (intptr_t)pid(), conn);
         if (!conn) {
             __LOG__("Worker onAccept Connection empty");
             break;
@@ -126,7 +127,6 @@ void Worker::onAccept() {
 void Worker::onHandleEvent() {
     while (!_eventQ.empty()) {
         onRequest(*_eventQ.popFront());
-        sleep(1);
     }
 }
 
@@ -200,6 +200,7 @@ void Worker::onResponse(Connection *conn, Request &request) {
 }
 
 void Worker::close(Connection *conn) {
+    __LOG__("close fd:%d, conn:%p\n", (int)*conn, conn);
     _poller.del(*conn);
     conn->close();
     _connsQ.pushBack(conn);
