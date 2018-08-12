@@ -1,5 +1,6 @@
 #include "httpd/server.h"
 #include "httpd/request.h"
+#include "httpd/response.h"
 #include "socket/addrinfo.h"
 
 BEGIN_NS(httpd)
@@ -11,11 +12,11 @@ USING_CLASS(socket, Peername);
 
 bool Server::start(int workers, int maxClients) {
     if (!_server.create("localhost", "9090")) {
-        __LOG__("server create error:%d:%s\n", errno, strerror(errno));
+        _LOG_("server create error:%d:%s\n", errno, strerror(errno));
         return false;
     }
 
-    __LOG__("server listen on port 9090\n");
+    _LOG_("server listen on port 9090\n");
     _server.setNonblock();
     _workers = new Worker*[workers];
     int perMax = maxClients/workers;
@@ -29,7 +30,7 @@ bool Server::start(int workers, int maxClients) {
 
 bool Worker::onInit() {
     if (!_poller.create(_maxClients)) {
-        __LOG__("worker poller create false\n");
+        _LOG_("poller create false\n");
         return false;
     }
 
@@ -52,12 +53,18 @@ void Worker::tryLockAccept(bool &holdLock) {
     if (locked) {
         if (!holdLock) {
             holdLock = true;
-            _poller.add(_server);
+            int error = _poller.add(_server);
+            if (error) {
+                _LOG_("poll add server error: %d:%s\n", errno, strerror(errno));
+            }
         }
     } else {
         if (holdLock) {
             holdLock = false;
-            _poller.del(_server);
+            int error = _poller.del(_server);
+            if (error) {
+                _LOG_("poll del server error: %d:%s\n", errno, strerror(errno));
+            }
         }
     }
 }
@@ -72,21 +79,15 @@ void Worker::run() {
         tryLockAccept(holdLock);
         EPollResult result = _poller.wait(100);
         for (EPollResult::Iterator it = result.begin(); it != result.end(); ++it) {
-            if (it->events() & EPOLLIN) {
-                if (it->fd() == _server) {
-                    __LOG__("=======================enter onAccept========================\n");
-                    onAccept();
-                    continue;
-                }
-                if (holdLock) {
-                    _eventQ.pushBack(&*it);
-                } else {
-                    onRequest(*it);
-                }
-            } else if (it->events() & EPOLLOUT) {
-
+            if (it->fd() == _server) {
+                _LOG_("=======================enter onAccept========================\n");
+                onAccept();
+                continue;
+            }
+            if (holdLock) {
+                _eventQ.pushBack(&*it);
             } else {
-                __LOG__("unknown event happen\n");
+                onRequest(*it);
             }
         }
         if (holdLock) {
@@ -101,40 +102,43 @@ void Worker::onAccept() {
         int fd = _server.accept();
         if (fd < 0) {
             if (errno != EWOULDBLOCK && errno != EAGAIN) {
-                __LOG__("Worker onAccept error: %d:%s\n", errno, strerror(errno));
+                _LOG_("accept error: %d:%s\n", errno, strerror(errno));
             }
-            _poller.mod(_server);
+            int error = _poller.mod(_server);
+            if (error) {
+                _LOG_("poll mod server error: %d:%s\n", errno, strerror(errno));
+            }
             break;
         }
         Connection *conn = _connsQ.popFront();
         if (!conn) {
-            __LOG__("Worker onAccept Connection empty");
+            _LOG_("Connection is empty");
             break;
         }
         conn->attach(fd);
-        _poller.add(fd, conn);
-        __LOG__("onAccept, Connection:%p, fd:%d\n", conn, fd);
+        int error = _poller.add(fd, conn);
+        if (error) {
+            _LOG_("poll add client error: %d:%s\n", errno, strerror(errno));
+        }
 
         Sockaddr addr;
         if (!TcpSocket(fd).getpeername(addr)) {
-            __LOG__("Worker getpeername error: %d:%s\n", errno, strerror(errno));
+            _LOG_("Worker getpeername error: %d:%s\n", errno, strerror(errno));
         }
         Peername peer(addr);
-        __LOG__("server accept: [%s|%d]\n", (const char*)peer, peer.port());
+        _LOG_("server accept: [%s|%d]\n", (const char*)peer, peer.port());
     }
 }
 
 void Worker::onHandleEvent() {
-    while (!_eventQ.empty()) {
-        onRequest(*_eventQ.popFront());
-        sleep(1);
+    EPollEvent *event;
+    while ((event = _eventQ.popFront())) {
+        onRequest(*event);
     }
 }
 
 void Worker::onRequest(EPollEvent &event) {
     Connection *conn = (Connection*)event.data();
-    printf("[%ld]onRequest:%p\n", (intptr_t)pid(), conn);
-
     Request request;
     if (!readHeader(conn, request)) {
         close(conn);
@@ -145,32 +149,29 @@ void Worker::onRequest(EPollEvent &event) {
         return;
     }
     onResponse(conn, request);
-    close(conn);
 }
 
 bool Worker::readHeader(Connection *conn, Request &request) {
     char buf[1024];
     int len = conn->recvline(buf, sizeof(buf));
     if (len <= 0) {
-        __LOG__("worker readHeader read status line error:%d:%s, len:%d\n",
-            errno, strerror(errno), len);
+        _LOG_("read header status line len: %d, error: %d:%s\n", len, errno, strerror(errno));
         return false;
     }
     request.parseStatusLine(buf);
     while (true) {
         len = conn->recvline(buf, sizeof(buf));
         if (len <= 0) {
-            __LOG__("worker readHeader read header error:%d:%s, len:%d\n",
-                errno, strerror(errno), len);
+            _LOG_("read header line len: %d, error: %d:%s\n", len, errno, strerror(errno));
             return false;
         }
         Header header(buf);
         if (header.empty()) {
-            __LOG__("worker readHeader read end\n");
+            _LOG_("read header line end\n");
             break;
         }
         request.addHeader(header);
-        __LOG__("worker readHeader: %s\n", header.toString().c_str());
+        _LOG_("read header: %s\n", header.toString().c_str());
     }
     
     return true;
@@ -178,30 +179,55 @@ bool Worker::readHeader(Connection *conn, Request &request) {
 
 bool Worker::readContent(Connection *conn, Request &request) {
     int length = request.contentLength();
-    __LOG__("worker readContent length: %d\n", length);
+    _LOG_("read content length: %d\n", length);
     if (length) {
         int read = conn->recvn(request.content(), length);
         if (read <= 0) {
+            _LOG_("read content len: %d, error: %d:%s\n", read, errno, strerror(errno));
             return false;;
         }
-        request.decodeContent();
     }
     
     return true;
 }
 
 void Worker::onResponse(Connection *conn, Request &request) {
-    string response = "HTTP/1.1 200 OK\r\n";
-    response += "Content-Type: text/html\r\n";
-    response += "Server: myframe httpd 1.0\r\n";
-    response += "\r\n";
-    response += "<HTML><TITLE>Hello Httpd</TITLE>\r\n";
-    response += "<BODY><P>Congratulations Hello World!!!</P></BODY></HTML>\r\n";
-    conn->sendn(response.c_str(), response.size());
+    Response response;
+    response.parseRequest(request);
+    conn->sendn(response.headers().c_str(), response.headers().length());
+    _LOG_("response header: %s\n", response.headers().c_str());
+    int fd = response.fd();
+    if (fd > 0) {
+        int length = response.contentLength();
+        int n = sendFile(conn, fd, length);
+        if (n != length) {
+            _LOG_("senfile len: %d not equal file length: %d\n", n, length);
+            close(conn);
+            return;
+        }
+    }
+    if (request.connectionClose()) {
+        close(conn);
+    }
+}
+
+int Worker::sendFile(Connection *conn, int fd, off_t length) {
+#ifdef __linux__
+    return sendfile(*conn, fd, NULL, length);
+#else
+    char *data = new char[length];
+    read(fd, data, length);
+    int n = conn->sendn(data, length);
+    delete []data;
+    return n;
+#endif
 }
 
 void Worker::close(Connection *conn) {
-    _poller.del(*conn);
+    int error = _poller.del(*conn);
+    if (error) {
+        _LOG_("poll del client fd: %d, error: %d:%s\n", (int)*conn, errno, strerror(errno));
+    }
     conn->close();
     _connsQ.pushBack(conn);
 }

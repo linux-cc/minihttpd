@@ -16,6 +16,7 @@ USING_CLASS(socket, EPollEvent);
 USING_CLASS(socket, TcpSocket);
 USING_CLASS(utils, CycleQueue);
 class Request;
+class Response;
 class Worker;
 
 class Server {
@@ -56,6 +57,7 @@ private:
     bool readHeader(Connection *conn, Request &request);
     bool readContent(Connection *conn, Request &request);
     void onResponse(Connection *conn, Request &request);
+    int sendFile(Connection *conn, int fd, off_t length);
     void close(Connection *conn);
 
     Server &_server;

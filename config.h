@@ -9,12 +9,12 @@
 #ifdef _DEBUG_
 #include <stdio.h>
 #ifdef __linux__
-#define __LOG__(fmt, ...)   printf("[%lu]"fmt, pthread_self(), ##__VA_ARGS__)
+#define _LOG_(fmt, ...)   printf("[%lu]"fmt, pthread_self(), ##__VA_ARGS__)
 #else
-#define __LOG__(fmt, ...)   printf("[%lu]"fmt, (intptr_t)pthread_self(), ##__VA_ARGS__)
+#define _LOG_(fmt, ...)   printf("[%lu]"fmt, (intptr_t)pthread_self(), ##__VA_ARGS__)
 #endif
 #else
-#define __LOG__(...)    
+#define _LOG_(...)    
 #endif
 
 #define BEGIN_NS(name)      namespace myframe { namespace name {

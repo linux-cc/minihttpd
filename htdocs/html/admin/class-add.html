@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>添加分类</title>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../layui/css/layui.css">
+</head>
+<body class="childrenBody" style="padding: 10px">
+    <form class="layui-form layui-form-pane">
+        <div class="layui-form-item">
+            <label class="layui-form-label">父类</label>
+            <div class="layui-input-block">
+                <select name="father">
+                    <option>请选择父类</option>
+                    <option value="1">linux/unix</option>
+                    <option value="11">&nbsp;&nbsp;内存</option>
+                    <option value="12">&nbsp;&nbsp;分页</option>
+                    <option value="2">c/c++</option>
+                    <option value="21">&nbsp;&nbsp;继承</option>
+                    <option value="22">&nbsp;&nbsp;stl</option>
+                    <option value="3">tcp/ip</option>
+                    <option value="31">&nbsp;&nbsp;链路层</option>
+                    <option value="32">&nbsp;&nbsp;网络层</option>
+                    <option>数据结构/算法</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="name" required  lay-verify="required" placeholder="请输入名称" class="layui-input">
+            </div>
+        </div>
+        <!-- div class="layui-form-item" style="text-align: center; padding: 20px">
+            <button class="layui-btn">提交</button>
+            <button class="layui-btn layui-btn-primary">取消</button>
+        </div -->
+    </form>
+    <script type="text/javascript" src="../layui/layui.js"></script>
+    <script type="text/javascript" src="../js/admin/comm.js"></script>
+    <script type="text/javascript">
+        layui.config({
+            base: '../js/admin/'
+        }).use('classes');
+    </script>
+</body>
+</html>

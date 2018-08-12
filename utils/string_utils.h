@@ -18,6 +18,7 @@ public:
     static void split(const string &str, char delim1, char delim2, map<string, string> &val);
     static string urlDecode(const string &str);
     static char hexToChar(char hex);
+    static string itoa(int i);
 };
 
 END_NS

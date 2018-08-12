@@ -28,7 +28,6 @@ public:
                 _tail = 0;
             }
             ++_size;
-            __LOG__("push: %p, tail: %d, size: %d\n", item, _tail, _size);
         }
     }
     Type *popFront() {
@@ -39,7 +38,6 @@ public:
                 _head = 0;
             }
             --_size;
-            __LOG__("pop: %p, head: %d, size: %d\n", t, _head, _size);
         }
         return t;
     }

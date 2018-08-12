@@ -31,7 +31,7 @@ void StringUtils::split(const string &str, char delim, string *vals[], int nval)
     int i = 0;
     while (nval--) {
         p2 = str.find(delim, p1);
-        *vals[i++] = str.substr(p1, p2);
+        *vals[i++] = p2 == string::npos ? str.substr(p1) : str.substr(p1, p2 - p1);
         if (p2 == string::npos) {
             break;
         }
@@ -46,16 +46,13 @@ void StringUtils::split(const string &str, char delim1, char delim2, map<string,
     string::size_type p1 = 0, p2;
     while (true) {
         p2 = str.find(delim1, p1);
-        string kv = str.substr(p1, p2);
-        if (p2 == string::npos) {
-            break;
-        }
+        string kv = p2 == string::npos ? str.substr(p1) : str.substr(p1, p2 - p1);
         string::size_type p3 = kv.find(delim2);
         string k = p3 != string::npos ? kv.substr(0, p3) : kv;
         string v = p3 != string::npos ? kv.substr(p3 + 1) : "";
         val[k] = v;
         p1 = p2 + 1;
-        if (p1 >= str.length()) {
+        if (p2 == string::npos || p1 >= str.length()) {
             break;
         }
     }
@@ -92,4 +89,9 @@ char StringUtils::hexToChar(char hex) {
     return hex - '0';
 }
 
+string StringUtils::itoa(int i) {
+    char temp[16] = { 0 };
+    sprintf(temp, "%d", i);
+    return temp;
+}
 END_NS

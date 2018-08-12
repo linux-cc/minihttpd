@@ -19,12 +19,12 @@ public:
     int setNonblock();
     void close();
 
-    int setOpt(int cmd, int val) {
-	    return setsockopt(_socket, SOL_SOCKET, cmd, &val, (socklen_t)sizeof(val));
+    int setOpt(int cmd, int val, int level = SOL_SOCKET) {
+	    return setsockopt(_socket, level, cmd, &val, (socklen_t)sizeof(val));
     }
-    int getOpt(int cmd, int *val) {
+    int getOpt(int cmd, int *val, int level = SOL_SOCKET) {
 	    socklen_t len = (socklen_t)sizeof(int);
-	    return getsockopt(_socket, SOL_SOCKET, cmd, val, &len);
+	    return getsockopt(_socket, level, cmd, val, &len);
     }
     void attach(int socket) {
         _socket = socket;

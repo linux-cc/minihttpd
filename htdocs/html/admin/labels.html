@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>文章标签</title>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../layui/css/layui.css">
+</head>
+<body class="childrenBody">
+    <blockquote class="layui-elem-quote">
+        <form class="layui-form">
+            <div class="layui-inline">
+                <input type="text" name="key_word" required lay-verify="required" placeholder="请输入关键字" class="layui-input">
+            </div>
+            <div class="layui-inline">
+                <button class="layui-btn layui-btn-normal">
+                    <i class="layui-icon">&#xe615;</i>查找
+                </button>
+            </div>
+        </form>
+    </blockquote>
+    <button class="layui-btn layui-btn-small" id="add">
+        <i class="layui-icon">&#xe61f;</i>添加
+    </button>
+    <button class="layui-btn layui-btn-small layui-btn-danger" id="del">
+        <i class="layui-icon">&#xe640;</i>删除
+    </button>
+    <table class="layui-table" id="labels" lay-filter="labels"></table>
+    <div id="labels_pages"></div>
+    <script type="text/javascript" src="../layui/layui.js"></script>
+    <script type="text/javascript" src="../js/admin/comm.js"></script>
+    <script type="text/javascript">
+        layui.config({
+            base: '../js/admin/'
+        }).use('labels');
+    </script>
+    <script type="text/html" id="labels_toolbar">
+        <a class="layui-btn layui-btn-mini" lay-event="edit"><i class="layui-icon">&#xe642;</i>编辑</a>
+        <a class="layui-btn layui-btn-mini layui-btn-danger" lay-event="del"><i class="layui-icon">&#xe640;</i>删除</a>
+    </script>
+</body>
+</html>
