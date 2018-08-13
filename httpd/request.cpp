@@ -48,7 +48,7 @@ bool Request::addHeader(const string &line) {
     if (p != string::npos) {
         string field = trim(line.substr(0, p));
         string value = trim(line.substr(p + 1));
-        _headrs[field] = value;
+        _headers[field] = value;
         if (field == getHeaderField(Content_Length)) {
             int length = atoi(value.c_str());
             _content.resize(length);
@@ -73,29 +73,26 @@ void Request::parseStatusLine(const string &line) {
     }
 }
 
-bool Request::connectionClose() const {
-    string field = getHeaderField(Connection);
-    ConstIt it = _headrs.find(field);
-    if (it != _headrs.end() && !strncasecmp(it->second.c_str(), "close", 5)) {
-        return true;
-    }
-
-    return false;
-}
-
 string Request::headers() const {
     string result = _method + " " + _uri;
     if (!_querys.empty()) {
         result += "?" + _querys;
     }
     result += " " + _version + CRLF;
-    for (ConstIt it = _headrs.begin(); it != _headrs.end(); ++it) {
+    for (ConstIt it = _headers.begin(); it != _headers.end(); ++it) {
         result += it->first + ": " + it->second + CRLF;
     }
     result += CRLF;
     result += _content;
 
     return result;
+}
+
+const string *Request::getConnection() const {
+    string field = getHeaderField(Connection);
+    ConstIt it = _headers.find(field);
+    
+    return it != _headers.end() ? &it->second : NULL;
 }
 
 END_NS

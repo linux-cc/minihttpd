@@ -1,15 +1,15 @@
-#ifndef __UTILS_CYCLE_QUEUE_H__
-#define __UTILS_CYCLE_QUEUE_H__
+#ifndef __HTTPD_SIMPLE_QUEUE_H__
+#define __HTTPD_SIMPLE_QUEUE_H__
 
 #include "config.h"
 
-BEGIN_NS(utils)
+BEGIN_NS(httpd)
 
 template<typename Type>
-class CycleQueue {
+class SimpleQueue {
 public:
-    CycleQueue(): _items(NULL), _capacity(0), _size(0), _head(0), _tail(0) {}
-    ~CycleQueue() {
+    SimpleQueue(): _items(NULL), _capacity(0), _size(0), _head(0), _tail(0) {}
+    ~SimpleQueue() {
         if (_items) {
             delete []_items;
         }
@@ -67,4 +67,4 @@ private:
 };
 
 END_NS
-#endif /* ifndef __UTILS_CYCLE_QUEUE_H__ */
+#endif /* ifndef __HTTPD_SIMPLE_QUEUE_H__ */

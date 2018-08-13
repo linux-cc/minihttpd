@@ -186,11 +186,11 @@ bool Worker::readHeader(Connection *conn, Request &request) {
 
 bool Worker::readContent(Connection *conn, Request &request) {
     int length = request.contentLength();
-    _LOG_("fd: %d, read content length: %d\n", (int)*conn, length);
+    _LOG_("fd: %d, Request content length: %d\n", (int)*conn, length);
     if (length) {
         int read = conn->recvn(request.content(), length);
         if (read <= 0) {
-            _LOG_("read content len: %d, error: %d:%s\n", read, errno, strerror(errno));
+            _LOG_("Request content len: %d, error: %d:%s\n", read, errno, strerror(errno));
             return false;;
         }
     }
@@ -202,7 +202,7 @@ void Worker::onResponse(Connection *conn, Request &request) {
     Response response;
     response.parseRequest(request);
     conn->sendn(response.headers().c_str(), response.headers().length());
-    _LOG_("fd: %d, response headers:\n%s\n", (int)*conn, response.headers().c_str());
+    _LOG_("fd: %d, Response headers:\n%s\n", (int)*conn, response.headers().c_str());
     int fd = response.fd();
     if (fd > 0) {
         int length = response.contentLength();
@@ -213,7 +213,7 @@ void Worker::onResponse(Connection *conn, Request &request) {
             return;
         }
     }
-    if (request.connectionClose()) {
+    if (response.connectionClose()) {
         close(conn);
     } else {
         _poller.mod(*conn, conn);

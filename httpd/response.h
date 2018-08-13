@@ -14,30 +14,32 @@ class Request;
 
 class Response {
 public:
-    Response(): _cgiBin(false), _fd(-1), _contentLength(0) {}
+    Response(): _cgiBin(false), _fd(-1) {}
     ~Response() { if (_fd > 0) close(_fd); }
     void parseRequest(const Request &request);
-    const string &headers() {
-        return _headers;
-    }
-    int contentLength() const {
-        return _contentLength;
-    }
+    string headers() const;
+    bool connectionClose() const;
+    int contentLength() const;
     int fd() const {
         return _fd;
     }
 
 private:
+    string parseUri(const string &uri);
     int parseFile(const string &file);
     void setStatusLine(int status, const string &version);
-    string parseUri(const string &uri);
     void setContentType(const string &file);
     void setContentLength(off_t length);
+    void setConnection(const Request &request);
+    void setServer();
 
+    string _version;
+    string _status;
+    string _reason;
     bool _cgiBin;
     int _fd;
-    off_t _contentLength;
-    string _headers;
+    typedef map<string, string>::const_iterator ConstIt;
+    map<string, string> _headers;
 };
 
 END_NS

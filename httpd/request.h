@@ -15,7 +15,8 @@ class Request {
 public:
     bool addHeader(const string &line);
     void parseStatusLine(const string &line);
-    bool connectionClose() const;
+    string headers() const;
+    const string *getConnection() const;
 
     bool isGet() const {
         return !strncasecmp(_method.c_str(), "GET", 3);
@@ -38,14 +39,14 @@ public:
     const string &version() const {
         return _version;
     }
-    string headers() const;
 
 private:
+
     string _method;
     string _uri;
     string _version;
     typedef map<string, string>::const_iterator ConstIt;
-    map<string, string> _headrs;
+    map<string, string> _headers;
     string _querys;
     string _content;
 };

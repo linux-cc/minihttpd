@@ -6,7 +6,7 @@
 #include "socket/socket.h"
 #include "socket/epoll.h"
 #include "httpd/connection.h"
-#include "utils/cycle_queue.h"
+#include "httpd/simple_queue.h"
 
 BEGIN_NS(httpd)
 
@@ -14,7 +14,6 @@ USING_CLASS(thread, Thread);
 USING_CLASS(socket, EPoller);
 USING_CLASS(socket, EPollEvent);
 USING_CLASS(socket, TcpSocket);
-USING_CLASS(utils, CycleQueue);
 class Request;
 class Response;
 class Worker;
@@ -63,8 +62,8 @@ private:
 
     Server &_server;
     EPoller _poller; 
-    CycleQueue<Connection> _connsQ;
-    CycleQueue<EPollEvent> _eventQ;
+    SimpleQueue<Connection> _connsQ;
+    SimpleQueue<EPollEvent> _eventQ;
     Connection *_conns;
     int _maxClients;
 };

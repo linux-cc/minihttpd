@@ -16,6 +16,14 @@ static string itoa(int i) {
     return temp;
 }
 
+inline void Response::setContentLength(off_t length) {
+    _headers[getHeaderField(Content_Length)] = itoa(length);
+}
+
+inline void Response::setServer() {
+    _headers[getHeaderField(Server)] = "myframe/httpd/1.0.01";
+}
+
 void Response::parseRequest(const Request &request) {
     if (!request.isGet() && !request.isPost()) {
         setStatusLine(Not_Implemented, request.version());
@@ -28,32 +36,28 @@ void Response::parseRequest(const Request &request) {
         } else {
             int code = parseFile(file);
             setStatusLine(code, request.version());
-            setContentType(file);
-            setContentLength(_contentLength);
         }
     }
-    _headers += string("Connection: keep-alive") + CRLF;
-    _headers += string("Server: myframe httpd 1.0") + CRLF;
-    _headers += CRLF;
+    setConnection(request);
+    setServer();
 }
 
-int Response::parseFile(const string &file) {
-    struct stat st;
-    if (stat(file.c_str(), &st)) {
-        return Not_Found;
+string Response::headers() const {
+    string result = _version + ' ' + _status + ' ' + _reason + CRLF;
+    for (ConstIt it = _headers.begin(); it != _headers.end(); ++it) {
+        result += it->first + ": " + it->second + CRLF;
     }
-    _cgiBin = !strncasecmp(file.c_str(), CGI_BIN, strlen(CGI_BIN));
-    int permit = S_IRUSR | S_IRGRP | S_IROTH | (_cgiBin ? S_IXUSR : 0);
-    if (!(st.st_mode & permit)) {
-        return Forbidden;
-    }
-    _fd = open(file.c_str(), O_RDONLY);
-    if (_fd < 0) {
-        return Internal_Server_Error;
-    }
-    _contentLength = st.st_size;
+    result += CRLF;
 
-    return OK;
+    return result;
+}
+
+int Response::contentLength() const {
+    ConstIt it = _headers.find(getHeaderField(Content_Length));
+    if (it != _headers.end()) {
+        return atoi(it->second.c_str());
+    }
+    return 0;
 }
 
 string Response::parseUri(const string &uri) {
@@ -75,10 +79,30 @@ string Response::parseUri(const string &uri) {
     return "";
 }
 
+int Response::parseFile(const string &file) {
+    struct stat st;
+    if (stat(file.c_str(), &st)) {
+        return Not_Found;
+    }
+    _cgiBin = !strncasecmp(file.c_str(), CGI_BIN, strlen(CGI_BIN));
+    int permit = S_IRUSR | S_IRGRP | S_IROTH | (_cgiBin ? S_IXUSR : 0);
+    if (!(st.st_mode & permit)) {
+        return Forbidden;
+    }
+    _fd = open(file.c_str(), O_RDONLY);
+    if (_fd < 0) {
+        return Internal_Server_Error;
+    }
+    setContentType(file);
+    setContentLength(st.st_size);
+
+    return OK;
+}
+
 void Response::setStatusLine(int status, const string &version) {
-    _headers = version + ' ';
-    _headers += itoa(status) + ' ';
-    _headers += getStatusReason(status) + CRLF;
+    _version = version;
+    _status = itoa(status);
+    _reason = getStatusReason(status);
 }
 
 void Response::setContentType(const string &file) {
@@ -87,27 +111,39 @@ void Response::setContentType(const string &file) {
     if (p != string::npos) {
         subfix = file.substr(p + 1);
     }
-    _headers += getHeaderField(Content_Type) + ": ";
+    string field = getHeaderField(Content_Type);
+    string &value = _headers[field];
     if (!strncasecmp(subfix.c_str(), "htm", 3)) {
-        _headers += "text/html";
+        value = "text/html";
     } else if (!strncasecmp(subfix.c_str(), "js", 2)) {
-        _headers += "application/javascript";
+        value = "application/javascript";
     } else if (!strncasecmp(subfix.c_str(), "jpg", 3) || !strncasecmp(subfix.c_str(), "jpeg", 4)) {
-        _headers += "image/jpeg";
+        value = "image/jpeg";
     } else if (!strncasecmp(subfix.c_str(), "png", 3)) {
-        _headers += "image/png";
+        value = "image/png";
     } else if (!strncasecmp(subfix.c_str(), "gif", 3)) {
-        _headers += "image/gif";
+        value = "image/gif";
     } else {
-        _headers += "text/" + subfix;
+        value = "text/" + subfix;
     }
-    _headers += "; charset=utf-8";
-    _headers += CRLF;
+    value += "; charset=UTF-8";
 }
 
-void Response::setContentLength(off_t length) {
-    _headers += getHeaderField(Content_Length) + ": ";
-    _headers += itoa(length) + CRLF;
+void Response::setConnection(const Request &request) {
+    string field = getHeaderField(Connection);
+    const string *value = request.getConnection();
+    if (value) {
+        _headers[field] = *value;
+    }    
+}
+
+bool Response::connectionClose() const {
+    ConstIt it = _headers.find(getHeaderField(Connection));
+    if (it != _headers.end() && !strncasecmp(it->second.c_str(), "close", 5)) {
+        return true;
+    }
+
+    return false;
 }
 
 END_NS
