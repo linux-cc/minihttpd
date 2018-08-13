@@ -16,8 +16,6 @@ bool Server::start(int workers, int maxClients) {
         _LOG_("server create error:%d:%s\n", errno, strerror(errno));
         return false;
     }
-
-    _LOG_("server listen on port 9090\n");
     _server.setNonblock();
     _workers = new Worker*[workers];
     int perMax = maxClients/workers;
@@ -25,6 +23,7 @@ bool Server::start(int workers, int maxClients) {
         _workers[i] = new Worker(*this, perMax);
         _workers[i]->start();
     }
+    _LOG_("server listen on port 9090\n");
 
     return true;
 }
@@ -125,6 +124,7 @@ void Worker::onAccept() {
             break;
         }
         conn->attach(fd);
+        TcpSocket(fd).setNoDelay();
         int error = _poller.add(fd, conn);
         if (error) {
             _LOG_("poll add client error: %d:%s\n", errno, strerror(errno));
@@ -135,7 +135,7 @@ void Worker::onAccept() {
             _LOG_("Worker getpeername error: %d:%s\n", errno, strerror(errno));
         }
         Peername peer(addr);
-        _LOG_("server accept: [%s|%d]\n", (const char*)peer, peer.port());
+        _LOG_("server accept: [%s|%d], fd: %d\n", (const char*)peer, peer.port(), fd);
     }
 }
 
@@ -167,6 +167,7 @@ bool Worker::readHeader(Connection *conn, Request &request) {
         _LOG_("read header status line len: %d, error: %d:%s\n", len, errno, strerror(errno));
         return false;
     }
+
     request.parseStatusLine(buf);
     while (true) {
         len = conn->recvline(buf, sizeof(buf));
@@ -174,21 +175,18 @@ bool Worker::readHeader(Connection *conn, Request &request) {
             _LOG_("read header line len: %d, error: %d:%s\n", len, errno, strerror(errno));
             return false;
         }
-        Header header(buf);
-        if (header.empty()) {
-            _LOG_("read header line end\n");
+        if (!request.addHeader(buf)) {
             break;
         }
-        request.addHeader(header);
-        _LOG_("read header: %s\n", header.toString().c_str());
     }
+    _LOG_("fd: %d, Request headers:\n%s", (int)*conn, request.headers().c_str());
     
     return true;
 }
 
 bool Worker::readContent(Connection *conn, Request &request) {
     int length = request.contentLength();
-    _LOG_("read content length: %d\n", length);
+    _LOG_("fd: %d, read content length: %d\n", (int)*conn, length);
     if (length) {
         int read = conn->recvn(request.content(), length);
         if (read <= 0) {
@@ -204,7 +202,7 @@ void Worker::onResponse(Connection *conn, Request &request) {
     Response response;
     response.parseRequest(request);
     conn->sendn(response.headers().c_str(), response.headers().length());
-    _LOG_("response header: %s\n", response.headers().c_str());
+    _LOG_("fd: %d, response headers:\n%s\n", (int)*conn, response.headers().c_str());
     int fd = response.fd();
     if (fd > 0) {
         int length = response.contentLength();
@@ -217,6 +215,8 @@ void Worker::onResponse(Connection *conn, Request &request) {
     }
     if (request.connectionClose()) {
         close(conn);
+    } else {
+        _poller.mod(*conn, conn);
     }
 }
 
@@ -224,11 +224,11 @@ int Worker::sendFile(Connection *conn, int fd, off_t length) {
 #ifdef __linux__
     return sendfile(*conn, fd, NULL, length);
 #else
-    char *data = new char[length];
-    read(fd, data, length);
-    int n = conn->sendn(data, length);
-    delete []data;
-    return n;
+    off_t len = length;
+    if (sendfile(fd, *conn, 0, &len, NULL, 0)) {
+        _LOG_("sendfile error: %d:%s\n", errno, strerror(errno));
+    }
+    return len;
 #endif
 }
 

@@ -2,6 +2,7 @@
 #define __SOCKET_SOCKET_H__
 
 #include "socket/addrinfo.h"
+#include <netinet/tcp.h>
 #include <errno.h>
 
 BEGIN_NS(socket)
@@ -18,14 +19,6 @@ public:
     }
     int setNonblock();
     void close();
-
-    int setOpt(int cmd, int val, int level = SOL_SOCKET) {
-	    return setsockopt(_socket, level, cmd, &val, (socklen_t)sizeof(val));
-    }
-    int getOpt(int cmd, int *val, int level = SOL_SOCKET) {
-	    socklen_t len = (socklen_t)sizeof(int);
-	    return getsockopt(_socket, level, cmd, val, &len);
-    }
     void attach(int socket) {
         _socket = socket;
     }
@@ -39,6 +32,13 @@ protected:
     bool socket(int family, int socktype, int protocol);
     bool create(const char *host, const char *service, int family, int socktype, int protocol);
     bool connect(const char *host, const char *service, int family, int socktype, int protocol);
+    int setOpt(int cmd, int level, int val) {
+	    return setsockopt(_socket, level, cmd, &val, (socklen_t)sizeof(val));
+    }
+    int getOpt(int cmd, int level, int *val) {
+	    socklen_t len = (socklen_t)sizeof(int);
+	    return getsockopt(_socket, level, cmd, val, &len);
+    }
 
     int _socket;
 };
@@ -60,7 +60,9 @@ public:
     bool getpeername(Sockaddr &addr) {
         return ::getpeername(_socket, addr, &addr.len()) == 0; 
     }
-
+    void setNoDelay() {
+        setOpt(TCP_NODELAY, IPPROTO_TCP, 1);
+    }
 };
 
 class UdpSocket : public Socket {

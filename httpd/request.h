@@ -2,30 +2,29 @@
 #define __HTTPD_REQUEST_H__
 
 #include "config.h"
-#include "httpd/header.h"
-#include "utils/string_utils.h"
 #include <strings.h>
+#include <string>
 #include <map>
 
 BEGIN_NS(httpd)
 
-USING_CLASS(utils, StringUtils);
+using std::string;
 using std::map;
 
-class Request{
+class Request {
 public:
-    void addHeader(const Header &header);
+    bool addHeader(const string &line);
     void parseStatusLine(const string &line);
     bool connectionClose() const;
 
     bool isGet() const {
-        return !strncasecmp(_statusLine.method.c_str(), "GET", 3);
+        return !strncasecmp(_method.c_str(), "GET", 3);
     }
     bool isPost() const {
-        return !strncasecmp(_statusLine.method.c_str(), "POST", 4);
+        return !strncasecmp(_method.c_str(), "POST", 4);
     }
     bool isHttp11() const {
-        return !strncasecmp(_statusLine.version.c_str(), "HTTP/1.1", 8);
+        return !strncasecmp(_version.c_str(), "HTTP/1.1", 8);
     }
     char *content() {
         return (char*)_content.data();
@@ -34,21 +33,20 @@ public:
         return _content.size();
     }
     const string &uri() const {
-        return _statusLine.uri;
+        return _uri;
     }
     const string &version() const {
-        return _statusLine.version;
+        return _version;
     }
+    string headers() const;
 
 private:
-    struct StatusLine {
-        string method;
-        string uri;
-        string version;
-    }_statusLine;
+    string _method;
+    string _uri;
+    string _version;
     typedef map<string, string>::const_iterator ConstIt;
     map<string, string> _headrs;
-    map<string, string> _params;
+    string _querys;
     string _content;
 };
 

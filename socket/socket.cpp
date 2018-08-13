@@ -11,7 +11,7 @@ bool Socket::socket(int family, int socktype, int protocol) {
         if (_socket < 0) {
             return false;
         }
-        setOpt(SO_REUSEADDR, 1);
+        setOpt(SO_REUSEADDR, SOL_SOCKET, 1);
     }
 
     return true;
@@ -96,7 +96,7 @@ bool TcpSocket::connect(const char *host, const char *service, int ms, int famil
             return false;
         }
 	    int error = 0;
-        if(getOpt(SO_ERROR, &error) < 0 || error) {
+        if(getOpt(SO_ERROR, SOL_SOCKET, &error) < 0 || error) {
             return false;
         }
 	}

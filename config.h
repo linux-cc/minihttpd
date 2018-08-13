@@ -9,6 +9,7 @@
 #ifdef _DEBUG_
 #include <stdio.h>
 #ifdef __linux__
+#include <sys/sendfile.h>
 #define _LOG_(fmt, ...)   printf("[%lu]"fmt, pthread_self(), ##__VA_ARGS__)
 #else
 #define _LOG_(fmt, ...)   printf("[%lu]"fmt, (intptr_t)pthread_self(), ##__VA_ARGS__)
@@ -17,6 +18,7 @@
 #define _LOG_(...)    
 #endif
 
+#define CRLF                "\r\n"
 #define BEGIN_NS(name)      namespace myframe { namespace name {
 #define END_NS              }}
 #define USING_NS(name)      using namespace myframe::name

@@ -1,43 +1,101 @@
 #include "httpd/request.h"
-#include "utils/string_utils.h"
+#include "httpd/constants.h"
 
 BEGIN_NS(httpd)
 
-USING_CLASS(utils, StringUtils);
+static string trim(const string &str) {
+    const char *base = str.c_str();
+    const char *p1 = base;
+    const char *p2 = base + str.length() - 1;
+    while(isspace(*p1)) p1++;
+    while(isspace(*p2)) p2--;
 
-void Request::addHeader(const Header &header) {
-    const string &field = header.field();
-    _headrs[field] = header.value();
-    if (field == Header::field(Header::Content_Length)) {
-        int length = atoi(header.value().c_str());
-        _content.resize(length);
+    return str.substr(p1 - base, p2 - p1 + 1);
+}
+
+static char hexToChar(char hex) {
+    if (hex >= 'A' && hex <= 'F') {
+        return hex - 'A';
     }
+    if (hex >= 'a' && hex <= 'f') {
+        return hex - 'a';
+    }
+
+    return hex - '0';
+}
+
+static string urlDecode(const string &str) {
+    string decode("");
+    size_t length = str.length();
+    for (size_t i = 0; i < length; ++i) {
+        if (str[i] == '+') {
+            decode += ' ';
+        } else if (str[i] == '%')
+        {
+            uint8_t high = hexToChar(str[++i]);
+            uint8_t low = hexToChar(str[++i]);
+            decode += (high << 4) | low;
+        } else {
+            decode += str[i];
+        }
+    }
+
+    return decode;
+}
+
+bool Request::addHeader(const string &line) {
+    string::size_type p = line.find(':');
+    if (p != string::npos) {
+        string field = trim(line.substr(0, p));
+        string value = trim(line.substr(p + 1));
+        _headrs[field] = value;
+        if (field == getHeaderField(Content_Length)) {
+            int length = atoi(value.c_str());
+            _content.resize(length);
+        }
+        return true;
+    }
+    return false;
 }
 
 void Request::parseStatusLine(const string &line) {
-    string *strs[] = { &_statusLine.method, &_statusLine.uri, &_statusLine.version };
-    StringUtils::split(line, ' ', strs, 3);
-    for (int i = 0; i < 3; ++i) {
-        StringUtils::trim(*strs[i]);
+    string::size_type p1 = line.find(' ');
+    string::size_type p2 = line.rfind(' ');
+    if (p1 != string::npos && p2 != string::npos) {
+        _method = line.substr(0, p1);
+        _uri = line.substr(p1 + 1, p2 - p1 - 1);
+        _version = trim(line.substr(p2 + 1));
     }
-    _LOG_("read status line method: %s, uri: %s, version: %s\n",
-        _statusLine.method.c_str(), _statusLine.uri.c_str(), _statusLine.version.c_str());
-    string::size_type p = _statusLine.uri.find('?');
+    string::size_type p = _uri.find('?');
     if (p != string::npos) {
-        string params = StringUtils::urlDecode(_statusLine.uri.substr(p + 1));
-        StringUtils::split(params, '&', '=', _params);
-        _statusLine.uri = _statusLine.uri.substr(0, p);
+        _querys = urlDecode(_uri.substr(p + 1));
+        _uri = _uri.substr(0, p);
     }
 }
 
 bool Request::connectionClose() const {
-    string field = Header::field(Header::Connection);
+    string field = getHeaderField(Connection);
     ConstIt it = _headrs.find(field);
     if (it != _headrs.end() && !strncasecmp(it->second.c_str(), "close", 5)) {
         return true;
     }
 
     return false;
+}
+
+string Request::headers() const {
+    string result = _method + " " + _uri;
+    if (!_querys.empty()) {
+        result += "?" + _querys;
+    }
+    result += " " + _version + CRLF;
+    for (ConstIt it = _headrs.begin(); it != _headrs.end(); ++it) {
+        result += it->first + ": " + it->second + CRLF;
+    }
+    result += CRLF;
+    result += _content;
+
+    return result;
 }
 
 END_NS
