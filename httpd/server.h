@@ -50,6 +50,7 @@ public:
     
 private:
     void tryLockAccept(bool &holdLock);
+    void disableAccept(bool &holdLock);
     void unlockAccept();
     void onAccept();
     void onHandleEvent();

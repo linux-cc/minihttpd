@@ -51,6 +51,9 @@ public:
     int size() const {
         return _size;
     }
+    int capacity() const {
+        return _capacity;
+    }
     
 private:
     struct Item {

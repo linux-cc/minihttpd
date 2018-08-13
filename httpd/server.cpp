@@ -2,6 +2,7 @@
 #include "httpd/request.h"
 #include "httpd/response.h"
 #include "socket/addrinfo.h"
+#include <math.h>
 
 BEGIN_NS(httpd)
 
@@ -49,6 +50,10 @@ void Worker::onCancel() {
 }
 
 void Worker::tryLockAccept(bool &holdLock) {
+    if (_eventQ.size() >= round(_eventQ.capacity() * 8 / 10)) {
+        disableAccept(holdLock);
+        return;
+    }
     bool locked = atomic_bool_cas(&__accept_lock, 0, 1); 
     if (locked) {
         if (!holdLock) {
@@ -59,12 +64,16 @@ void Worker::tryLockAccept(bool &holdLock) {
             }
         }
     } else {
-        if (holdLock) {
-            holdLock = false;
-            int error = _poller.del(_server);
-            if (error) {
-                _LOG_("poll del server error: %d:%s\n", errno, strerror(errno));
-            }
+        disableAccept(holdLock);
+    }
+}
+
+void Worker::disableAccept(bool &holdLock) {
+    if (holdLock) {
+        holdLock = false;
+        int error = _poller.del(_server);
+        if (error) {
+            _LOG_("poll del server error: %d:%s\n", errno, strerror(errno));
         }
     }
 }
@@ -77,7 +86,7 @@ void Worker::run() {
     bool holdLock = false;
     while (!_server.isQuit()) {
         tryLockAccept(holdLock);
-        EPollResult result = _poller.wait(100);
+        EPollResult result = _poller.wait(50);
         for (EPollResult::Iterator it = result.begin(); it != result.end(); ++it) {
             if (it->fd() == _server) {
                 _LOG_("=======================enter onAccept========================\n");
@@ -112,7 +121,7 @@ void Worker::onAccept() {
         }
         Connection *conn = _connsQ.popFront();
         if (!conn) {
-            _LOG_("Connection is empty");
+            _LOG_("Connection is empty\n");
             break;
         }
         conn->attach(fd);
