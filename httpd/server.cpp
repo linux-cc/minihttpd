@@ -118,20 +118,23 @@ void Worker::onAccept() {
             }
             break;
         }
+        TcpSocket client(fd);
         Connection *conn = _connsQ.popFront();
         if (!conn) {
             _LOG_("Connection is empty\n");
+            client.close();
             break;
         }
+        client.setNoDelay();
+        client.setNonblock();
         conn->attach(fd);
-        TcpSocket(fd).setNoDelay();
         int error = _poller.add(fd, conn);
         if (error) {
             _LOG_("poll add client error: %d:%s\n", errno, strerror(errno));
         }
 
         Sockaddr addr;
-        if (!TcpSocket(fd).getpeername(addr)) {
+        if (!client.getpeername(addr)) {
             _LOG_("Worker getpeername error: %d:%s\n", errno, strerror(errno));
         }
         Peername peer(addr);
@@ -148,57 +151,46 @@ void Worker::onHandleEvent() {
 
 void Worker::onRequest(EPollEvent &event) {
     Connection *conn = (Connection*)event.data();
-    Request request;
-    if (!readHeader(conn, request)) {
+    if (!conn->recv()) {
         close(conn);
         return;
     }
-    if (!readContent(conn, request)) {
-        close(conn);
-        return;
-    }
-    onResponse(conn, request);
-}
-
-bool Worker::readHeader(Connection *conn, Request &request) {
-    char buf[1024];
-    int len = conn->recvline(buf, sizeof(buf));
-    if (len <= 0) {
-        _LOG_("read header status line len: %d, error: %d:%s\n", len, errno, strerror(errno));
-        return false;
-    }
-
-    request.parseStatusLine(buf);
-    while (true) {
-        len = conn->recvline(buf, sizeof(buf));
-        if (len <= 0) {
-            _LOG_("read header line len: %d, error: %d:%s\n", len, errno, strerror(errno));
-            return false;
-        }
-        if (!request.addHeader(buf)) {
+    _poller.mod(*conn, conn);
+    Request &request = conn->request();
+    const char *p1 = conn->pos();
+    const char *p2 = strstr(p1, CRLF);
+    if (p2) {
+        switch(request.status()) {
+        case Request::PROCESS_LINE:
+            request.parseStatusLine(p1, p2);
+            p1 = p2 + 2;
+        case Request::PROCESS_HEADERS:
+            while ((p2 = strstr(p1, CRLF))) {
+                request.addHeader(p1, p2);
+                p1 = p2 + 2;
+                if (request.inProcessContent()) {
+                    break;
+                }
+            }
+            if (request.inProcessHeaders()) {
+                break;
+            }
+        case Request::PROCESS_CONTENT:
+            p1 += request.setContent(p1, conn->last());
+            if (request.inProcessContent()) {
+                break;
+            }
+        case Request::PROCESS_DONE:
+            _LOG_("fd: %d, Request headers:\n%s\n", (int)*conn, request.headers().c_str());
+            onResponse(conn, request);
+            request.reset();
             break;
         }
+        conn->adjust(p1);
     }
-    _LOG_("fd: %d, Request headers:\n%s", (int)*conn, request.headers().c_str());
-    
-    return true;
 }
 
-bool Worker::readContent(Connection *conn, Request &request) {
-    int length = request.contentLength();
-    _LOG_("fd: %d, Request content length: %d\n", (int)*conn, length);
-    if (length) {
-        int read = conn->recvn(request.content(), length);
-        if (read <= 0) {
-            _LOG_("Request content len: %d, error: %d:%s\n", read, errno, strerror(errno));
-            return false;;
-        }
-    }
-    
-    return true;
-}
-
-void Worker::onResponse(Connection *conn, Request &request) {
+bool Worker::onResponse(Connection *conn, Request &request) {
     Response response;
     response.parseRequest(request);
     conn->sendn(response.headers().c_str(), response.headers().length());
@@ -210,14 +202,15 @@ void Worker::onResponse(Connection *conn, Request &request) {
         if (n != length) {
             _LOG_("senfile len: %d not equal file length: %d\n", n, length);
             close(conn);
-            return;
+            return false;
         }
     }
     if (response.connectionClose()) {
         close(conn);
-    } else {
-        _poller.mod(*conn, conn);
+        return false;
     }
+
+    return true;
 }
 
 int Worker::sendFile(Connection *conn, int fd, off_t length) {

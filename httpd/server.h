@@ -54,9 +54,7 @@ private:
     void onAccept();
     void onHandleEvent();
     void onRequest(EPollEvent &event);
-    bool readHeader(Connection *conn, Request &request);
-    bool readContent(Connection *conn, Request &request);
-    void onResponse(Connection *conn, Request &request);
+    bool onResponse(Connection *conn, Request &request);
     int sendFile(Connection *conn, int fd, off_t length);
     void close(Connection *conn);
 

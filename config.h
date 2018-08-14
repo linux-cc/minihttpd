@@ -18,6 +18,8 @@
 #define _LOG_(...)    
 #endif
 
+#define CR                  '\r'
+#define LF                  '\n'
 #define CRLF                "\r\n"
 #define BEGIN_NS(name)      namespace myframe { namespace name {
 #define END_NS              }}

@@ -8,49 +8,30 @@ USING_CLASS(socket, TcpSocket);
 Connection::Connection(int socket, int bufSize):
 _socket(socket),
 _recvIndex(0),
-_recvBufSize(bufSize) {
+_recvBufSize(bufSize),
+_sendIndex(0),
+_sendBufSize(bufSize) {
     _recvBuf = new char[_recvBufSize];
+    _sendBuf = new char[_sendBufSize];
 }
 
-int Connection::recvn(void *buf, int size) {
-    if (!_recvIndex) {
-        return TcpSocket(_socket).recv(buf, size, MSG_WAITALL);
+bool Connection::recv() {
+    int n = TcpSocket(_socket).recv(_recvBuf + _recvIndex, _recvBufSize - _recvIndex);
+    if (n <= 0) {
+        if (n < 0 && errno == EAGAIN) {
+            return true;
+        }
+        return false;
     }
-    if (size <= _recvIndex) {
-        memcpy(buf, _recvBuf, size);
-        _recvIndex -= size;
-        return size;
-    }
-    char *pb = (char*)buf;
-    memcpy(pb, _recvBuf, _recvIndex);
-    pb += _recvIndex;
-    size -= _recvIndex;
-    _recvIndex = 0;
+    _recvIndex += n;
 
-    return TcpSocket(_socket).recv(pb, size, MSG_WAITALL);
+    return true;
 }
 
-int Connection::recvline(void *buf, int size) {
-    if (!_recvIndex) {
-        int len = TcpSocket(_socket).recv(_recvBuf, _recvBufSize);
-        if (len <= 0) {
-            return len;
-        }
-        _recvIndex += len;
-    }
-    int i = 0, _size = MIN(_recvIndex, size - 1);
-    char *p = (char*)buf;
-    for (; i < _size; ++i) {
-        if ((p[i] = _recvBuf[i]) == '\n') {
-            ++i;
-            break;
-        }
-    }
-    p[i] = '\0';
-    _recvIndex -= i;
-    memmove(_recvBuf, _recvBuf + i, _recvIndex);
-    
-    return i;
+void Connection::adjust(const char *last) {
+    int length = last - _recvBuf;
+    _recvIndex -= length;
+    memmove(_recvBuf, last , _recvIndex);
 }
 
 int Connection::sendn(const void *buf, size_t size) {

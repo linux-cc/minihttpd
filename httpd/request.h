@@ -13,8 +13,17 @@ using std::map;
 
 class Request {
 public:
-    bool addHeader(const string &line);
-    void parseStatusLine(const string &line);
+    enum Status {
+        PROCESS_LINE,
+        PROCESS_HEADERS,
+        PROCESS_CONTENT,
+        PROCESS_DONE,
+    };
+    Request(): _status(PROCESS_LINE), _contentIndex(0) {}
+    void parseStatusLine(const char *beg, const char *end);
+    void addHeader(const char *beg, const char *end);
+    int setContent(const char *beg, const char *end);
+    void reset();
     string headers() const;
     const string *getConnection() const;
 
@@ -39,9 +48,17 @@ public:
     const string &version() const {
         return _version;
     }
+    Status status() const {
+        return _status;
+    } 
+    bool inProcessHeaders() const {
+        return _status == PROCESS_HEADERS;
+    }
+    bool inProcessContent() const {
+        return _status == PROCESS_CONTENT;
+    }
 
 private:
-
     string _method;
     string _uri;
     string _version;
@@ -49,6 +66,8 @@ private:
     map<string, string> _headers;
     string _querys;
     string _content;
+    Status _status;
+    int _contentIndex;
 };
 
 END_NS
