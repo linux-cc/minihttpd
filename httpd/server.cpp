@@ -49,7 +49,7 @@ void Worker::onCancel() {
 }
 
 void Worker::tryLockAccept(bool &holdLock) {
-    if (_eventQ.size() >= round(_eventQ.capacity() * 8 / 10)) {
+    if (_connsQ.size() <= round(_connsQ.capacity() * 2 / 10)) {
         disableAccept(holdLock);
         return;
     }
@@ -85,7 +85,7 @@ void Worker::run() {
     bool holdLock = false;
     while (!_server.isQuit()) {
         tryLockAccept(holdLock);
-        EPollResult result = _poller.wait(50);
+        EPollResult result = _poller.wait(100);
         for (EPollResult::Iterator it = result.begin(); it != result.end(); ++it) {
             if (it->fd() == _server) {
                 _LOG_("=======================enter onAccept========================\n");
@@ -155,7 +155,6 @@ void Worker::onRequest(EPollEvent &event) {
         close(conn);
         return;
     }
-    _poller.mod(*conn, conn);
     Request &request = conn->request();
     const char *p1 = conn->pos();
     const char *p2 = strstr(p1, CRLF);
@@ -181,18 +180,19 @@ void Worker::onRequest(EPollEvent &event) {
                 break;
             }
         case Request::PROCESS_DONE:
-            _LOG_("fd: %d, Request headers:\n%s\n", (int)*conn, request.headers().c_str());
             onResponse(conn, request);
-            request.reset();
             break;
         }
         conn->adjust(p1);
     }
+    _poller.mod(*conn, conn);
 }
 
 bool Worker::onResponse(Connection *conn, Request &request) {
+    _LOG_("fd: %d, Request headers:\n%s\n", (int)*conn, request.headers().c_str());
     Response response;
     response.parseRequest(request);
+    request.reset();
     conn->sendn(response.headers().c_str(), response.headers().length());
     _LOG_("fd: %d, Response headers:\n%s\n", (int)*conn, response.headers().c_str());
     int fd = response.fd();

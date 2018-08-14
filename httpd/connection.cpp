@@ -30,8 +30,10 @@ bool Connection::recv() {
 
 void Connection::adjust(const char *last) {
     int length = last - _recvBuf;
-    _recvIndex -= length;
-    memmove(_recvBuf, last , _recvIndex);
+    if (length) {
+        _recvIndex -= length;
+        memmove(_recvBuf, last , _recvIndex);
+    }
 }
 
 int Connection::sendn(const void *buf, size_t size) {
