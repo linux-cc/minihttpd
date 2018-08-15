@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
     }
     printf("listen in port %s\n", argv[1]);
     server.setNonblock();
-    poller.add(server);
+    poller.addPollIn(server);
     char buf[1024];
     while (!__quit) {
         EPollResult result = poller.wait(1000);
@@ -39,12 +39,12 @@ int main(int argc, char *argv[]) {
                     if (fd < 0) {
                         if (errno != EWOULDBLOCK && errno != EAGAIN)
                             printf("server accept error: %d:%s\n", errno, strerror(errno));
-                        poller.mod(server);
+                        poller.modPollIn(server);
                         break;
                     }
                     TcpSocket client(fd);
                     client.setNonblock();
-                    poller.add(client);
+                    poller.addPollIn(client);
                     if (!client.getpeername(addr)) {
                         printf("server getpeername error: %d:%s\n", errno, strerror(errno));
                     }
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
                     buf[len] = 0;
                     printf("receive data[%s|%d]: %s", (const char*)peer, peer.port(), buf);
                     client.send(buf, len);
-                    poller.mod(client);
+                    poller.modPollIn(client);
                 }
             }
         }

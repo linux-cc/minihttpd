@@ -34,6 +34,8 @@ public:
     int events() const;
     int fd() const;
     void *data() const;
+    bool isPollIn() const;
+    bool isPollOut() const;
 
 private:
     void init(int fd, int events, void *data);
@@ -48,8 +50,20 @@ public:
     ~EPoller();
 
     bool create(int size);
-    int add(int fd, void *data = NULL);
-    int mod(int fd, void *data = NULL);
+    int addPollIn(int fd, void *data = NULL) {
+        return add(fd, EPOLLIN | EPOLLONESHOT | EPOLLET, data);
+    }
+    int addPollOut(int fd, void *data = NULL) {
+        return add(fd, EPOLLOUT | EPOLLONESHOT | EPOLLET, data);
+    }
+    int add(int fd, int events, void *data = NULL);
+    int modPollIn(int fd, void *data = NULL) {
+        return mod(fd, EPOLLIN | EPOLLONESHOT | EPOLLET, data);
+    }
+    int modPollOut(int fd, void *data = NULL) {
+        return mod(fd, EPOLLOUT | EPOLLONESHOT | EPOLLET, data);
+    }
+    int mod(int fd, int events, void *data = NULL);
     int del(int fd);
     EPollResult wait(int timeout);
 

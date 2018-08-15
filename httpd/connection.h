@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "httpd/request.h"
+#include "httpd/response.h"
 #include <unistd.h>
 
 BEGIN_NS(httpd)
@@ -11,7 +12,8 @@ class Connection {
 public:
     Connection(int socket = -1, int bufSize = 8192);
     bool recv();
-    int sendn(const void *buf, size_t size);
+    bool send();
+    int send(const void *buf, int size);
     void close();
     void release();
     void adjust(const char *last);
@@ -31,8 +33,16 @@ public:
     Request &request() {
         return _request;
     }
+    Response &response() {
+        return _response;
+    }
+    bool needPollOut() const {
+        return _sendIndex;
+    }
 
 private:
+    int copy(const void *buf, int size);
+
     int _socket;
     int _recvIndex;
     int _recvBufSize;
@@ -41,6 +51,7 @@ private:
     char *_recvBuf;
     char *_sendBuf;
     Request _request;
+    Response _response;
 };
 
 END_NS

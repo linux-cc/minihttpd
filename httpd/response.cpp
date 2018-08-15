@@ -17,6 +17,7 @@ static string itoa(int i) {
 }
 
 inline void Response::setContentLength(off_t length) {
+    _contentLength = length;
     _headers[getHeaderField(Content_Length)] = itoa(length);
 }
 
@@ -34,30 +35,14 @@ void Response::parseRequest(const Request &request) {
         if (file.empty()) {
             setStatusLine(Bad_Request, request.version());
         } else {
-            int code = parseFile(file);
-            setStatusLine(code, request.version());
+            int status = parseFile(file);
+            setStatusLine(status, request.version());
         }
     }
     setConnection(request);
     setServer();
-}
-
-string Response::headers() const {
-    string result = _version + ' ' + _status + ' ' + _reason + CRLF;
-    for (ConstIt it = _headers.begin(); it != _headers.end(); ++it) {
-        result += it->first + ": " + it->second + CRLF;
-    }
-    result += CRLF;
-
-    return result;
-}
-
-int Response::contentLength() const {
-    ConstIt it = _headers.find(getHeaderField(Content_Length));
-    if (it != _headers.end()) {
-        return atoi(it->second.c_str());
-    }
-    return 0;
+    setHeaders();
+    _status = SEND_HEADERS;
 }
 
 string Response::parseUri(const string &uri) {
@@ -101,7 +86,7 @@ int Response::parseFile(const string &file) {
 
 void Response::setStatusLine(int status, const string &version) {
     _version = version;
-    _status = itoa(status);
+    _code = itoa(status);
     _reason = getStatusReason(status);
 }
 
@@ -144,6 +129,32 @@ bool Response::connectionClose() const {
     }
 
     return false;
+}
+
+void Response::setHeaders(){
+    _headersStr = _version + ' ' + _code + ' ' + _reason + CRLF;
+    for (ConstIt it = _headers.begin(); it != _headers.end(); ++it) {
+        _headersStr += it->first + ": " + it->second + CRLF;
+    }
+    _headersStr += CRLF;
+}
+
+void Response::addHeadersPos(int pos) {
+    _headersPos += pos;
+    if (_headersPos >= (int)_headersStr.length()) {
+        _status = _fd > 0 ? SEND_CONTENT : SEND_DONE;
+    }
+}
+
+void Response::reset() {
+    _cgiBin = false;
+    _fd = -1;
+    _headers.clear();
+    _status = PARSE_REQUEST;
+    _headersStr.clear();
+    _headersPos = 0;
+    _filePos = 0;
+    _contentLength = 0;
 }
 
 END_NS

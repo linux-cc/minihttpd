@@ -22,6 +22,12 @@ inline int epoll_get_fd(const epoll_event &ev) {
 inline void *epoll_get_data(const epoll_event &ev) {
     return ev.data.ptr;
 }
+inline bool epoll_is_in(const epoll_event &ev) {
+    return ev.events & EPOLLIN;
+}
+inline bool epoll_is_out(const epoll_event &ev) {
+    return ev.events & EPOLLOUT;
+}
 #else /* mac osx */
 inline int epoll_create(int) {
     return kqueue();
@@ -46,13 +52,19 @@ inline void epoll_set_event(int fd, int events, void *data, epoll_event &ev) {
     ev.udata = data;
 }
 inline int epoll_get_events(const epoll_event &ev) {
-    return ev.flags;
+    return ev.filter;
 }
 inline int epoll_get_fd(const epoll_event &ev) {
     return ev.ident;
 }
 inline void *epoll_get_data(const epoll_event &ev) {
     return ev.udata;
+}
+inline bool epoll_is_in(const epoll_event &ev) {
+    return ev.filter == EPOLLIN;
+}
+inline bool epoll_is_out(const epoll_event &ev) {
+    return ev.filter == EPOLLOUT;
 }
 #endif /* __linux__ */
 
@@ -70,6 +82,14 @@ int EPollEvent::fd() const {
 
 void *EPollEvent::data() const {
     return epoll_get_data(_event);
+}
+
+bool EPollEvent::isPollIn() const {
+    return epoll_is_in(_event);
+}
+
+bool EPollEvent::isPollOut() const {
+    return epoll_is_out(_event);
 }
 
 EPoller::~EPoller() {
@@ -90,12 +110,12 @@ bool EPoller::create(int size) {
     return _events;
 }
 
-int EPoller::add(int fd, void *data) {
-    return ctl(fd, EPOLL_CTL_ADD, EPOLLIN | EPOLLONESHOT | EPOLLET, data);
+int EPoller::add(int fd, int events, void *data) {
+    return ctl(fd, EPOLL_CTL_ADD, events, data);
 }
 
-int EPoller::mod(int fd, void *data) {
-    return ctl(fd, EPOLL_CTL_MOD, EPOLLIN | EPOLLONESHOT | EPOLLET, data);
+int EPoller::mod(int fd, int events, void *data) {
+    return ctl(fd, EPOLL_CTL_MOD, events, data);
 }
 
 int EPoller::del(int fd) {
