@@ -2,6 +2,7 @@
 #define __HTTPD_RESPONSE_H__
 
 #include "config.h"
+#include <sys/stat.h>
 #include <string>
 #include <map>
 
@@ -23,6 +24,7 @@ public:
         _headersPos(0), _filePos(0), _contentLength(0) {}
     void parseRequest(const Request &request);
     bool connectionClose() const;
+    void setCommonHeaders(const Request &request);
     const char *headers() const {
         return _headersStr.data() + _headersPos;
     }
@@ -66,11 +68,9 @@ private:
     string parseUri(const string &uri);
     int parseFile(const string &file);
     void setStatusLine(int status, const string &version);
+    void setContentInfo(const string &file, const struct stat &st);
     void setContentType(const string &file);
-    void setContentLength(off_t length);
-    void setConnection(const Request &request);
-    void setServer();
-    void setHeaders();
+    void setHeadersStr();
 
     string _version;
     string _code;

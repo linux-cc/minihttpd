@@ -1,7 +1,6 @@
 #include "httpd/response.h"
 #include "httpd/request.h"
 #include "httpd/constants.h"
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -17,13 +16,13 @@ static string itoa(int i) {
     return temp;
 }
 
-inline void Response::setContentLength(off_t length) {
-    _contentLength = length;
-    _headers[getHeaderField(Content_Length)] = itoa(length);
-}
-
-inline void Response::setServer() {
-    _headers[getHeaderField(Server)] = "myframe/httpd/1.0.01";
+static string getGMTTime(time_t t) {
+    char buf[32] = { 0 };
+    time_t _t = t ? t : time(NULL);
+    struct tm *tm = gmtime(&_t);
+    strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT", tm);
+   
+    return buf;
 }
 
 void Response::parseRequest(const Request &request) {
@@ -40,10 +39,26 @@ void Response::parseRequest(const Request &request) {
             setStatusLine(status, request.version());
         }
     }
-    setConnection(request);
-    setServer();
-    setHeaders();
+    setCommonHeaders(request);
+    setHeadersStr();
     _status = SEND_HEADERS;
+}
+
+void Response::setCommonHeaders(const Request &request) {
+    string field = getHeaderField(Connection);
+    const string *value = request.getConnection();
+    if (value) {
+        _headers[field] = *value;
+    }    
+    _headers[getHeaderField(Server)] = "myframe/httpd/1.1.01";
+    _headers[getHeaderField(Date)] = getGMTTime(0);
+}
+
+void Response::setContentInfo(const string &file, const struct stat &st) {
+    setContentType(file);
+    _contentLength = st.st_size;
+    _headers[getHeaderField(Content_Length)] = itoa(st.st_size);
+    _headers[getHeaderField(Last_Modified)] = getGMTTime(st.st_mtimespec.tv_sec);
 }
 
 string Response::parseUri(const string &uri) {
@@ -79,8 +94,7 @@ int Response::parseFile(const string &file) {
     if (_fd < 0) {
         return Internal_Server_Error;
     }
-    setContentType(file);
-    setContentLength(st.st_size);
+    setContentInfo(file, st);
 
     return OK;
 }
@@ -115,14 +129,6 @@ void Response::setContentType(const string &file) {
     value += "; charset=UTF-8";
 }
 
-void Response::setConnection(const Request &request) {
-    string field = getHeaderField(Connection);
-    const string *value = request.getConnection();
-    if (value) {
-        _headers[field] = *value;
-    }    
-}
-
 bool Response::connectionClose() const {
     ConstIt it = _headers.find(getHeaderField(Connection));
     if (it != _headers.end() && !strncasecmp(it->second.c_str(), "close", 5)) {
@@ -132,7 +138,7 @@ bool Response::connectionClose() const {
     return false;
 }
 
-void Response::setHeaders(){
+void Response::setHeadersStr(){
     _headersStr = _version + ' ' + _code + ' ' + _reason + CRLF;
     for (ConstIt it = _headers.begin(); it != _headers.end(); ++it) {
         _headersStr += it->first + ": " + it->second + CRLF;
