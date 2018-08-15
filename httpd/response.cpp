@@ -3,6 +3,7 @@
 #include "httpd/constants.h"
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #define WEB_ROOT    "./htdocs/html"
 #define CGI_BIN     "/cgi-bin"
@@ -74,7 +75,7 @@ int Response::parseFile(const string &file) {
     if (!(st.st_mode & permit)) {
         return Forbidden;
     }
-    _fd = open(file.c_str(), O_RDONLY);
+    _fd = open(file.c_str(), O_RDONLY | O_NONBLOCK);
     if (_fd < 0) {
         return Internal_Server_Error;
     }
@@ -148,6 +149,9 @@ void Response::addHeadersPos(int pos) {
 
 void Response::reset() {
     _cgiBin = false;
+    if (_fd > 0) {
+        close(_fd);
+    }
     _fd = -1;
     _headers.clear();
     _status = PARSE_REQUEST;

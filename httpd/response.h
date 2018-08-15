@@ -2,7 +2,6 @@
 #define __HTTPD_RESPONSE_H__
 
 #include "config.h"
-#include <unistd.h>
 #include <string>
 #include <map>
 

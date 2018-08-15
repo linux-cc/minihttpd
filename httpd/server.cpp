@@ -70,7 +70,7 @@ void Worker::tryLockAccept(bool &holdLock) {
 void Worker::disableAccept(bool &holdLock) {
     if (holdLock) {
         holdLock = false;
-        int error = _poller.del(_server);
+        int error = _poller.delPollIn(_server);
         if (error) {
             _LOG_("poll del server error: %d:%s\n", errno, strerror(errno));
         }
@@ -85,9 +85,8 @@ void Worker::run() {
     bool holdLock = false;
     while (!_server.isQuit()) {
         tryLockAccept(holdLock);
-        EPollResult result = _poller.wait(100);
+        EPollResult result = _poller.wait(1000);
         for (EPollResult::Iterator it = result.begin(); it != result.end(); ++it) {
-            _LOG_("is in:%d, is out:%d\n", it->isPollIn(), it->isPollOut());
             if (it->isPollIn()) {
                 if (it->fd() == _server) {
                     _LOG_("=======================enter onAccept========================\n");
@@ -106,7 +105,6 @@ void Worker::run() {
                     onResponse(*it);
                 }
             }
-            sleep(1);
         }
         if (holdLock) {
             unlockAccept();
@@ -167,24 +165,19 @@ void Worker::onHandleEvent() {
 
 void Worker::onRequest(EPollEvent &event) {
     Connection *conn = (Connection*)event.data();
-    _LOG_("onRequest1\n");
     if (!conn->recv()) {
-        _LOG_("onRequest2\n");
         close(conn);
         return;
     }
-    _LOG_("onRequest3\n");
     Request &request = conn->request();
     const char *p1 = conn->pos();
     const char *p2 = strstr(p1, CRLF);
     if (p2) {
         switch(request.status()) {
         case Request::PROCESS_LINE:
-    _LOG_("onRequest4\n");
             request.parseStatusLine(p1, p2);
             p1 = p2 + 2;
         case Request::PROCESS_HEADERS:
-    _LOG_("onRequest5\n");
             while ((p2 = strstr(p1, CRLF))) {
                 request.addHeader(p1, p2);
                 p1 = p2 + 2;
@@ -196,19 +189,16 @@ void Worker::onRequest(EPollEvent &event) {
                 break;
             }
         case Request::PROCESS_CONTENT:
-    _LOG_("onRequest6\n");
             p1 += request.setContent(p1, conn->last());
             if (request.inProcessContent()) {
                 break;
             }
         case Request::PROCESS_DONE:
-    _LOG_("onRequest7\n");
+            _LOG_("fd: %d, Request headers:\n%s\n", (int)*conn, request.headers().c_str());
             _poller.addPollOut(*conn, conn);
-            return;
         }
         conn->adjust(p1);
     }
-    _LOG_("onRequest8\n");
     _poller.modPollIn(*conn, conn);
 }
 
@@ -216,16 +206,17 @@ void Worker::onResponse(EPollEvent &event) {
     Connection *conn = (Connection*)event.data();
     Request &request = conn->request();
     Response &response = conn->response();
-    _LOG_("fd: %d, Request headers:\n%s\n", (int)*conn, request.headers().c_str());
     switch(response.status()) {
     case Response::PARSE_REQUEST:
         response.parseRequest(request);
         request.reset();
+        _LOG_("fd: %d, Response headers:\n%s\n", (int)*conn, response.originHeaders());
     case Response::SEND_HEADERS: {
         int length = response.headersLength();
         int n = conn->send(response.headers(), length);
+        _LOG_("send headers n:%d, length:%d\n", n, length);
         if (n < 0) {
-            _LOG_("Respon send headers error: %d:%s\n", errno, strerror(errno));
+            _LOG_("Response send headers error: %d:%s\n", errno, strerror(errno));
             close(conn);
             return;
         }
@@ -233,11 +224,10 @@ void Worker::onResponse(EPollEvent &event) {
         if (response.inSendHeaders()) {
             break;
         }
-        _LOG_("fd: %d, Response headers:\n%s\n", (int)*conn, response.originHeaders());
     }
     case Response::SEND_CONTENT:
         if (!sendFile(conn, response)) {
-            _LOG_("Respon sendfile error: %d:%s\n", errno, strerror(errno));
+            _LOG_("Response sendfile error: %d:%s\n", errno, strerror(errno));
             close(conn);
             return;
         }
@@ -246,7 +236,7 @@ void Worker::onResponse(EPollEvent &event) {
         }
     case Response::SEND_DONE:
         if (!conn->send()) {
-            _LOG_("Respon send buffer error: %d:%s\n", errno, strerror(errno));
+            _LOG_("Response send buffer error: %d:%s\n", errno, strerror(errno));
             close(conn);
             return;
         }
@@ -255,6 +245,7 @@ void Worker::onResponse(EPollEvent &event) {
                 close(conn);
             }
             response.reset();
+            _poller.delPollOut(*conn);
             return;
         }
     }
@@ -278,15 +269,14 @@ bool Worker::sendFile(Connection *conn, Response &response) {
     if (sendfile(fd, *conn, pos, &n, NULL, 0)) {
         return errno != EAGAIN ? false : true;
     }
-    if (n < length) {
-        response.addFilePos(n + 1);
-    }
+    response.addFilePos(n + 1);
+    _LOG_("sendfile n:%lld, length:%lld\n", n, length);
 #endif
     return true;
 }
 
 void Worker::close(Connection *conn) {
-    int error = _poller.del(*conn);
+    int error = _poller.delPollIn(*conn);
     if (error) {
         _LOG_("poll del client fd: %d, error: %d:%s\n", (int)*conn, errno, strerror(errno));
     }

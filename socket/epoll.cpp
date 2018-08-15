@@ -118,8 +118,12 @@ int EPoller::mod(int fd, int events, void *data) {
     return ctl(fd, EPOLL_CTL_MOD, events, data);
 }
 
-int EPoller::del(int fd) {
+int EPoller::delPollIn(int fd) {
     return ctl(fd, EPOLL_CTL_DEL, EPOLLIN | EPOLLONESHOT | EPOLLET, NULL);
+}
+
+int EPoller::delPollOut(int fd) {
+    return ctl(fd, EPOLL_CTL_DEL, EPOLLOUT | EPOLLONESHOT | EPOLLET, NULL);
 }
 
 EPollResult EPoller::wait(int timeout) {

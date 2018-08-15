@@ -5,7 +5,6 @@ BEGIN_NS(httpd)
 
 static string urlDecode(const string &str);
 static string trim(const string &str);
-static string &trim(string &str);
 
 void Request::parseStatusLine(const char *beg, const char *end) {
     string line(beg, end - beg);
@@ -57,8 +56,10 @@ int Request::setContent(const char *beg, const char *end) {
 }
 
 void Request::reset() {
+    _uri.clear();
     _headers.clear();
     _content.clear();
+    _querys.clear();
     _status = PROCESS_LINE;
     _contentIndex = 0;
 }

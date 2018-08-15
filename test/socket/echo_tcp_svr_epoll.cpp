@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
                 int len = client.recv(buf, 1024);
                 if (len <= 0) {
                     printf("client[%s|%d]: close, len:%d\n", (const char*)peer, peer.port(), len);
-                    poller.del(client);
+                    poller.delPollIn(client);
                     client.close();
                 } else {
                     buf[len] = 0;

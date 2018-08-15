@@ -64,7 +64,8 @@ public:
         return mod(fd, EPOLLOUT | EPOLLONESHOT | EPOLLET, data);
     }
     int mod(int fd, int events, void *data = NULL);
-    int del(int fd);
+    int delPollIn(int fd);
+    int delPollOut(int fd);
     EPollResult wait(int timeout);
 
 private:
