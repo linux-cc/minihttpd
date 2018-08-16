@@ -30,6 +30,8 @@ void Response::parseRequest(const Request &request) {
         setStatusLine(Not_Implemented, request.version());
     } else if (!request.isHttp11()) {
         setStatusLine(HTTP_Version_Not_Supported, request.version());
+    } else if (request.has100Continue()) {
+        setStatusLine(Continue, request.version());
     } else {
         string file = WEB_ROOT + parseUri(request.uri());
         if (file.empty()) {
@@ -58,7 +60,7 @@ void Response::setContentInfo(const string &file, const struct stat &st) {
     setContentType(file);
     _contentLength = st.st_size;
     _headers[getHeaderField(Content_Length)] = itoa(st.st_size);
-    _headers[getHeaderField(Last_Modified)] = getGMTTime(st.st_mtimespec.tv_sec);
+    _headers[getHeaderField(Last_Modified)] = getGMTTime(STAT_MTIME(st));
 }
 
 string Response::parseUri(const string &uri) {

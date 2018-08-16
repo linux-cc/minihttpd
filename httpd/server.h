@@ -2,26 +2,27 @@
 #define __HTTPD_SERVER_H__
 
 #include "config.h"
-#include "thread/thread.h"
 #include "socket/socket.h"
-#include "socket/epoll.h"
-#include "httpd/connection.h"
 #include "httpd/simple_queue.h"
+#include <set>
+#include <map>
 
 BEGIN_NS(httpd)
 
-USING_CLASS(thread, Thread);
-USING_CLASS(socket, EPoller);
-USING_CLASS(socket, EPollEvent);
 USING_CLASS(socket, TcpSocket);
-class Request;
-class Response;
+using std::set;
+using std::map;
 class Worker;
+class Connection;
 
 class Server {
 public:
-    Server(): _workers(NULL), _quit(false) {}
-    bool start(int workers, int maxClients = 1024);
+    Server(): _workers(NULL), _slotSets(NULL), _slots(30), _curSlot(0), _quit(false) {}
+    bool start(int workers, int workerClients, int timeout);
+    void update(Connection *conn, Worker *worker);
+    void remove(Connection *conn, Worker *worker);
+    void run();
+
     int accept() {
         return _server.accept();
     }
@@ -36,34 +37,16 @@ public:
     }
 private:
     TcpSocket _server;
+    typedef std::pair<Connection*, Worker*> Item;
+    typedef set<Item> SlotSet;
+    typedef map<Connection*, int> SlotMap;
+    SimpleQueue<SlotSet> _slotQ;
+    SlotMap  _connSlot;
     Worker **_workers;
+    SlotSet *_slotSets;
+    int _slots;
+    int _curSlot;
     bool _quit;
-};
-
-class Worker: public Thread {
-public:
-    Worker(Server &server, int maxClients): _server(server), _maxClients(maxClients) {}
-    bool onInit();
-    void run();
-    void onCancel();
-    
-private:
-    void tryLockAccept(bool &holdLock);
-    void disableAccept(bool &holdLock);
-    void unlockAccept();
-    void onAccept();
-    void onHandleEvent();
-    void onRequest(EPollEvent &event);
-    void onResponse(EPollEvent &event);
-    bool sendFile(Connection *conn, Response &response);
-    void close(Connection *conn);
-
-    Server &_server;
-    EPoller _poller; 
-    SimpleQueue<Connection> _connsQ;
-    SimpleQueue<EPollEvent> _eventQ;
-    Connection *_conns;
-    int _maxClients;
 };
 
 END_NS

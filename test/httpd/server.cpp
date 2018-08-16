@@ -1,17 +1,15 @@
 #include "httpd/server.h"
-
-static bool _quit = false;
+#include <unistd.h>
 
 int main(int argc, char *argv[]) {
     USING_CLASS(httpd, Server);
     Server svr;
     if (argc == 3)
-        svr.start(atoi(argv[1]), atoi(argv[2]));
+        svr.start(atoi(argv[1]), atoi(argv[2]), 10);
     else
-        svr.start(4, 32);
+        svr.start(2, 8, 10);
 
-    while (!_quit) {
-        sleep(1);
-    }
+    svr.run();
+
     return 0;
 }

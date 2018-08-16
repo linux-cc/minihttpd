@@ -25,6 +25,9 @@ public:
     void parseRequest(const Request &request);
     bool connectionClose() const;
     void setCommonHeaders(const Request &request);
+    bool is100Continue() const {
+        return _code[0] == '1' && _code[1] == '0' && _code[2] == '0';
+    }
     const char *headers() const {
         return _headersStr.data() + _headersPos;
     }

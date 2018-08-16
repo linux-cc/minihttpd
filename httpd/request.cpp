@@ -42,25 +42,32 @@ void Request::addHeader(const char *beg, const char *end) {
 }
 
 int Request::setContent(const char *beg, const char *end) {
-    if (!_content.empty() && beg < end - 1) {
-        char *data = (char*)_content.data();
-        int length = MIN((int)_content.length() - _contentIndex, end - beg);
-        memcpy(data + _contentIndex, beg, length);
-        _contentIndex += length;
-        return length;
-    }
-    if (_content.empty() || _contentIndex == (int)_content.length()) {
+    int total = _content.length();
+    if (has100Continue() || !total) {
         _status = PROCESS_DONE;
+        return 0;
     }
-    return 0;
+    char *data = (char*)_content.data();
+    int length = MIN(total - _contentIndex, end - beg);
+    memcpy(data + _contentIndex, beg, length);
+    _contentIndex += length;
+    if (_contentIndex >= total) {
+        _status = PROCESS_DONE;
+        _content = urlDecode(_content);
+    }
+    return length;
 }
 
-void Request::reset() {
-    _uri.clear();
-    _headers.clear();
-    _content.clear();
-    _querys.clear();
+void Request::reset(bool is100Continue) {
     _status = PROCESS_LINE;
+    _headers.clear();
+    _querys.clear();
+    if (is100Continue) {
+        _status = PROCESS_CONTENT;
+    } else {
+        _uri.clear();
+        _content.clear();
+    }
     _contentIndex = 0;
 }
 
@@ -79,11 +86,25 @@ string Request::headers() const {
     return result;
 }
 
-const string *Request::getConnection() const {
-    string field = getHeaderField(Connection);
-    ConstIt it = _headers.find(field);
+const string *Request::getHeader(int field) const {
+    string _field = getHeaderField(field);
+    ConstIt it = _headers.find(_field);
     
     return it != _headers.end() ? &it->second : NULL;
+}
+
+const string *Request::getConnection() const {
+    return getHeader(Connection);
+}
+
+bool Request::has100Continue() const {
+    const string *value = getHeader(Expect);
+    if (value && value->size() >= 3) {
+        const string &v = *value;
+        return v[0] == '1' && v[1] == '0' && v[2] == '0';
+    }
+
+    return false;
 }
 
 string &trim(string &str) {

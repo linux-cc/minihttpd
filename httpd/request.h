@@ -23,9 +23,11 @@ public:
     void parseStatusLine(const char *beg, const char *end);
     void addHeader(const char *beg, const char *end);
     int setContent(const char *beg, const char *end);
-    void reset();
+    void reset(bool is100Continue);
     string headers() const;
+    const string *getHeader(int field) const;
     const string *getConnection() const;
+    bool has100Continue() const;
 
     bool isGet() const {
         return !strncasecmp(_method.c_str(), "GET", 3);
@@ -36,8 +38,8 @@ public:
     bool isHttp11() const {
         return !strncasecmp(_version.c_str(), "HTTP/1.1", 8);
     }
-    char *content() {
-        return (char*)_content.data();
+    const char *content() const {
+        return _content.data();
     }
     int contentLength() const {
         return _content.size();

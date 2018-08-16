@@ -16,14 +16,14 @@ public:
     }
     void init(Type *items, int nitem) {
         _capacity = nitem;
-        _items = new Item[_capacity];
+        _items = new Type*[_capacity];
         for (int i = 0; items && i < _capacity; ++i) {
             pushBack(items + i);
         }
     }
     void pushBack(Type *item) {
         if (!full()) {
-            _items[_tail++].item = item;
+            _items[_tail++] = item;
             if (_tail == _capacity) {
                 _tail = 0;
             }
@@ -33,7 +33,7 @@ public:
     Type *popFront() {
         Type *t = NULL;
         if (!empty()) {
-            t = _items[_head++].item;
+            t = _items[_head++];
             if (_head == _capacity) {
                 _head = 0;
             }
@@ -41,7 +41,9 @@ public:
         }
         return t;
     }
-
+    Type *at(int index) {
+        return _items[index];
+    }
     bool empty() const {
         return _size == 0;
     }
@@ -56,10 +58,7 @@ public:
     }
     
 private:
-    struct Item {
-        Type *item;
-    };
-    Item *_items;
+    Type **_items;
     int _capacity;
     int _size;
     int _head;
