@@ -3,9 +3,7 @@
 
 #include "config.h"
 #include "thread/thread.h"
-#include "socket/socket.h"
 #include "socket/epoll.h"
-#include "httpd/connection.h"
 #include "httpd/simple_queue.h"
 
 BEGIN_NS(httpd)
@@ -13,11 +11,8 @@ BEGIN_NS(httpd)
 USING_CLASS(thread, Thread);
 USING_CLASS(socket, EPoller);
 USING_CLASS(socket, EPollEvent);
-USING_CLASS(socket, TcpSocket);
-class Request;
-class Response;
-class Worker;
 class Server;
+class Connection;
 
 class Worker: public Thread {
 public:
@@ -35,7 +30,6 @@ private:
     void onHandleEvent();
     void onRequest(EPollEvent &event);
     void onResponse(EPollEvent &event);
-    bool sendFile(Connection *conn, Response &response);
     void closeInternal(Connection *conn);
 
     Server &_server;

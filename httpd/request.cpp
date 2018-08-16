@@ -1,74 +1,91 @@
 #include "httpd/request.h"
-#include "httpd/constants.h"
+#include "httpd/connection.h"
 
 BEGIN_NS(httpd)
 
 static string urlDecode(const string &str);
 static string trim(const string &str);
 
-void Request::parseStatusLine(const char *beg, const char *end) {
-    string line(beg, end - beg);
-    string::size_type p1 = line.find(' ');
-    string::size_type p2 = line.rfind(' ');
-    if (p1 != string::npos && p2 != string::npos) {
-        _method = line.substr(0, p1);
-        _uri = line.substr(p1 + 1, p2 - p1 - 1);
-        _version = trim(line.substr(p2 + 1));
-        _status = PROCESS_HEADERS;
+int Request::parseStatusLine(const char *pos) {
+    const char *end = strstr(pos, CRLF);
+    if (end) {
+        string line(pos, end - pos);
+        string::size_type p1 = line.find(' ');
+        string::size_type p2 = line.rfind(' ');
+        if (p1 != string::npos && p2 != string::npos) {
+            _method = line.substr(0, p1);
+            _uri = line.substr(p1 + 1, p2 - p1 - 1);
+            _version = trim(line.substr(p2 + 1));
+            _status = PARSE_HEADERS;
+        }
+        string::size_type p = _uri.find('?');
+        if (p != string::npos) {
+            _querys = urlDecode(_uri.substr(p + 1));
+            _uri = _uri.substr(0, p);
+        }
+        return end - pos + 2;
     }
-    string::size_type p = _uri.find('?');
-    if (p != string::npos) {
-        _querys = urlDecode(_uri.substr(p + 1));
-        _uri = _uri.substr(0, p);
-    }
+
+    return 0;
 }
 
-void Request::addHeader(const char *beg, const char *end) {
-    string header(beg, end - beg);
-    string::size_type p = header.find(':');
-    if (p != string::npos) {
-        string field = trim(header.substr(0, p));
-        string value = trim(header.substr(p + 1));
-        _headers[field] = value;
-        if (field == getHeaderField(Content_Length)) {
-            int length = atoi(value.c_str());
-            _content.resize(length);
+int Request::parseHeaders(const char *pos) {
+    const char *end;
+    int length = 0;
+    while ((end = strstr(pos, CRLF))) {
+        length += end - pos + 2;
+        string header(pos, end - pos);
+        string::size_type p = header.find(':');
+        if (p != string::npos) {
+            string field = trim(header.substr(0, p));
+            string value = trim(header.substr(p + 1));
+            _headers[field] = value;
+            if (field == getFieldName(Header::Content_Length)) {
+                int length = atoi(value.c_str());
+                _content.resize(length);
+            }
+        } else {
+            if (pos[0] == CR && pos[1] == LF) {
+                _status = PARSE_CONTENT;
+                break;
+            }
         }
-    } else {
-        if (beg[0] == CR && beg[1] == LF) {
-            _status = PROCESS_CONTENT;
-        }
+        pos = end + 2;
     }
+
+    return length;
 }
 
-int Request::setContent(const char *beg, const char *end) {
+int Request::parseContent(const char *pos, const char *last) {
     int total = _content.length();
     if (has100Continue() || !total) {
-        _status = PROCESS_DONE;
+        _status = PARSE_DONE;
         return 0;
     }
     char *data = (char*)_content.data();
-    int length = MIN(total - _contentIndex, end - beg);
-    memcpy(data + _contentIndex, beg, length);
-    _contentIndex += length;
-    if (_contentIndex >= total) {
-        _status = PROCESS_DONE;
+    int length = MIN(total - _contentPos, last - pos);
+    memcpy(data + _contentPos, pos, length);
+    _contentPos += length;
+    if (_contentPos >= total) {
+        _status = PARSE_DONE;
         _content = urlDecode(_content);
     }
+
     return length;
 }
 
 void Request::reset(bool is100Continue) {
-    _status = PROCESS_LINE;
+    if (is100Continue) {
+        _status = PARSE_CONTENT;
+        _headers.erase(getFieldName(Header::Expect));
+        return;
+    }
+    _status = PARSE_LINE;
+    _uri.clear();
     _headers.clear();
     _querys.clear();
-    if (is100Continue) {
-        _status = PROCESS_CONTENT;
-    } else {
-        _uri.clear();
-        _content.clear();
-    }
-    _contentIndex = 0;
+    _content.clear();
+    _contentPos = 0;
 }
 
 string Request::headers() const {
@@ -77,7 +94,7 @@ string Request::headers() const {
         result += "?" + _querys;
     }
     result += " " + _version + CRLF;
-    for (ConstIt it = _headers.begin(); it != _headers.end(); ++it) {
+    for (HeaderIt it = _headers.begin(); it != _headers.end(); ++it) {
         result += it->first + ": " + it->second + CRLF;
     }
     result += CRLF;
@@ -87,18 +104,14 @@ string Request::headers() const {
 }
 
 const string *Request::getHeader(int field) const {
-    string _field = getHeaderField(field);
-    ConstIt it = _headers.find(_field);
+    string _field = getFieldName(field);
+    HeaderIt it = _headers.find(_field);
     
     return it != _headers.end() ? &it->second : NULL;
 }
 
-const string *Request::getConnection() const {
-    return getHeader(Connection);
-}
-
 bool Request::has100Continue() const {
-    const string *value = getHeader(Expect);
+    const string *value = getHeader(Header::Expect);
     if (value && value->size() >= 3) {
         const string &v = *value;
         return v[0] == '1' && v[1] == '0' && v[2] == '0';

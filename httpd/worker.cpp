@@ -2,6 +2,7 @@
 #include "httpd/server.h"
 #include "httpd/request.h"
 #include "httpd/response.h"
+#include "httpd/connection.h"
 #include "socket/addrinfo.h"
 #include <math.h>
 
@@ -154,36 +155,29 @@ void Worker::onRequest(EPollEvent &event) {
         return;
     }
     Request &request = conn->request();
-    const char *p1 = conn->pos();
-    const char *p2 = strstr(p1, CRLF);
-    if (p2) {
-        switch(request.status()) {
-        case Request::PROCESS_LINE:
-            request.parseStatusLine(p1, p2);
-            p1 = p2 + 2;
-        case Request::PROCESS_HEADERS:
-            while ((p2 = strstr(p1, CRLF))) {
-                request.addHeader(p1, p2);
-                p1 = p2 + 2;
-                if (request.inProcessContent()) {
-                    break;
-                }
-            }
-            if (request.inProcessHeaders()) {
-                break;
-            }
-            _LOG_("fd: %d, Request headers:\n%s", (int)*conn, request.headers().c_str());
-        case Request::PROCESS_CONTENT:
-            p1 += request.setContent(p1, conn->last());
-            if (request.inProcessContent()) {
-                break;
-            }
-        case Request::PROCESS_DONE:
-            _LOG_("fd: %d, Request content:\n%s\n", (int)*conn, request.content());
-            _poller.addPollOut(*conn, conn);
+    const char *pos = conn->pos();
+    switch(request.status()) {
+    case Request::PARSE_LINE:
+        pos += request.parseStatusLine(pos);
+        if (request.inParseStatusLine()) {
+            break;
         }
-        conn->adjust(p1);
+    case Request::PARSE_HEADERS:
+        pos += request.parseHeaders(pos);
+        if (request.inParseHeaders()) {
+            break;
+        }
+        _LOG_("fd: %d, Request headers:\n%s", (int)*conn, request.headers().c_str());
+    case Request::PARSE_CONTENT:
+        pos += request.parseContent(pos, conn->last());
+        if (request.inParseContent()) {
+            break;
+        }
+    case Request::PARSE_DONE:
+        _LOG_("fd: %d, Request content:\n%s\n", (int)*conn, request.content().c_str());
+        _poller.addPollOut(*conn, conn);
     }
+    conn->adjust(pos);
     _poller.modPollIn(*conn, conn);
     _server.update(conn, this);
 }
@@ -196,23 +190,20 @@ void Worker::onResponse(EPollEvent &event) {
     case Response::PARSE_REQUEST:
         response.parseRequest(request);
         request.reset(response.is100Continue());
-        _LOG_("fd: %d, Response headers:\n%s\n", (int)*conn, response.originHeaders());
+        _LOG_("fd: %d, Response headers:\n%s\n", (int)*conn, response.headers());
     case Response::SEND_HEADERS: {
-        int length = response.headersLength();
-        int n = conn->send(response.headers(), length);
-        if (n < 0) {
+        if (!response.sendHeaders(conn)) {
             _LOG_("Response send headers error: %d:%s\n", errno, strerror(errno));
             closeInternal(conn);
             return;
         }
-        response.addHeadersPos(n + 1);
         if (response.inSendHeaders()) {
             break;
         }
     }
     case Response::SEND_CONTENT:
-        if (!sendFile(conn, response)) {
-            _LOG_("Response sendfile error: %d:%s\n", errno, strerror(errno));
+        if (!response.sendContent(conn)) {
+            _LOG_("Response send content error: %d:%s\n", errno, strerror(errno));
             closeInternal(conn);
             return;
         }
@@ -235,29 +226,6 @@ void Worker::onResponse(EPollEvent &event) {
         }
     }
     _poller.modPollOut(*conn, conn);
-}
-
-bool Worker::sendFile(Connection *conn, Response &response) {
-    int fd = response.fileFd();
-    off_t length = response.contentLength();
-    if (fd < 0 || length == 0) {
-        return true;
-    }
-    off_t pos = response.filePos();
-    off_t n = length;
-#ifdef __linux__
-    n = sendfile(*conn, fd, &pos, length);
-    if (n < 0) {
-        return errno != EAGAIN ? false : true;
-    }
-#else
-    if (sendfile(fd, *conn, pos, &n, NULL, 0)) {
-        return errno != EAGAIN ? false : true;
-    }
-    response.addFilePos(n + 1);
-    _LOG_("sendfile n:%lld, length:%lld\n", n, length);
-#endif
-    return true;
 }
 
 void Worker::close(Connection *conn) {

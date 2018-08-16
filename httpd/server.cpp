@@ -1,5 +1,7 @@
 #include "httpd/server.h"
 #include "httpd/worker.h"
+#include "httpd/connection.h"
+#include "httpd/constants.h"
 
 BEGIN_NS(httpd)
 
@@ -7,6 +9,16 @@ USING_CLASS(thread, AutoMutex);
 USING_CLASS(thread, Mutex);
 
 static Mutex __setLock;
+
+Server::Server():
+_workers(NULL),
+_slotSets(NULL),
+_slots(30),
+_curSlot(0),
+_quit(false) {
+    Header::initFieldName();
+    ResponseStatus::initStatusReason();
+}
 
 bool Server::start(int workers, int workerClients, int timeout) {
     _LOG_("workers: %d, workerClients: %d, timeout: %d\n", workers, workerClients, timeout);

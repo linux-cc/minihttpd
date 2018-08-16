@@ -17,7 +17,7 @@ class Connection;
 
 class Server {
 public:
-    Server(): _workers(NULL), _slotSets(NULL), _slots(30), _curSlot(0), _quit(false) {}
+    Server();
     bool start(int workers, int workerClients, int timeout);
     void update(Connection *conn, Worker *worker);
     void remove(Connection *conn, Worker *worker);

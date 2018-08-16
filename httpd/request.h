@@ -2,6 +2,7 @@
 #define __HTTPD_REQUEST_H__
 
 #include "config.h"
+#include "httpd/constants.h"
 #include <strings.h>
 #include <string>
 #include <map>
@@ -10,25 +11,31 @@ BEGIN_NS(httpd)
 
 using std::string;
 using std::map;
+class Connection;
 
 class Request {
 public:
     enum Status {
-        PROCESS_LINE,
-        PROCESS_HEADERS,
-        PROCESS_CONTENT,
-        PROCESS_DONE,
+        PARSE_LINE,
+        PARSE_HEADERS,
+        PARSE_CONTENT,
+        PARSE_DONE,
     };
-    Request(): _status(PROCESS_LINE), _contentIndex(0) {}
-    void parseStatusLine(const char *beg, const char *end);
-    void addHeader(const char *beg, const char *end);
-    int setContent(const char *beg, const char *end);
+    Request(): _status(PARSE_LINE), _contentPos(0) {}
+    int parseStatusLine(const char *pos);
+    int parseHeaders(const char *pos);
+    int parseContent(const char *pos, const char *last);
     void reset(bool is100Continue);
     string headers() const;
     const string *getHeader(int field) const;
-    const string *getConnection() const;
     bool has100Continue() const;
 
+    const string &content() const {
+        return _content;
+    }
+    const string *getConnection() const {
+        return getHeader(Header::Connection);
+    }
     bool isGet() const {
         return !strncasecmp(_method.c_str(), "GET", 3);
     }
@@ -37,12 +44,6 @@ public:
     }
     bool isHttp11() const {
         return !strncasecmp(_version.c_str(), "HTTP/1.1", 8);
-    }
-    const char *content() const {
-        return _content.data();
-    }
-    int contentLength() const {
-        return _content.size();
     }
     const string &uri() const {
         return _uri;
@@ -53,23 +54,26 @@ public:
     Status status() const {
         return _status;
     } 
-    bool inProcessHeaders() const {
-        return _status == PROCESS_HEADERS;
+    bool inParseStatusLine() const {
+        return _status == PARSE_LINE;
     }
-    bool inProcessContent() const {
-        return _status == PROCESS_CONTENT;
+    bool inParseHeaders() const {
+        return _status == PARSE_HEADERS;
+    }
+    bool inParseContent() const {
+        return _status == PARSE_CONTENT;
     }
 
 private:
     string _method;
     string _uri;
     string _version;
-    typedef map<string, string>::const_iterator ConstIt;
+    typedef map<string, string>::const_iterator HeaderIt;
     map<string, string> _headers;
     string _querys;
     string _content;
     Status _status;
-    int _contentIndex;
+    int _contentPos;
 };
 
 END_NS

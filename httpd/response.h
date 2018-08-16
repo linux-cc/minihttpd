@@ -11,6 +11,7 @@ BEGIN_NS(httpd)
 using std::string;
 using std::map;
 class Request;
+class Connection;
 
 class Response {
 public:
@@ -21,40 +22,18 @@ public:
         SEND_DONE,
     };
     Response(): _cgiBin(false), _fd(-1), _status(PARSE_REQUEST),
-        _headersPos(0), _filePos(0), _contentLength(0) {}
+        _headersPos(0), _filePos(0), _fileLength(0) {}
     void parseRequest(const Request &request);
-    bool connectionClose() const;
     void setCommonHeaders(const Request &request);
+    bool sendHeaders(Connection *conn);
+    bool sendContent(Connection *conn);
+    bool connectionClose() const;
+
     bool is100Continue() const {
         return _code[0] == '1' && _code[1] == '0' && _code[2] == '0';
     }
     const char *headers() const {
-        return _headersStr.data() + _headersPos;
-    }
-    const char *originHeaders() const {
         return _headersStr.c_str();
-    }
-    int headersLength() const {
-        return _headersStr.size() - _headersPos;
-    }
-    int headersPos() const {
-        return _headersPos;
-    }
-    void addHeadersPos(int pos);
-    int contentLength() const {
-        return _contentLength - _filePos;
-    }
-    int fileFd() const {
-        return _fd;
-    }
-    void addFilePos(off_t pos) {
-        _filePos += pos;
-        if (_filePos >= _contentLength) {
-            _status = SEND_DONE;
-        }
-    }
-    off_t filePos() const {
-        return _filePos;
     }
     Status status() const {
         return _status;
@@ -68,9 +47,9 @@ public:
     void reset();
 
 private:
+    void setStatusLine(int status, const string &version);
     string parseUri(const string &uri);
     int parseFile(const string &file);
-    void setStatusLine(int status, const string &version);
     void setContentInfo(const string &file, const struct stat &st);
     void setContentType(const string &file);
     void setHeadersStr();
@@ -80,13 +59,13 @@ private:
     string _reason;
     bool _cgiBin;
     int _fd;
-    typedef map<string, string>::const_iterator ConstIt;
-    map<string, string> _headers;
+    map<int, string> _headers;
     Status _status;
     string _headersStr;
     int _headersPos;
     off_t _filePos;
-    off_t _contentLength;
+    off_t _fileLength;
+    typedef map<int, string>::const_iterator HeaderIt;
 };
 
 END_NS

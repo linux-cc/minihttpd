@@ -17,7 +17,7 @@ do {\
 static map<int, string> __fields;
 static map<int, string> __status;
 
-static void initHeaderField() {
+void Header::initFieldName() {
     if (!__fields.empty()) {
         return;
     }
@@ -74,7 +74,7 @@ static void initHeaderField() {
     __INIT__(Last_Modified, '-', __fields);
 }
 
-static void initStatus() {
+void ResponseStatus::initStatusReason() {
     if (!__status.empty()) {
         return;
     }
@@ -126,13 +126,11 @@ static void initStatus() {
     __INIT__(HTTP_Version_Not_Supported, ' ', __status);
 }
 
-const string &getHeaderField(int header) {
-    initHeaderField();
+const string &getFieldName(int header) {
     return __fields[header];
 }
 
 const string &getStatusReason(int status) {
-    initStatus();
     return __status[status];
 }
 
