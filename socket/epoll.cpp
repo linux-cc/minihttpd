@@ -114,8 +114,8 @@ int EPoller::add(int fd, void *data, int events) {
     return ctl(fd, EPOLL_CTL_ADD, events | EPOLLONESHOT | EPOLLET, data);
 }
 
-int EPoller::mod(int fd, void *data, int events) {
-    return ctl(fd, EPOLL_CTL_MOD, events | EPOLLONESHOT | EPOLLET, data);
+int EPoller::mod(int fd, void *data, bool isOut) {
+    return ctl(fd, EPOLL_CTL_MOD, (isOut ? EPOLLOUT : EPOLLIN)| EPOLLONESHOT | EPOLLET, data);
 }
 
 int EPoller::del(int fd, int events) {

@@ -176,7 +176,7 @@ void Worker::onRequest(EPollEvent &event) {
             break;
         }
     case Request::PARSE_DONE:
-        _poller.mod(*conn, conn, EPOLL_RDWR);
+        _poller.mod(*conn, conn, true);
         _LOG_("fd: %d, Request content:\n%s\n", (int)*conn, request.content().c_str());
     }
     conn->adjust(pos);
@@ -222,15 +222,18 @@ void Worker::onResponse(EPollEvent &event) {
                 closeInternal(conn);
             }
             response.reset();
-            //_poller.del(*conn, EPOLL_WRITE);
+            _poller.mod(*conn, conn);
             return;
         }
     }
-    _poller.mod(*conn, conn, EPOLL_WRITE);
+    int error = _poller.mod(*conn, conn, true);
+    if (error) {
+        _LOG_("onResponse poll mode: %d:%s\n", errno, strerror(errno));
+    }
 }
 
 void Worker::close(Connection *conn) {
-    //int error = _poller.del(*conn);
+    _poller.del(*conn);
     _LOG_("close connection: %p, fd: %d\n", conn, (int)*conn);
     conn->close();
     _connsQ.pushBack(conn);

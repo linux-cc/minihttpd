@@ -75,6 +75,7 @@ bool Response::sendHeaders(Connection *conn) {
 
 bool Response::sendContent(Connection *conn) {
     if (_fd < 0 || _fileLength == 0) {
+        _status = SEND_DONE;
         return true;
     }
     off_t n = _fileLength - _filePos;
@@ -87,11 +88,11 @@ bool Response::sendContent(Connection *conn) {
     if (sendfile(_fd, *conn, _filePos, &n, NULL, 0)) {
         return errno != EAGAIN ? false : true;
     }
-     _filePos += n + 1;
-     if (_filePos >= _fileLength) {
-         _status = SEND_DONE;
-     }
 #endif
+    _filePos += n + 1;
+    if (_filePos >= _fileLength) {
+       _status = SEND_DONE;
+    }
     return true;
 }
 
