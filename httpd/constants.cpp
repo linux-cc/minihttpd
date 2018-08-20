@@ -63,6 +63,7 @@ void Header::initFieldName() {
     __INIT__(WWW_Authenticate, '-', __fields);
     // entity headers
     __INIT__(Allow, '-', __fields);
+    __INIT__(Content_Disposition, '-', __fields);
     __INIT__(Content_Encoding, '-', __fields);
     __INIT__(Content_Language, '-', __fields);
     __INIT__(Content_Length, '-', __fields);

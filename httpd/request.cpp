@@ -1,83 +1,215 @@
 #include "httpd/request.h"
 #include "httpd/connection.h"
+#include <fcntl.h>
+#include <errno.h>
 
 BEGIN_NS(httpd)
 
 static string urlDecode(const string &str);
 static string trim(const string &str);
+static string &trim(string &str);
+static string extractBetween(const string &str, const string &delim1, const string &delim2, int pos = 0);
 
-int Request::parseStatusLine(const char *pos) {
-    const char *end = strstr(pos, CRLF);
-    if (end) {
-        string line(pos, end - pos);
-        string::size_type p1 = line.find(' ');
-        string::size_type p2 = line.rfind(' ');
-        if (p1 != string::npos && p2 != string::npos) {
-            _method = line.substr(0, p1);
-            _uri = line.substr(p1 + 1, p2 - p1 - 1);
-            _version = trim(line.substr(p2 + 1));
+Request::Request():
+_status(PARSE_LINE),
+_contentPos(0),
+_contentLength(0),
+_multipartPos(0),
+_multipartFd(-1),
+_100Continue(0),
+_multipart(0),
+_multipartStatus(MULTIPART_HEADERS),
+_reserve(0){
+    _content.resize(1024);
+}
+
+int Request::parseStatusLine(const char *pos, const char *last) {
+    const char *p0 = NULL, *p1 = NULL, *p2 = pos;
+    for (; p2 < last - 1; ++p2) {
+        if (*p2 == ' ') {
+            p0 ? p1 = p2 : p0 = p2;
+        } else if (p2[0] == CR && p2[1] == LF) {
+            _method.assign(pos, p0 - pos);
+            _uri.assign(p0 + 1, p1 - p0 - 1);
+            _version.assign(p1 + 1, p2 - p1 - 1);
+            string::size_type p = _uri.find('?');
+            if (p != string::npos) {
+                _querys = urlDecode(_uri.substr(p + 1));
+                _uri = _uri.substr(0, p);
+            }
             _status = PARSE_HEADERS;
+            return p2 - pos + 2;
         }
-        string::size_type p = _uri.find('?');
-        if (p != string::npos) {
-            _querys = urlDecode(_uri.substr(p + 1));
-            _uri = _uri.substr(0, p);
-        }
-        return end - pos + 2;
     }
 
     return 0;
 }
 
-int Request::parseHeaders(const char *pos) {
-    const char *end;
+int Request::parseHeaders(const char *pos, const char *last) {
+    const char *p0 = NULL, *p1 = pos;
     int length = 0;
-    while ((end = strstr(pos, CRLF))) {
-        length += end - pos + 2;
-        string header(pos, end - pos);
-        string::size_type p = header.find(':');
-        if (p != string::npos) {
-            string field = trim(header.substr(0, p));
-            string value = trim(header.substr(p + 1));
-            _headers[field] = value;
-            if (field == getFieldName(Header::Content_Length)) {
-                int length = atoi(value.c_str());
-                _content.resize(length);
-            }
-        } else {
-            if (pos[0] == CR && pos[1] == LF) {
+    for (; p1 < last - 1; ++p1) {
+        if (*p1 == ':') {
+            p0 = p1;
+        } else if (p1[0] == CR && p1[1] == LF) {
+            string field(pos, p0 - pos);
+            string value(p0 + 1, p1 - p0 - 1);
+            addHeader(trim(field), trim(value));
+            length += p1 - pos + 2;
+            if (p1 + 3 < last && p1[2] == CR && p1[3] == LF) {
+                length += 2;
                 _status = PARSE_CONTENT;
                 break;
             }
+            ++p1;
+            pos = p1 + 1;
         }
-        pos = end + 2;
     }
 
     return length;
 }
 
+void Request::addHeader(const string &field, const string &value) {
+    _headers[field] = value;
+    if (field == getFieldName(Header::Content_Length)) {
+        _contentLength = atoi(value.c_str());
+    } else if (field == getFieldName(Header::Expect)) {
+        if (value.size() >= 3) {
+            _100Continue = (value[0] == '1' && value[1] == '0' && value[2] == '0');
+        }
+    } else if (field == getFieldName(Header::Content_Type)) {
+        _multipart = !strncasecmp(value.c_str(), "multipart/form-data", strlen("multipart/form-data"));
+    }
+}
+
 int Request::parseContent(const char *pos, const char *last) {
-    int total = _content.length();
-    if (has100Continue() || !total) {
+    if (_100Continue || !_contentLength) {
         _status = PARSE_DONE;
         return 0;
     }
-    char *data = (char*)_content.data();
-    int length = MIN(total - _contentPos, last - pos);
-    memcpy(data + _contentPos, pos, length);
+    int length = 0;
+    if (_multipart) {
+        string &type= _headers[getFieldName(Header::Content_Type)];
+        string::size_type eq = type.find('=');
+        string boundary = "--" + trim(type.substr(eq + 1));
+        length = parseMultipart(pos, last, boundary);
+    } else {
+        if (_contentLength + 1 > (int)_content.length()) {
+            _content.resize(_contentLength);
+        }
+        char *data = (char*)_content.data();
+        length = MIN(_contentLength - _contentPos, last - pos);
+        memcpy(data + _contentPos, pos, length);
+    }
     _contentPos += length;
-    if (_contentPos >= total) {
+    if (_contentPos >= _contentLength) {
         _status = PARSE_DONE;
-        _content = urlDecode(_content);
+        _content[_contentLength] = '\0';
+        _content = urlDecode(_content.c_str());
+    }
+
+    return length;
+}
+
+int Request::parseMultipart(const char *pos, const char *last, const string &boundary) {
+    int length = 0;
+    const char *p1 = pos;
+    string::size_type bsize = boundary.size();
+    for (; p1 < last - bsize; ++p1) {
+        if (!strncmp(boundary.c_str(), p1, bsize)) {
+            if (_multipartStatus == MULTIPART_HEADERS) {
+                if (p1 + bsize + 2 < last && p1[bsize] == '-' && p1[bsize + 1] == '-') {
+                    return length + bsize + 4;
+                }
+                int hlen = parseFormHeader(p1 + bsize + 2, last);
+                if (!hlen) {
+                    break;
+                }
+                p1 += hlen + bsize + 2;
+                length += hlen + bsize + 2;
+                pos = p1;
+            } else if (_multipartStatus == MULTIPART_CONTENT) {
+                length += 2 + setMultipartContent(pos, p1 - pos - 2);
+                --p1;
+                _multipartStatus = MULTIPART_HEADERS;
+            }
+        }
+    }
+    if (_multipartStatus == MULTIPART_CONTENT && last - pos > 0) {
+        length += setMultipartContent(pos, last - pos);
+    }
+
+    return length;
+}
+
+int Request::parseFormHeader(const char *pos, const char *last) {
+    const char *p0 = NULL, *p1 = pos;
+    int length = 0;
+    for (; p1 < last - 1; ++p1) {
+        if (*p1 == ':') {
+            p0 = p1;
+        } else if (p1[0] == CR && p1[1] == LF) {
+            length += p1 - pos + 2;
+            string field(pos, p0 - pos);
+            string value(p0 + 1, p1 - p0);
+            _curMultipartHeader.parse(field, value);
+            if (p1 + 3 < last && p1[2] == CR && p1[3] == LF) {
+                _multipartStatus = MULTIPART_CONTENT;
+                length += 2;
+                setMultipartName();
+                if (_curMultipartHeader.hasType) {
+                    string filename = "upload/" + _curMultipartHeader.name;
+                    _multipartFd = open(filename.c_str(), O_CREAT|O_WRONLY|O_TRUNC, 0666);
+                }
+                break;
+            }
+            ++p1;
+            pos = p1 + 1;
+        }
+    }
+
+    return length;
+}
+
+void Request::MultipartHeader::parse(const string &field, const string &value) {
+    hasType = false;
+    if (field == getFieldName(Header::Content_Disposition)) {
+        string::size_type p = value.find("filename");
+        name = extractBetween(value, "\"", "\"", p != string::npos ? p : 0);
+    } else if (field == getFieldName(Header::Content_Type)) {
+        hasType = true;
+    }
+}
+
+void Request::setMultipartName() {
+    if (!_curMultipartHeader.hasType) {
+        if (_multipartPos) {
+            _content[_multipartPos++] = '&';
+        }
+        string &name = _curMultipartHeader.name;
+        memcpy((char*)_content.data() + _multipartPos, name.c_str(), name.size());
+        _multipartPos += name.size();
+        _content[_multipartPos++] = '=';
+    }
+}
+
+int Request::setMultipartContent(const char *pos, int length) {
+    if (_curMultipartHeader.hasType) {
+        if (_multipartFd > 0) {
+            write(_multipartFd, pos, length);
+        }
+    } else {
+        memcpy((char*)_content.data() + _multipartPos, pos, length);
+        _multipartPos += length;
     }
 
     return length;
 }
 
 void Request::reset(bool is100Continue) {
+    _100Continue = 0;
     if (is100Continue) {
         _status = PARSE_CONTENT;
-        _headers.erase(getFieldName(Header::Expect));
         return;
     }
     _status = PARSE_LINE;
@@ -108,16 +240,6 @@ const string *Request::getHeader(int field) const {
     HeaderIt it = _headers.find(_field);
     
     return it != _headers.end() ? &it->second : NULL;
-}
-
-bool Request::has100Continue() const {
-    const string *value = getHeader(Header::Expect);
-    if (value && value->size() >= 3) {
-        const string &v = *value;
-        return v[0] == '1' && v[1] == '0' && v[2] == '0';
-    }
-
-    return false;
 }
 
 string &trim(string &str) {
@@ -170,6 +292,18 @@ string urlDecode(const string &str) {
     }
 
     return decode;
+}
+
+string extractBetween(const string &str, const string &delim1, const string &delim2, int pos) {
+    string result;
+    string::size_type len = delim1.length();
+    string::size_type p1 = str.find(delim1, pos);
+    string::size_type p2 = str.find(delim2, p1 + len);
+    if (p1 != string::npos && p2 != string::npos) {
+        result = str.substr(p1 + len, p2 - p1 - len);
+    }
+
+    return result;
 }
 
 END_NS

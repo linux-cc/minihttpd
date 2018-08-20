@@ -21,15 +21,17 @@ public:
         PARSE_CONTENT,
         PARSE_DONE,
     };
-    Request(): _status(PARSE_LINE), _contentPos(0) {}
-    int parseStatusLine(const char *pos);
-    int parseHeaders(const char *pos);
+    Request();
+    int parseStatusLine(const char *pos, const char *last);
+    int parseHeaders(const char *pos, const char *last);
     int parseContent(const char *pos, const char *last);
     void reset(bool is100Continue);
     string headers() const;
     const string *getHeader(int field) const;
-    bool has100Continue() const;
 
+    bool has100Continue() const {
+        return _100Continue;
+    }
     const string &content() const {
         return _content;
     }
@@ -65,15 +67,42 @@ public:
     }
 
 private:
+    enum {
+        MULTIPART_HEADERS,
+        MULTIPART_CONTENT,
+    };
+    struct MultipartHeader {
+        void parse(const string &field, const string &value);
+
+        string name;
+        string value;
+        bool hasType;
+    };
+    int parseMultipart(const char *pos, const char *last, const string &boundary);
+    int parseFormdata(const char *pos, const char *last);
+    int parseFormHeader(const char *pos, const char *last);
+    void setMultipartName();
+    int setMultipartContent(const char *pos, int length);
+    int parseFormBody(const char *pos, const char *last);
+    void addHeader(const string &field, const string &value);
+
+    typedef map<string, string>::const_iterator HeaderIt;
     string _method;
     string _uri;
     string _version;
-    typedef map<string, string>::const_iterator HeaderIt;
     map<string, string> _headers;
     string _querys;
     string _content;
     Status _status;
+    MultipartHeader _curMultipartHeader;
     int _contentPos;
+    int _contentLength;
+    int _multipartPos;
+    int _multipartFd;
+    uint8_t _100Continue: 1;
+    uint8_t _multipart: 1;
+    uint8_t _multipartStatus: 1;
+    uint8_t _reserve: 5;
 };
 
 END_NS

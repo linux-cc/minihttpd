@@ -156,20 +156,21 @@ void Worker::onRequest(EPollEvent &event) {
     }
     Request &request = conn->request();
     const char *pos = conn->pos();
+    const char *last = conn->last();
     switch(request.status()) {
     case Request::PARSE_LINE:
-        pos += request.parseStatusLine(pos);
+        pos += request.parseStatusLine(pos, last);
         if (request.inParseStatusLine()) {
             break;
         }
     case Request::PARSE_HEADERS:
-        pos += request.parseHeaders(pos);
+        pos += request.parseHeaders(pos, last);
         if (request.inParseHeaders()) {
             break;
         }
         _LOG_("fd: %d, Request headers:\n%s", (int)*conn, request.headers().c_str());
     case Request::PARSE_CONTENT:
-        pos += request.parseContent(pos, conn->last());
+        pos += request.parseContent(pos, last);
         if (request.inParseContent()) {
             break;
         }

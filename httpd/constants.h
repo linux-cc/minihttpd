@@ -52,6 +52,7 @@ struct Header {
         WWW_Authenticate,
         // entity headers
         Allow,
+        Content_Disposition,
         Content_Encoding,
         Content_Language,
         Content_Length,
