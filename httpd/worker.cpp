@@ -42,7 +42,7 @@ void Worker::tryLockAccept(bool &holdLock) {
     if (locked) {
         if (!holdLock) {
             holdLock = true;
-            int error = _poller.addPollIn(_server);
+            int error = _poller.add(_server);
             if (error) {
                 _LOG_("poll add server error: %d:%s\n", errno, strerror(errno));
             }
@@ -55,7 +55,7 @@ void Worker::tryLockAccept(bool &holdLock) {
 void Worker::disableAccept(bool &holdLock) {
     if (holdLock) {
         holdLock = false;
-        int error = _poller.delPollIn(_server);
+        int error = _poller.del(_server);
         if (error) {
             _LOG_("poll del server error: %d:%s\n", errno, strerror(errno));
         }
@@ -104,7 +104,7 @@ void Worker::onAccept() {
             if (errno != EWOULDBLOCK && errno != EAGAIN) {
                 _LOG_("accept error: %d:%s\n", errno, strerror(errno));
             }
-            int error = _poller.modPollIn(_server);
+            int error = _poller.mod(_server);
             if (error) {
                 _LOG_("poll mod server error: %d:%s\n", errno, strerror(errno));
             }
@@ -121,7 +121,7 @@ void Worker::onAccept() {
         client.setNonblock();
         conn->attach(fd);
         _server.update(conn, this);
-        int error = _poller.addPollIn(fd, conn);
+        int error = _poller.add(fd, conn);
         if (error) {
             _LOG_("poll add client error: %d:%s\n", errno, strerror(errno));
         }
@@ -154,6 +154,7 @@ void Worker::onRequest(EPollEvent &event) {
         closeInternal(conn);
         return;
     }
+    _poller.mod(*conn, conn);
     Request &request = conn->request();
     const char *pos = conn->pos();
     const char *last = conn->last();
@@ -175,11 +176,10 @@ void Worker::onRequest(EPollEvent &event) {
             break;
         }
     case Request::PARSE_DONE:
+        _poller.mod(*conn, conn, EPOLL_RDWR);
         _LOG_("fd: %d, Request content:\n%s\n", (int)*conn, request.content().c_str());
-        _poller.addPollOut(*conn, conn);
     }
     conn->adjust(pos);
-    _poller.modPollIn(*conn, conn);
     _server.update(conn, this);
 }
 
@@ -222,16 +222,16 @@ void Worker::onResponse(EPollEvent &event) {
                 closeInternal(conn);
             }
             response.reset();
-            _poller.delPollOut(*conn);
+            //_poller.del(*conn, EPOLL_WRITE);
             return;
         }
     }
-    _poller.modPollOut(*conn, conn);
+    _poller.mod(*conn, conn, EPOLL_WRITE);
 }
 
 void Worker::close(Connection *conn) {
-    int error = _poller.delPollIn(*conn);
-    _LOG_("close connection: %p, fd: %d, poll del ret: %d\n", conn, (int)*conn, error);
+    //int error = _poller.del(*conn);
+    _LOG_("close connection: %p, fd: %d\n", conn, (int)*conn);
     conn->close();
     _connsQ.pushBack(conn);
 }

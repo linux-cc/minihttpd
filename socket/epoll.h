@@ -5,6 +5,9 @@
 #include <unistd.h>
 #ifdef __linux__
 #include <sys/epoll.h>
+#define EPOLL_READ                  EPOLLIN
+#define EPOLL_WRITE                 EPOLLOUT
+#define EPOLL_RDWR                  (EPOLLIN | EPOLLOUT)
 #else /* mac osx */
 #include <sys/event.h>
 #include <sys/time.h>
@@ -16,6 +19,9 @@
 #define EPOLLERR                    EV_ERROR
 #define EPOLLONESHOT                0
 #define EPOLLET                     0
+#define EPOLL_READ                  EPOLLIN
+#define EPOLL_WRITE                 EPOLLOUT
+#define EPOLL_RDWR                  EPOLLOUT
 typedef struct kevent epoll_event;
 #endif /* __linux__ */
 
@@ -50,22 +56,9 @@ public:
     ~EPoller();
 
     bool create(int size);
-    int addPollIn(int fd, void *data = NULL) {
-        return add(fd, EPOLLIN | EPOLLONESHOT | EPOLLET, data);
-    }
-    int addPollOut(int fd, void *data = NULL) {
-        return add(fd, EPOLLOUT | EPOLLONESHOT | EPOLLET, data);
-    }
-    int add(int fd, int events, void *data = NULL);
-    int modPollIn(int fd, void *data = NULL) {
-        return mod(fd, EPOLLIN | EPOLLONESHOT | EPOLLET, data);
-    }
-    int modPollOut(int fd, void *data = NULL) {
-        return mod(fd, EPOLLOUT | EPOLLONESHOT | EPOLLET, data);
-    }
-    int mod(int fd, int events, void *data = NULL);
-    int delPollIn(int fd);
-    int delPollOut(int fd);
+    int add(int fd, void *data = NULL, int events = EPOLL_READ);
+    int mod(int fd, void *data = NULL, int events = EPOLL_READ);
+    int del(int fd, int events = EPOLL_READ);
     EPollResult wait(int timeout);
 
 private:

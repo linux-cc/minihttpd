@@ -110,20 +110,16 @@ bool EPoller::create(int size) {
     return _events;
 }
 
-int EPoller::add(int fd, int events, void *data) {
-    return ctl(fd, EPOLL_CTL_ADD, events, data);
+int EPoller::add(int fd, void *data, int events) {
+    return ctl(fd, EPOLL_CTL_ADD, events | EPOLLONESHOT | EPOLLET, data);
 }
 
-int EPoller::mod(int fd, int events, void *data) {
-    return ctl(fd, EPOLL_CTL_MOD, events, data);
+int EPoller::mod(int fd, void *data, int events) {
+    return ctl(fd, EPOLL_CTL_MOD, events | EPOLLONESHOT | EPOLLET, data);
 }
 
-int EPoller::delPollIn(int fd) {
-    return ctl(fd, EPOLL_CTL_DEL, EPOLLIN | EPOLLONESHOT | EPOLLET, NULL);
-}
-
-int EPoller::delPollOut(int fd) {
-    return ctl(fd, EPOLL_CTL_DEL, EPOLLOUT | EPOLLONESHOT | EPOLLET, NULL);
+int EPoller::del(int fd, int events) {
+    return ctl(fd, EPOLL_CTL_DEL, events | EPOLLONESHOT | EPOLLET, NULL);
 }
 
 EPollResult EPoller::wait(int timeout) {
@@ -138,7 +134,11 @@ EPollResult EPoller::wait(int timeout) {
 int EPoller::ctl(int fd, int action, int events, void *data) {
     EPollEvent ev;
     ev.init(fd, events, data);
-    return epoll_ctl(_fd, action, fd, ev);
+    int ret = epoll_ctl(_fd, action, fd, ev);
+    if (ret) {
+        _LOG_("EPoller ctl ret: %d, error: %d:%s\n", ret, errno, strerror(errno));
+    }
+    return ret;
 }
 
 EPollResult &EPollResult::operator=(const EPollResult &other) {
