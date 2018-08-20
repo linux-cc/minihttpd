@@ -10,7 +10,7 @@
 #include <stdio.h>
 #ifdef __linux__
 #include <sys/sendfile.h>
-#define STAT_MTIME(st)      (st).mtime
+#define STAT_MTIME(st)      (st).st_mtime
 #define _LOG_(fmt, ...)     printf("[%lu]"fmt, pthread_self(), ##__VA_ARGS__)
 #else
 #define STAT_MTIME(st)      (st).st_mtimespec.tv_sec
