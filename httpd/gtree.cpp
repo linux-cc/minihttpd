@@ -51,7 +51,7 @@ _gzip(gzip) {
     _baseL = new int[LENGTH_CODES];
     _baseD = new int[D_CODES];
     _flagBuf = new uint8_t[WSIZE/CHAR_BITS];
-    _gbit = new GBit;
+    _gbit = new GBit(_gzip);
 }
 
 GTree::~GTree() {
@@ -76,7 +76,7 @@ void GTree::initTreeDesc() {
     _sLTree = new Tree[L_CODES+2];
     _lDesc._extraBits = extraLBits;
     _lDesc._extraBase = LITERALS+1;
-    _lDesc._elems = LENGTH_CODES;
+    _lDesc._elems = L_CODES;
     _lDesc._maxLength = MAX_BITS;
     _lDesc._maxCode = 0;
 
@@ -250,7 +250,7 @@ bool GTree::flushBlock(int eof) {
 
     initBlock();
     if (eof) {
-        return _gbit->winDup(_gzip);
+        return _gbit->winDup();
     }
     return true;
 }
@@ -259,11 +259,11 @@ void GTree::build(TreeDesc &desc) {
     Tree *dt = desc._dynamic;
     Tree *st = desc._static;
     desc._maxCode = buildHeap(dt, st, desc._elems);
+    int node = desc._elems;
 
     do {
         int n = headPop(dt);
         int m = _heap[SMALLEST];
-        int node = desc._elems;
 
         _heap[--_heapMax] = n;
         _heap[--_heapMax] = m;
@@ -546,23 +546,23 @@ void GTree::sendTree(Tree *tree, int maxCode) {
     }
 }
 
-GTree::GBit::GBit():
+GTree::GBit::GBit(GZip &gzip):
+_gzip(gzip),
 _buf(0),
 _size(CHAR_BITS * sizeof(uint16_t)),
 _valid(0) {
-
 }
 
-uint16_t GTree::GBit::sendCode(int idx, Tree *tree) {
+bool GTree::GBit::sendCode(int idx, Tree *tree) {
     return sendBits(tree[idx]._code, tree[idx]._len);
 }
 
-uint16_t GTree::GBit::sendBits(int value, int length) {
-    uint16_t result = 0;
+bool GTree::GBit::sendBits(int value, int length) {
+    bool result = true;
 
     _buf |= value << _valid;
     if (_valid + length > _size) {
-        result = _buf;
+        result = _gzip.putShort(_buf);
         _buf = (uint16_t)value >> (_size - _valid);
         length -= _size;
     }
@@ -583,13 +583,13 @@ unsigned GTree::GBit::reverseBits(unsigned value, int length) {
     return result;
 }
 
-bool GTree::GBit::winDup(GZip &gzip) {
+bool GTree::GBit::winDup() {
     bool result = true;
 
     if (_valid > CHAR_BITS) {
-        result = gzip.putShort(_buf);
+        result = _gzip.putShort(_buf);
     } else if (_valid > 0) {
-        result = gzip.putByte(_buf);
+        result = _gzip.putByte(_buf);
     }
     _buf = 0;
     _valid = 0;

@@ -87,13 +87,14 @@ private:
 
 class GTree::GBit {
 public:
-    GBit();
-    uint16_t sendBits(int value, int length);
-    uint16_t sendCode(int idx, Tree *tree);
+    GBit(GZip &gzip);
+    bool sendBits(int value, int length);
+    bool sendCode(int idx, Tree *tree);
     unsigned reverseBits(unsigned value, int length);
-    bool winDup(GZip &gzip);
+    bool winDup();
 
 private:
+    GZip &_gzip;
     uint16_t _buf;
     uint8_t _size;
     uint8_t _valid;

@@ -8,16 +8,16 @@
 
 #ifdef _DEBUG_
 #include <stdio.h>
+#define _LOG_(fmt, ...)     printf("[%ld]"fmt, (intptr_t)pthread_self(), ##__VA_ARGS__)
+#else
+#define _LOG_(...)    
+#endif
+
 #ifdef __linux__
 #include <sys/sendfile.h>
 #define STAT_MTIME(st)      (st).st_mtime
-#define _LOG_(fmt, ...)     printf("[%lu]"fmt, pthread_self(), ##__VA_ARGS__)
 #else
 #define STAT_MTIME(st)      (st).st_mtimespec.tv_sec
-#define _LOG_(fmt, ...)     printf("[%lu]"fmt, (intptr_t)pthread_self(), ##__VA_ARGS__)
-#endif
-#else
-#define _LOG_(...)    
 #endif
 
 #define CR                  '\r'
