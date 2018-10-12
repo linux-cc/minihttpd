@@ -96,8 +96,8 @@ bool GZip::init(const string &infile, const string &outfile) {
     }
 
     memset((char*)_head, 0, WSIZE * sizeof(*_head));
-    int len = readFile(_window, TWO_WSIZE);    
-    if (len <= 0) {
+    _lookAhead = readFile(_window, TWO_WSIZE);    
+    if (_lookAhead <= 0) {
         return false;
     }
     for (int i = 0; i < MIN_MATCH - 1; i++) {
