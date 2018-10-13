@@ -6,10 +6,6 @@
 #define _dad            _dl.dad
 #define _len            _dl.len
 
-#define _dLTree         _lDesc._tree
-#define _dDTree         _dDesc._tree
-#define _blTree         _blDesc._tree
-
 #define CHAR_BITS       __CHAR_BIT__
 #define MAX_BITS        15
 #define MAX_BL_BITS     7
@@ -25,9 +21,6 @@
 #define D_CODE(d)       ((d) < LITERALS ? _dcode[d] : _dcode[LITERALS+((d)>>7)])
 #define HEAP_SIZE       (2 * L_CODES + 1)
 #define SMALLEST        1
-
-#define STORED_BLOCK    0
-#define STATIC_TREES    1
 #define DYN_TREES       2
 
 BEGIN_NS(httpd)
@@ -52,9 +45,9 @@ _gzip(gzip) {
 }
 
 GTree::~GTree() {
-    delete[] _dLTree;
-    delete[] _dDTree;
-    delete[] _blTree;
+    delete[] _lDesc._tree;
+    delete[] _dDesc._tree;
+    delete[] _blDesc._tree;
     delete[] _heap;
     delete[] _depth;
     delete[] _blCount;
@@ -67,21 +60,21 @@ GTree::~GTree() {
 }
 
 void GTree::initTreeDesc() {
-    _dLTree = new Tree[2*L_CODES+1];
+    _lDesc._tree = new Tree[2*L_CODES+1];
     _lDesc._extraBits = extraLBits;
     _lDesc._extraBase = LITERALS+1;
     _lDesc._elems = L_CODES;
     _lDesc._maxLength = MAX_BITS;
     _lDesc._maxCode = 0;
 
-    _dDTree = new Tree[2*D_CODES+1];
+    _dDesc._tree = new Tree[2*D_CODES+1];
     _dDesc._extraBits = extraDBits;
     _dDesc._extraBase = 0;
     _dDesc._elems = D_CODES;
     _dDesc._maxLength = MAX_BITS;
     _dDesc._maxCode = 0;
 
-    _blTree = new Tree[2*BL_CODES+1];
+    _blDesc._tree = new Tree[2*BL_CODES+1];
     _blDesc._extraBits = extraBLBits;
     _blDesc._extraBase = 0;
     _blDesc._elems = BL_CODES;
@@ -147,16 +140,16 @@ void GTree::initBlock() {
     int n;
 
     for (n = 0; n < L_CODES; n++) {
-        _dLTree[n]._freq = 0;
+        _lDesc._tree[n]._freq = 0;
     }
     for (n = 0; n < D_CODES; n++) {
-        _dDTree[n]._freq = 0;
+        _dDesc._tree[n]._freq = 0;
     }
     for (n = 0; n < BL_CODES; n++) {
-        _blTree[n]._freq = 0;
+        _blDesc._tree[n]._freq = 0;
     }
 
-    _dLTree[END_BLOCK]._freq = 1;
+    _lDesc._tree[END_BLOCK]._freq = 1;
     _lastL = _lastD = _lastF = 0;
     _flags = 0;
     _flagBit = 1;
@@ -166,11 +159,11 @@ bool GTree::tally(unsigned dist, unsigned lc) {
     _gzip._lbuf[_lastL++] = lc;
     
     if (dist == 0) {
-        _dLTree[lc]._freq++;
+        _lDesc._tree[lc]._freq++;
     } else {
         dist--;
-        _dLTree[_lcode[lc]+LITERALS+1]._freq++;
-        _dDTree[D_CODE(dist)]._freq++;
+        _lDesc._tree[_lcode[lc]+LITERALS+1]._freq++;
+        _dDesc._tree[D_CODE(dist)]._freq++;
         _gzip._dbuf[_lastD++] = dist;
         _flags |= _flagBit;
     }
@@ -184,7 +177,7 @@ bool GTree::tally(unsigned dist, unsigned lc) {
         unsigned outLength = _lastL * CHAR_BITS;
         unsigned inLength = _gzip._strStart - _gzip._blkStart;
         for (int code = 0; code < D_CODES; code++) {
-            outLength += _dDTree[code]._freq * (5 + extraDBits[code]);
+            outLength += _dDesc._tree[code]._freq * (5 + extraDBits[code]);
         }
         outLength >>= 3;
         if (_lastD < _lastL/2 && outLength < inLength/2) {
@@ -203,7 +196,7 @@ bool GTree::flushBlock(int eof) {
     int maxBlIndex = buildBl();
     _gbit->sendBits((DYN_TREES<<1)+eof, 3);
     sendAllTrees(_lDesc._maxCode + 1, _dDesc._maxCode + 1, maxBlIndex + 1);
-    compressBlock(_dLTree, _dDTree);
+    compressBlock(_lDesc._tree, _dDesc._tree);
 
     initBlock();
     if (eof) {
@@ -351,13 +344,13 @@ void GTree::ajustBitLen(TreeDesc &desc, int overflow, int h) {
 }
 
 int GTree::buildBl() {
-    scanTree(_dLTree, _lDesc._maxCode);
-    scanTree(_dDTree, _dDesc._maxCode);
+    scanTree(_lDesc._tree, _lDesc._maxCode);
+    scanTree(_dDesc._tree, _dDesc._maxCode);
     build(_blDesc);
 
     int maxBlIndex;
     for (maxBlIndex = BL_CODES-1; maxBlIndex >= 3; maxBlIndex--) {
-        if (_blTree[blOrder[maxBlIndex]]._len != 0) {
+        if (_blDesc._tree[blOrder[maxBlIndex]]._len != 0) {
             break;
         }
     }
@@ -380,16 +373,16 @@ void GTree::scanTree(Tree *tree, int maxCode) {
         if (++count < maxCount && curLen == nextLen) {
             continue;
         } else if (count < minCount) {
-            _blTree[curLen]._freq += count;
+            _blDesc._tree[curLen]._freq += count;
         } else if (curLen != 0) {
             if (curLen != prevLen) {
-                _blTree[curLen]._freq++;
+                _blDesc._tree[curLen]._freq++;
             }
-            _blTree[REP_3_6]._freq++;
+            _blDesc._tree[REP_3_6]._freq++;
         } else if (count <= 10) {
-            _blTree[REPZ_3_10]._freq++;
+            _blDesc._tree[REPZ_3_10]._freq++;
         } else {
-            _blTree[REPZ_11_138]._freq++;
+            _blDesc._tree[REPZ_11_138]._freq++;
         }
         count = 0, prevLen = curLen;
         if (nextLen == 0) {
@@ -441,10 +434,10 @@ void GTree::sendAllTrees(int lcodes, int dcodes, int blcodes) {
     _gbit->sendBits(blcodes - 4, 4);
 
     for (int rank = 0; rank < blcodes; rank++) {
-        _gbit->sendBits(_blTree[blOrder[rank]]._len, 3);
+        _gbit->sendBits(_blDesc._tree[blOrder[rank]]._len, 3);
     }
-    sendTree(_dLTree, lcodes - 1); /* send the literal tree */
-    sendTree(_dDTree, dcodes - 1); /* send the distance tree */
+    sendTree(_lDesc._tree, lcodes - 1); /* send the literal tree */
+    sendTree(_dDesc._tree, dcodes - 1); /* send the distance tree */
 }
 
 void GTree::sendTree(Tree *tree, int maxCode) {
@@ -461,20 +454,20 @@ void GTree::sendTree(Tree *tree, int maxCode) {
             continue;
         } else if (count < minCount) {
             do {
-                _gbit->sendCode(curLen, _blTree);
+                _gbit->sendCode(curLen, _blDesc._tree);
             } while (--count);
         } else if (curLen) {
             if (curLen != prevLen) {
-                _gbit->sendCode(curLen, _blTree);
+                _gbit->sendCode(curLen, _blDesc._tree);
                 count--;
             }
-            _gbit->sendCode(REP_3_6, _blTree);
+            _gbit->sendCode(REP_3_6, _blDesc._tree);
             _gbit->sendBits(count - 3, 2);
         } else if (count <= 10) {
-            _gbit->sendCode(REPZ_3_10, _blTree);
+            _gbit->sendCode(REPZ_3_10, _blDesc._tree);
             _gbit->sendBits(count - 3, 3);
         } else {
-            _gbit->sendCode(REPZ_11_138, _blTree);
+            _gbit->sendCode(REPZ_11_138, _blDesc._tree);
             _gbit->sendBits(count - 11, 7);
         }
         count = 0, prevLen = curLen;
