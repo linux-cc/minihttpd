@@ -6,8 +6,10 @@ OBJDIR	= obj
 TMPDIR  = $(BINDIR) $(LIBDIR) $(OBJDIR)
 
 CXX		= g++
-CCFLAG	= -g -Wall -fPIC -D_DEBUG_
-SOFLAG	= -shared -o
+FLAG    = -g
+CCFLAG	= $(FLAG) -Wall -fPIC -D_DEBUG_
+SOFLAG	= $(FLAG) -shared -o
+APPFLAG = $(FLAG) -o
 INCFLAG	= -I./ $(shell mysql_config --cflags)
 SOLIBS  = $(shell mysql_config --libs)
 APPLIBS = -L$(LIBDIR) -l$(LIBNAME) $(SOLIBS) -lpthread
@@ -37,7 +39,7 @@ $(TARGET) : $(SOOBJS)
 	$(CXX) $(SOFLAG) $@ $^ $(SOLIBS)
 
 app: $(APPOBJS)
-	$(foreach a,$(APPOBJS),$(CXX) -o $(BINDIR)/$(basename $(notdir $(a))) $(a) $(APPLIBS);)
+	$(foreach a,$(APPOBJS),$(CXX) $(APPFLAG) $(BINDIR)/$(basename $(notdir $(a))) $(a) $(APPLIBS);)
 	
 $(OBJDIR)/%.o : %.cpp
 	$(CXX) $(CCFLAG) $(INCFLAG) -c $< -o $@

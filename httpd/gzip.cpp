@@ -38,12 +38,10 @@ inline void GZip::updateHash(uint8_t uc) {
 }
 
 inline unsigned GZip::insertString(unsigned pos) {
-    updateHash(_window[pos + MIN_MATCH - 1]);
-    unsigned head = _head[_insH];
-    _prev[pos & WMASK] = head;
-    _head[_insH] = pos;
+    _insH = ((_insH << H_SHIFT) ^ (_window[pos + MIN_MATCH - 1])) & WMASK,
+    _prev[pos & WMASK] = _head[_insH], _head[_insH] = pos;
 
-    return head;
+    return _prev[pos & WMASK];
 }
 
 GZip::GZip():
@@ -223,8 +221,7 @@ bool GZip::deflateFast() {
             } else {
                 _strStart += matchLength;
                 matchLength = 0;
-                _insH = _window[_strStart];
-                updateHash(_window[_strStart]);
+                updateHash(_insH = _window[_strStart]);
             }
         } else {
             flush = _gtree->tally(0, _window[_strStart]);
