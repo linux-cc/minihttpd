@@ -6,11 +6,9 @@
 #define _dad            _dl.dad
 #define _len            _dl.len
 
-#define _dLTree         _lDesc._dynamic
-#define _dDTree         _dDesc._dynamic
-#define _sLTree         _lDesc._static
-#define _sDTree         _dDesc._static
-#define _blTree         _blDesc._dynamic
+#define _dLTree         _lDesc._tree
+#define _dDTree         _dDesc._tree
+#define _blTree         _blDesc._tree
 
 #define CHAR_BITS       __CHAR_BIT__
 #define MAX_BITS        15
@@ -55,9 +53,7 @@ _gzip(gzip) {
 
 GTree::~GTree() {
     delete[] _dLTree;
-    delete[] _sLTree;
     delete[] _dDTree;
-    delete[] _sDTree;
     delete[] _blTree;
     delete[] _heap;
     delete[] _depth;
@@ -72,7 +68,6 @@ GTree::~GTree() {
 
 void GTree::initTreeDesc() {
     _dLTree = new Tree[2*L_CODES+1];
-    _sLTree = new Tree[L_CODES+2];
     _lDesc._extraBits = extraLBits;
     _lDesc._extraBase = LITERALS+1;
     _lDesc._elems = L_CODES;
@@ -80,7 +75,6 @@ void GTree::initTreeDesc() {
     _lDesc._maxCode = 0;
 
     _dDTree = new Tree[2*D_CODES+1];
-    _sDTree = new Tree[D_CODES];
     _dDesc._extraBits = extraDBits;
     _dDesc._extraBase = 0;
     _dDesc._elems = D_CODES;
@@ -88,7 +82,6 @@ void GTree::initTreeDesc() {
     _dDesc._maxCode = 0;
 
     _blTree = new Tree[2*BL_CODES+1];
-    _blDesc._static = NULL;
     _blDesc._extraBits = extraBLBits;
     _blDesc._extraBase = 0;
     _blDesc._elems = BL_CODES;
@@ -104,8 +97,6 @@ void GTree::init() {
         _blCount[bits] = 0;
     }
 
-    initStatic();
-    genCodes(_sLTree, L_CODES + 1);
     initBlock();
 }
 
@@ -134,31 +125,6 @@ void GTree::initDistCode() {
         for (int n = 0; n < (1<<(extraDBits[code]-7)); n++) {
             _dcode[LITERALS + dist++] = code;
         }
-    }
-}
-
-void GTree::initStatic() {
-    int n = 0;
-    while (n <= 143) {
-        _sLTree[n++]._len = 8;
-        _blCount[8]++;
-    }
-    while (n <= 255) {
-        _sLTree[n++]._len = 9;
-        _blCount[9]++;
-    }
-    while (n <= 279) {
-        _sLTree[n++]._len = 7;
-        _blCount[7]++;
-    }
-    while (n <= 287) {
-        _sLTree[n++]._len = 8;
-        _blCount[8]++;
-    }
-
-    for (n = 0; n < D_CODES; n++) {
-        _sDTree[n]._len = 5;
-        _sDTree[n]._code = _gbit->reverseBits(n, 5);
     }
 }
 
@@ -247,66 +213,65 @@ bool GTree::flushBlock(int eof) {
 }
 
 void GTree::build(TreeDesc &desc) {
-    Tree *dt = desc._dynamic;
-    Tree *st = desc._static;
-    desc._maxCode = buildHeap(dt, st, desc._elems);
+    Tree *tree = desc._tree;
+    desc._maxCode = buildHeap(tree, desc._elems);
     int node = desc._elems;
 
     do {
-        int n = headPop(dt);
+        int n = headPop(tree);
         int m = _heap[SMALLEST];
 
         _heap[--_heapMax] = n;
         _heap[--_heapMax] = m;
-        dt[node]._freq = dt[n]._freq + dt[m]._freq;
+        tree[node]._freq = tree[n]._freq + tree[m]._freq;
         _depth[node] = MAX(_depth[n], _depth[m]) + 1;
-        dt[n]._dad = dt[m]._dad = node;
+        tree[n]._dad = tree[m]._dad = node;
         _heap[SMALLEST] = node++;
-        heapDown(dt, SMALLEST);
+        heapDown(tree, SMALLEST);
     } while (_heapLen > SMALLEST);
     _heap[--_heapMax] = _heap[SMALLEST];
     genBitLen(desc);
-    genCodes(dt, desc._maxCode);
+    genCodes(tree, desc._maxCode);
 }
 
-int GTree::buildHeap(Tree *dt, Tree *st, int elems) {
+int GTree::buildHeap(Tree *tree, int elems) {
     _heapLen = 0;
     _heapMax = HEAP_SIZE;
     int maxCode = -1;
 
     for (int n = 0; n < elems; n++) {
-        if (dt[n]._freq) {
+        if (tree[n]._freq) {
             _heap[++_heapLen] = maxCode = n;
             _depth[n] = 0;
         } else {
-            dt[n]._len = 0;
+            tree[n]._len = 0;
         }
     }
 
     while (_heapLen < 2) {
         int n = _heap[++_heapLen] = maxCode < 2 ? ++maxCode : 0;
-        dt[n]._freq = 1;
+        tree[n]._freq = 1;
         _depth[n] = 0;
     }
 
     for (int n = _heapLen/2; n >= 1; n--) {
-        heapDown(dt, n);
+        heapDown(tree, n);
     }
 
     return maxCode;
 }
 
-void GTree::heapDown(Tree *t, int dad) {
+void GTree::heapDown(Tree *tree, int dad) {
 #define smaller(t, n, m)    (t[n]._freq < t[m]._freq || (t[n]._freq == t[m]._freq && _depth[n] <= _depth[m]))
     
     int dv = _heap[dad];
     int son = dad << 1;
 
     while (son <= _heapLen) {
-        if (son < _heapLen && smaller(t, _heap[son+1], _heap[son])) {
+        if (son < _heapLen && smaller(tree, _heap[son+1], _heap[son])) {
             son++;
         }
-        if (smaller(t, dv, _heap[son])) {
+        if (smaller(tree, dv, _heap[son])) {
             break;
         }
         _heap[dad] = _heap[son];
@@ -333,19 +298,19 @@ void GTree::genBitLen(TreeDesc &desc) {
     }
 
     int overflow = 0, h;
-    Tree *dt = desc._dynamic;
+    Tree *tree = desc._tree;
     int maxLength = desc._maxLength;
     int maxCode = desc._maxCode;
 
-    dt[_heap[_heapMax]]._len = 0;
+    tree[_heap[_heapMax]]._len = 0;
     for (h = _heapMax + 1; h < HEAP_SIZE; h++) {
         int n = _heap[h];
-        int bits = dt[dt[n]._dad]._len + 1;
+        int bits = tree[tree[n]._dad]._len + 1;
         if (bits > maxLength) {
             bits = maxLength;
             overflow++;
         }
-        dt[n]._len = bits;
+        tree[n]._len = bits;
         if (n > maxCode) {
             continue;
         }
@@ -361,7 +326,7 @@ void GTree::genBitLen(TreeDesc &desc) {
 void GTree::ajustBitLen(TreeDesc &desc, int overflow, int h) {
     int maxLength = desc._maxLength;
     int maxCode = desc._maxCode;
-    Tree *dt = desc._dynamic;
+    Tree *tree = desc._tree;
 
     do {
         int bits = maxLength - 1;
@@ -377,8 +342,8 @@ void GTree::ajustBitLen(TreeDesc &desc, int overflow, int h) {
         while (n != 0) {
             int m = _heap[--h];
             if (m > maxCode) continue;
-            if (dt[m]._len != (unsigned) bits) {
-                dt[m]._len = bits;
+            if (tree[m]._len != (unsigned) bits) {
+                tree[m]._len = bits;
             }
             n--;
         }

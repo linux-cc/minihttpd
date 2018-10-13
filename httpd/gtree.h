@@ -31,7 +31,7 @@ private:
     void genCodes(Tree *tree, int maxCode);
     void initBlock();
     void build(TreeDesc &desc);
-    int buildHeap(Tree *dt, Tree *st, int elems);
+    int buildHeap(Tree *tree, int elems);
     void heapDown(Tree *tree, int dad);
     int headPop(Tree *tree);
     void genBitLen(TreeDesc &desc);
@@ -53,8 +53,7 @@ private:
         }_dl;
     };
     struct TreeDesc {
-        Tree *_dynamic;
-        Tree *_static;
+        Tree *_tree;
         uint8_t *_extraBits;
         int _extraBase;
         int _elems;
