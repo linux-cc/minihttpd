@@ -16,9 +16,7 @@
 
 BEGIN_NS(httpd)
 
-static uint32_t updateCrc(uint8_t *in, uint32_t len);
-
-GZip::Config GZip::_configTable[10] = {
+GZip::Config GZip::_configTable[] = {
     /*      good lazy nice chain */
     /* 0 */ {0,    0,  0,    0},  /* store only */
     /* 1 */ {4,    4,  8,    4},  /* maximum speed, no lazy matches */
@@ -72,27 +70,11 @@ GZip::~GZip() {
     delete[] _prev;
 }
 
-bool GZip::init(const string &infile, const string &outfile) {
-    struct stat sbuf;
-    const char *cinfile = infile.c_str();
-    if (stat(cinfile, &sbuf) || !S_ISREG(sbuf.st_mode)) {
-        return false;
-    }
-    _infd = open(cinfile, O_RDONLY);
-    if (_infd < 0) {
-        return false;
-    }
-    string _outfile = outfile;
-    if (_outfile.empty()) {
-        _outfile = infile + ".gz";
-    }
-    _outfd = open(_outfile.c_str(), O_WRONLY|O_TRUNC|O_CREAT, sbuf.st_mode);
-    if (_outfd < 0) {
-        return false;
-    }
-
-    putLong(STAT_MTIME(sbuf));
-    _crc = updateCrc(NULL, 0);
+bool GZip::init(int infd, int outfd) {
+    _infd = infd;
+    _outfd = outfd;
+    
+    updateCrc(NULL, 0);
     memset((char*)_head, 0, WSIZE * sizeof(*_head));
     _lookAhead = readFile(_window, TWO_WSIZE);    
     if (_lookAhead <= 0) {
@@ -107,32 +89,45 @@ bool GZip::init(const string &infile, const string &outfile) {
 }
 
 bool GZip::zip(const string &infile, const string &outfile) {
-    putByte(GZIP_MAGIC[0]);
-    putByte(GZIP_MAGIC[1]);
-    putByte(8); /* compression method */
-    putByte(8); /* general flags */
-    
-    if (!init(infile, outfile)) {
+    struct stat sbuf;
+    const char *cinfile = infile.c_str();
+    if (stat(cinfile, &sbuf) || !S_ISREG(sbuf.st_mode)) {
+        return false;
+    }
+    int infd = open(cinfile, O_RDONLY);
+    if (infd < 0) {
+        return false;
+    }
+    string _outfile = outfile;
+    if (_outfile.empty()) {
+        _outfile = infile + ".gz";
+    }
+    int outfd = open(_outfile.c_str(), O_WRONLY|O_TRUNC|O_CREAT, sbuf.st_mode);
+    if (outfd < 0) {
         return false;
     }
 
+    return zip(infd, outfd);
+}
+
+bool GZip::zip(int infd, int outfd) {
+    if (!init(infd, outfd)) {
+        return false;
+    }
+
+    putByte(GZIP_MAGIC[0]);
+    putByte(GZIP_MAGIC[1]);
+    putByte(8); /* compression method */
+    putByte(0); /* general flags */
+    putLong(0); /* no timestamp */
     putByte(0); /* extra flags */
     putByte(3); /* os code assume Unix */
-    string::size_type i = infile.rfind('/');
-    const char *p = i == string::npos ? infile.c_str() : &infile[i + 1];
-    do {
-        putByte(*p);
-    } while(*p++);
     deflate();
     putLong(_crc);
     putLong(_bytesIn);
     flushOutbuf();
 
     return true;
-}
-
-bool GZip::zip(const void *in, int inLen, void *out, int outLen) {
-    return false;
 }
 
 bool GZip::deflate() {
@@ -313,7 +308,7 @@ void GZip::fillWindow() {
 int GZip::readFile(void *buf, unsigned len) {
     int n = read(_infd, buf, len);
     if (n > 0) {
-        _crc = updateCrc((uint8_t*)buf, n);
+        updateCrc((uint8_t*)buf, n);
         _bytesIn += n;
     }
 
@@ -355,7 +350,23 @@ bool GZip::flushOutbuf() {
     return true;
 }
 
-static uint32_t crc32Tab[] = {
+void GZip::updateCrc(uint8_t *in, uint32_t len) {
+    uint32_t c;
+    static uint32_t crc = (uint32_t)0xffffffffL;
+
+    if (in == NULL) {
+        c = 0xffffffffL;
+    } else {
+        c = crc;
+        while (len--) {
+            c = _crcTable[((int)c ^ (*in++)) & 0xff] ^ (c >> 8);
+        }
+    }
+    crc = c;
+    _crc = c ^ 0xffffffffL;
+}
+
+uint32_t GZip::_crcTable[] = {
   0x00000000L, 0x77073096L, 0xee0e612cL, 0x990951baL, 0x076dc419L, 0x706af48fL, 0xe963a535L, 0x9e6495a3L,
   0x0edb8832L, 0x79dcb8a4L, 0xe0d5e91eL, 0x97d2d988L, 0x09b64c2bL, 0x7eb17cbdL, 0xe7b82d07L, 0x90bf1d91L,
   0x1db71064L, 0x6ab020f2L, 0xf3b97148L, 0x84be41deL, 0x1adad47dL, 0x6ddde4ebL, 0xf4d4b551L, 0x83d385c7L,
@@ -389,21 +400,6 @@ static uint32_t crc32Tab[] = {
   0xbdbdf21cL, 0xcabac28aL, 0x53b39330L, 0x24b4a3a6L, 0xbad03605L, 0xcdd70693L, 0x54de5729L, 0x23d967bfL,
   0xb3667a2eL, 0xc4614ab8L, 0x5d681b02L, 0x2a6f2b94L, 0xb40bbe37L, 0xc30c8ea1L, 0x5a05df1bL, 0x2d02ef8dL
 };
-
-uint32_t updateCrc(uint8_t *in, uint32_t len) {
-    uint32_t c;
-    static uint32_t crc = (uint32_t)0xffffffffL;
-    if (in == NULL) {
-        c = 0xffffffffL;
-    } else {
-        c = crc;
-        while (len--) {
-            c = crc32Tab[((int)c ^ (*in++)) & 0xff] ^ (c >> 8);
-        }
-    }
-    crc = c;
-    return c ^ 0xffffffffL;
-}
 
 END_NS
 

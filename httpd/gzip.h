@@ -14,10 +14,10 @@ public:
     GZip();
     ~GZip();
     bool zip(const string &infile, const string &outfile = "");
-    bool zip(const void *in, int inLen, void *out, int outLen);
+    bool zip(int infd, int outfd);
 
 private:
-    bool init(const string &infile, const string &outfile);
+    bool init(int infd, int outfd);
     bool deflate();
     bool deflateFast();
     bool putLong(uint32_t ui) {
@@ -31,6 +31,7 @@ private:
     void fillWindow();
     bool flushOutbuf();
     int readFile(void *buf, unsigned len);
+    void updateCrc(uint8_t *in, uint32_t len);
     
     GTree *_gtree;
     struct Config {
@@ -58,7 +59,8 @@ private:
     uint8_t _level;
     bool _eof;
 
-    static Config _configTable[10];
+    static Config _configTable[];
+    static uint32_t _crcTable[];
     friend class GTree;
 };
 
