@@ -573,14 +573,12 @@ bool GTree::GBit::sendBits(int value, int length) {
 
 unsigned GTree::GBit::reverseBits(unsigned value, int length) {
     unsigned result = 0;
-
     while (length--) {
         result |= value & 1;
         value >>= 1;
         result <<= 1;
     }
-
-    return result;
+    return result >> 1;
 }
 
 bool GTree::GBit::winDup() {

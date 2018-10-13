@@ -54,7 +54,6 @@ private:
     unsigned _matchStart;
     int _infd;
     int _outfd;
-    time_t _mtime;
     uint32_t _crc;
     uint8_t _level;
     bool _eof;

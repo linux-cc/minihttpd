@@ -54,7 +54,6 @@ _blkStart(0),
 _insH(0),
 _infd(-1),
 _outfd(-1),
-_mtime(0),
 _crc(0),
 _level(6),
 _eof(false) {
@@ -81,7 +80,6 @@ bool GZip::init(const string &infile, const string &outfile) {
     if (stat(cinfile, &sbuf) || !S_ISREG(sbuf.st_mode)) {
         return false;
     }
-    _mtime = STAT_MTIME(sbuf); 
     _infd = open(cinfile, O_RDONLY);
     if (_infd < 0) {
         return false;
@@ -95,6 +93,8 @@ bool GZip::init(const string &infile, const string &outfile) {
         return false;
     }
 
+    putLong(STAT_MTIME(sbuf));
+    _crc = updateCrc(NULL, 0);
     memset((char*)_head, 0, WSIZE * sizeof(*_head));
     _lookAhead = readFile(_window, TWO_WSIZE);    
     if (_lookAhead <= 0) {
@@ -113,11 +113,8 @@ bool GZip::zip(const string &infile, const string &outfile) {
     putByte(GZIP_MAGIC[1]);
     putByte(8); /* compression method */
     putByte(8); /* general flags */
-    putLong(_mtime);
-    _crc = updateCrc(NULL, 0);
     
     if (!init(infile, outfile)) {
-        _LOG_("gzip init false\n");
         return false;
     }
 
@@ -125,9 +122,9 @@ bool GZip::zip(const string &infile, const string &outfile) {
     putByte(3); /* os code assume Unix */
     string::size_type i = infile.rfind('/');
     const char *p = i == string::npos ? infile.c_str() : &infile[i + 1];
-    while (*p) {
-        putByte(*p++);
-    }
+    do {
+        putByte(*p);
+    } while(*p++);
     deflate();
     putLong(_crc);
     putLong(_bytesIn);
@@ -340,7 +337,7 @@ bool GZip::putShort(uint16_t us) {
 bool GZip::putByte(uint8_t uc) {
     bool result = true;
     _outbuf[_outcnt++] = uc;
-    if (_outcnt == (HALF_WSIZE)) {
+    if (_outcnt == HALF_WSIZE) {
         result = flushOutbuf();
     }
 
@@ -408,7 +405,6 @@ uint32_t updateCrc(uint8_t *in, uint32_t len) {
         }
     }
     crc = c;
-    
     return c ^ 0xffffffffL;
 }
 
