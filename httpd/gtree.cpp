@@ -38,7 +38,6 @@ static uint8_t blOrder[BL_CODES] = {16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,
 static uint8_t extraLBits[LENGTH_CODES] = {0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0};
 static uint8_t extraDBits[D_CODES] = {0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13};
 static uint8_t extraBLBits[BL_CODES] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,7};
-static unsigned optimalLen, staticLen;
 
 GTree::GTree(GZip &gzip):
 _gzip(gzip) {
@@ -192,7 +191,6 @@ void GTree::initBlock() {
     }
 
     _dLTree[END_BLOCK]._freq = 1;
-    optimalLen = staticLen = 0;
     _lastL = _lastD = _lastF = 0;
     _flags = 0;
     _flagBit = 1;
@@ -237,16 +235,9 @@ bool GTree::flushBlock(int eof) {
     build(_dDesc);
 
     int maxBlIndex = buildBl();
-    int optimalLenB = (optimalLen+3+7)>>3;
-    int staticLenB = (staticLen+3+7)>>3;
-    if (staticLenB <= optimalLenB) {
-        _gbit->sendBits((STATIC_TREES<<1)+eof, 3);
-        compressBlock(_sLTree, _sDTree);
-    } else {
-        _gbit->sendBits((DYN_TREES<<1)+eof, 3);
-        sendAllTrees(_lDesc._maxCode + 1, _dDesc._maxCode + 1, maxBlIndex + 1);
-        compressBlock(_dLTree, _dDTree);
-    }
+    _gbit->sendBits((DYN_TREES<<1)+eof, 3);
+    sendAllTrees(_lDesc._maxCode + 1, _dDesc._maxCode + 1, maxBlIndex + 1);
+    compressBlock(_dLTree, _dDTree);
 
     initBlock();
     if (eof) {
@@ -296,10 +287,6 @@ int GTree::buildHeap(Tree *dt, Tree *st, int elems) {
         int n = _heap[++_heapLen] = maxCode < 2 ? ++maxCode : 0;
         dt[n]._freq = 1;
         _depth[n] = 0;
-        optimalLen--;
-        if (st) {
-            staticLen -= st[n]._len;
-        }
     }
 
     for (int n = _heapLen/2; n >= 1; n--) {
@@ -347,10 +334,8 @@ void GTree::genBitLen(TreeDesc &desc) {
 
     int overflow = 0, h;
     Tree *dt = desc._dynamic;
-    Tree *st = desc._static;
     int maxLength = desc._maxLength;
     int maxCode = desc._maxCode;
-    int base = desc._extraBase;
 
     dt[_heap[_heapMax]]._len = 0;
     for (h = _heapMax + 1; h < HEAP_SIZE; h++) {
@@ -365,12 +350,6 @@ void GTree::genBitLen(TreeDesc &desc) {
             continue;
         }
         _blCount[bits]++;
-        uint8_t xbits = n >= base ? desc._extraBits[n-base] : 0;
-        uint16_t f = dt[n]._freq;
-        optimalLen += f * (bits + xbits);
-        if (st) {
-            staticLen += f * (st[n]._len + xbits);
-        }
     }
 
     if (overflow == 0) {
@@ -399,7 +378,6 @@ void GTree::ajustBitLen(TreeDesc &desc, int overflow, int h) {
             int m = _heap[--h];
             if (m > maxCode) continue;
             if (dt[m]._len != (unsigned) bits) {
-                optimalLen += (bits-dt[m]._len) * dt[m]._freq;
                 dt[m]._len = bits;
             }
             n--;
@@ -418,7 +396,6 @@ int GTree::buildBl() {
             break;
         }
     }
-    optimalLen += 3*(maxBlIndex+1) + 5 + 5 + 4;
 
     return maxBlIndex;
 }
