@@ -42,17 +42,24 @@ inline unsigned GZip::insertString(unsigned pos) {
     return _prev[pos & WMASK];
 }
 
+inline bool GZip::finish() {
+    return _gtree->flushBlock(1) && putLong(_crc) && putLong(_bytesIn) && flushOutbuf();
+}
+
 GZip::GZip():
 _outcnt(0),
 _bytesIn(0),
 _strStart(0),
 _blkStart(0),
 _insH(0),
+_prevLength(MIN_MATCH - 1),
+_matchLength(MIN_MATCH - 1),
 _infd(-1),
 _outfd(-1),
 _crc(0),
 _level(6),
-_eof(false) {
+_eof(0),
+_matchAvl(0) {
     _gtree = new GTree(*this);
     _window = new uint8_t[TWO_WSIZE];
     _outbuf = new uint8_t[HALF_WSIZE];
@@ -84,6 +91,13 @@ bool GZip::init(int infd, int outfd) {
         updateHash(_window[i]);
     }
     _gtree->init();
+    putByte(GZIP_MAGIC[0]);
+    putByte(GZIP_MAGIC[1]);
+    putByte(8); /* compression method */
+    putByte(0); /* general flags */
+    putLong(0); /* no timestamp */
+    putByte(0); /* extra flags */
+    putByte(3); /* os code assume Unix */
 
     return true;
 }
@@ -107,59 +121,45 @@ bool GZip::zip(const string &infile, const string &outfile) {
         return false;
     }
 
-    return zip(infd, outfd);
-}
-
-bool GZip::zip(int infd, int outfd) {
     if (!init(infd, outfd)) {
         return false;
     }
 
-    putByte(GZIP_MAGIC[0]);
-    putByte(GZIP_MAGIC[1]);
-    putByte(8); /* compression method */
-    putByte(0); /* general flags */
-    putLong(0); /* no timestamp */
-    putByte(0); /* extra flags */
-    putByte(3); /* os code assume Unix */
-    deflate();
-    putLong(_crc);
-    putLong(_bytesIn);
-    flushOutbuf();
+    while (true) {
+        if (!(_level < 4 ? deflateFast() : deflate())) {
+            return false;
+        }
+        if (_eof) {
+            break;
+        }
+        fillWindow();
+    }
 
-    return true;
+    return finish();
 }
 
 bool GZip::deflate() {
-    if (_level < 4) {
-        return deflateFast();
-    }
-
-    unsigned prevMatch;
-    unsigned matchLength = MIN_MATCH - 1;
-    bool matchAvailable = false;
-    
     while (_lookAhead) {
         unsigned hashHead = insertString(_strStart);
-        _prevLength = matchLength, prevMatch = _matchStart;
+        _prevLength = _matchLength, _prevStart = _matchStart;
         if (hashHead && _prevLength < _config.maxLazy && _strStart - hashHead <= MAX_DIST) {
-            matchLength = longestMatch(hashHead);
-            if (matchLength > _lookAhead) {
-                matchLength = _lookAhead;
+            _matchLength = longestMatch(hashHead);
+            if (_matchLength > _lookAhead) {
+                _matchLength = _lookAhead;
             }
-            if (matchLength == MIN_MATCH && _strStart - _matchStart > TOO_FAR) {
-                matchLength--;
+            if (_matchLength == MIN_MATCH && _strStart - _matchStart > TOO_FAR) {
+                _matchLength--;
             }
         }
-        if (_prevLength >= MIN_MATCH && matchLength <= _prevLength) {
-            bool flush = _gtree->tally(_strStart - 1 - prevMatch, _prevLength - MIN_MATCH);
+        if (_prevLength >= MIN_MATCH && _matchLength <= _prevLength) {
+            bool flush = _gtree->tally(_strStart - 1 - _prevStart, _prevLength - MIN_MATCH);
             _lookAhead -= _prevLength - 1;
             _prevLength -= 2;
             while (_prevLength--) {
                 hashHead = insertString(++_strStart);
             }
-            matchAvailable = false;
-            matchLength = MIN_MATCH - 1;
+            _matchAvl = 0;
+            _matchLength = MIN_MATCH - 1;
             _strStart++;
             if (flush) {
                 if (!_gtree->flushBlock()) {
@@ -167,7 +167,7 @@ bool GZip::deflate() {
                 }
                 _blkStart = _strStart;
             }
-        } else if (matchAvailable) {
+        } else if (_matchAvl) {
             if (_gtree->tally(0, _window[_strStart - 1])) {
                 if (!_gtree->flushBlock()) {
                     return false;
@@ -177,46 +177,43 @@ bool GZip::deflate() {
             _strStart++;
             _lookAhead--;
         } else {
-            matchAvailable = true;
+            _matchAvl = 1;
             _strStart++;
             _lookAhead--;
         }
         if (_lookAhead < MIN_LOOKAHEAD && !_eof) {
-            fillWindow();
+            break;
         }
     }
-    if (matchAvailable) {
+    if (_matchAvl && _eof) {
         _gtree->tally(0, _window[_strStart-1]);
     }
 
-    return _gtree->flushBlock(1);
+    return true;
 }
 
 bool GZip::deflateFast() {
-    bool flush;
-    unsigned matchLength = 0;
-    _prevLength = MIN_MATCH - 1;
-    
     while (_lookAhead) {
+        bool flush;
         unsigned hashHead = insertString(_strStart);
         if (hashHead && _strStart - hashHead <= MAX_DIST) {
-            matchLength = longestMatch(hashHead);
-            if (matchLength > _lookAhead) {
-                matchLength = _lookAhead;
+            _matchLength = longestMatch(hashHead);
+            if (_matchLength > _lookAhead) {
+                _matchLength = _lookAhead;
             }
         }
-        if (matchLength >= MIN_MATCH) {
-            flush = _gtree->tally(_strStart - _matchStart, matchLength - MIN_MATCH);
-            _lookAhead -= matchLength;
-            if (matchLength <= _config.maxLazy) {
-                matchLength--;
+        if (_matchLength >= MIN_MATCH) {
+            flush = _gtree->tally(_strStart - _matchStart, _matchLength - MIN_MATCH);
+            _lookAhead -= _matchLength;
+            if (_matchLength <= _config.maxLazy) {
+                _matchLength--;
                 do {
                     hashHead = insertString(++_strStart);
-                } while(--matchLength);
+                } while(--_matchLength);
                 _strStart++;
             } else {
-                _strStart += matchLength;
-                matchLength = 0;
+                _strStart += _matchLength;
+                _matchLength = 0;
                 _insH = _window[_strStart];
                 updateHash(_window[_strStart + 1]);
             }
@@ -232,11 +229,11 @@ bool GZip::deflateFast() {
                 _blkStart = _strStart;
         }
         if (_lookAhead < MIN_LOOKAHEAD && !_eof) {
-            fillWindow();
+            break;
         }
     }
 
-    return _gtree->flushBlock(1);
+    return true;
 }
 
 unsigned GZip::longestMatch(unsigned hashHead) {

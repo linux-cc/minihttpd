@@ -17,7 +17,7 @@ public:
         _level = level;
     }
     bool zip(const string &infile, const string &outfile = "");
-    bool zip(int infd, int outfd);
+    bool finish();
 
 private:
     bool init(int infd, int outfd);
@@ -54,13 +54,17 @@ private:
     unsigned _blkStart;
     unsigned _lookAhead;
     unsigned _insH;
+    unsigned _prevStart;
     unsigned _prevLength;
     unsigned _matchStart;
+    unsigned _matchLength;
     int _infd;
     int _outfd;
     uint32_t _crc;
-    uint8_t _level;
-    bool _eof;
+    uint8_t _level: 4;
+    uint8_t _eof: 1;
+    uint8_t _matchAvl: 1;
+    uint8_t _reserve: 2;
 
     static Config _configTable[];
     static uint32_t _crcTable[];
