@@ -7,7 +7,7 @@ int main(int argc, char *argv[]) {
         _LOG_("usage %s [-level] file\n", argv[0]);
         return -1;
     }
-    printf("argv[1][0]: %c\n", argv[1][0]);
+
     if (argv[1][0] == '-') {
         zip.setLevel(argv[1][1] - '0');
         if (argc == 3)

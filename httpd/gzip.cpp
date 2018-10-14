@@ -278,7 +278,7 @@ unsigned GZip::longestMatch(unsigned hashHead) {
 }
 
 void GZip::fillWindow() {
-    unsigned more = (TWO_WSIZE) - _lookAhead - _strStart;
+    unsigned more = TWO_WSIZE - _lookAhead - _strStart;
 
     if (_strStart >= WSIZE + MAX_DIST) {
         memcpy(_window, _window + WSIZE, WSIZE);

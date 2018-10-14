@@ -184,7 +184,7 @@ bool GTree::tally(unsigned dist, unsigned lc) {
             return true;
         }
     }
-    return (_lastL == WSIZE - 1 || _lastD == WSIZE);
+    return (_lastL == WSIZE || _lastD == WSIZE);
 }
 
 bool GTree::flushBlock(int eof) {
@@ -199,16 +199,14 @@ bool GTree::flushBlock(int eof) {
     compressBlock(_lDesc._tree, _dDesc._tree);
 
     initBlock();
-    if (eof) {
-        return _gbit->winDup();
-    }
-    return true;
+
+    return eof ? _gbit->winDup() : true;
 }
 
 void GTree::build(TreeDesc &desc) {
     Tree *tree = desc._tree;
-    desc._maxCode = buildHeap(tree, desc._elems);
     int node = desc._elems;
+    desc._maxCode = buildHeap(tree, desc._elems);
 
     do {
         int n = headPop(tree);
