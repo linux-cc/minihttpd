@@ -194,7 +194,8 @@ bool GZip::deflate() {
 
 bool GZip::deflateFast() {
     bool flush;
-    unsigned matchLength = MIN_MATCH - 1;
+    unsigned matchLength = 0;
+    _prevLength = MIN_MATCH - 1;
     
     while (_lookAhead) {
         unsigned hashHead = insertString(_strStart);
@@ -210,13 +211,14 @@ bool GZip::deflateFast() {
             if (matchLength <= _config.maxLazy) {
                 matchLength--;
                 do {
-                    _strStart++;
-                    hashHead = insertString(_strStart);
+                    hashHead = insertString(++_strStart);
                 } while(--matchLength);
+                _strStart++;
             } else {
                 _strStart += matchLength;
                 matchLength = 0;
-                updateHash(_insH = _window[_strStart]);
+                _insH = _window[_strStart];
+                updateHash(_window[_strStart + 1]);
             }
         } else {
             flush = _gtree->tally(0, _window[_strStart]);
@@ -351,19 +353,18 @@ bool GZip::flushOutbuf() {
 }
 
 void GZip::updateCrc(uint8_t *in, uint32_t len) {
-    uint32_t c;
-    static uint32_t crc = (uint32_t)0xffffffffL;
+    uint32_t mask = (uint32_t)-1;
+    static uint32_t crc = mask;
+    uint32_t c = mask;
 
-    if (in == NULL) {
-        c = 0xffffffffL;
-    } else {
+    if (in) {
         c = crc;
         while (len--) {
             c = _crcTable[((int)c ^ (*in++)) & 0xff] ^ (c >> 8);
         }
     }
     crc = c;
-    _crc = c ^ 0xffffffffL;
+    _crc = c ^ mask;
 }
 
 uint32_t GZip::_crcTable[] = {

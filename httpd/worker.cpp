@@ -179,7 +179,7 @@ void Worker::onRequest(EPollEvent &event) {
         _poller.mod(*conn, conn, true);
         _LOG_("fd: %d, Request content:\n%s\n", (int)*conn, request.content().c_str());
     }
-    conn->adjust(pos);
+    conn->seek(pos);
     _server.update(conn, this);
 }
 

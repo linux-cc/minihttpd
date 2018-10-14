@@ -91,11 +91,11 @@ void Connection::release() {
     _recvBuf = NULL;
 }
 
-void Connection::adjust(const char *last) {
-    int length = last - _recvBuf;
+void Connection::seek(const char *pos) {
+    int length = pos - _recvBuf;
     if (length) {
         _recvIndex -= length;
-        memmove(_recvBuf, last , _recvIndex);
+        memmove(_recvBuf, pos , _recvIndex);
     }
 }
 

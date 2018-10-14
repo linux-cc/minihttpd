@@ -13,6 +13,9 @@ class GZip {
 public:
     GZip();
     ~GZip();
+    void setLevel(int level) {
+        _level = level;
+    }
     bool zip(const string &infile, const string &outfile = "");
     bool zip(int infd, int outfd);
 

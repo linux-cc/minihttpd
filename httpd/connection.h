@@ -16,7 +16,7 @@ public:
     int send(const void *buf, int size);
     void close();
     void release();
-    void adjust(const char *last);
+    void seek(const char *pos);
 
     const char *pos() const {
         return _recvBuf;
