@@ -2,7 +2,6 @@
 #define __HTTPD_REQUEST_H__
 
 #include "config.h"
-#include "httpd/constants.h"
 #include <strings.h>
 #include <string>
 #include <map>
@@ -34,9 +33,6 @@ public:
     }
     const string &content() const {
         return _content;
-    }
-    const string *getConnection() const {
-        return getHeader(Header::Connection);
     }
     bool isGet() const {
         return !strncasecmp(_method.c_str(), "GET", 3);

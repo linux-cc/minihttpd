@@ -16,12 +16,13 @@ public:
     }
     bool zip(const char *infile, const char *outfile = NULL);
     
-    bool init(int infd, int outfd);
-    void deflate() {
-        _level < 4 ? deflateFast() : deflateHigh();
+    void setChunked() {
+        _chunked = 1;
     }
-    bool flushOutbuf();
-    bool finish();
+    bool init(int infd, int outfd);
+    void deflate();
+    int flushOutbuf();
+    void reset();
 
 private:
     void deflateHigh();
@@ -74,7 +75,7 @@ private:
     uint8_t _eof: 1;
     uint8_t _matchAvl: 1;
     uint8_t _chunked: 1;
-    uint8_t _reserve: 2;
+    uint8_t _reserve: 1;
 
     static Config _configTable[];
     static uint32_t _crcTable[];

@@ -151,6 +151,7 @@ void Worker::onHandleEvent() {
 void Worker::onRequest(EPollEvent &event) {
     Connection *conn = (Connection*)event.data();
     if (!conn->recv()) {
+        _LOG_("onRequest recv error: %s\n", strerror(errno));
         closeInternal(conn);
         return;
     }

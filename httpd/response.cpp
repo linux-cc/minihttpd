@@ -50,10 +50,18 @@ void Response::parseRequest(const Request &request) {
 }
 
 void Response::setCommonHeaders(const Request &request) {
-    const string *value = request.getConnection();
+    const string *value = request.getHeader(Header::Connection);
     if (value) {
         _headers[Header::Connection] = *value;
+        _connClose = !strncasecmp(value->c_str(), "close", 5);
     }    
+    value = request.getHeader(Header::Accept_Encoding);
+    if (value && value->find("gzip") != string::npos) {
+        _headers[Header::Transfer_Encoding] = "chunked";
+        _headers[Header::Content_Encoding] = "gzip";
+        _headers.erase(Header::Content_Length);
+        _hasGzip = 1;
+    }
     _headers[Header::Server] = "myframe/httpd/1.1.01";
     _headers[Header::Date] = getGMTTime(0);
 }
@@ -73,7 +81,7 @@ bool Response::sendHeaders(Connection *conn) {
     return true;
 }
 
-bool Response::sendContent(Connection *conn) {
+bool Response::sendContentOriginal(Connection *conn) {
     if (_fd < 0 || _fileLength == 0) {
         _status = SEND_DONE;
         return true;
@@ -96,13 +104,23 @@ bool Response::sendContent(Connection *conn) {
     return true;
 }
 
-bool Response::connectionClose() const {
-    HeaderIt it = _headers.find(Header::Connection);
-    if (it != _headers.end() && !strncasecmp(it->second.c_str(), "close", 5)) {
-        return true;
+bool Response::sendContentChunked(Connection *conn) {
+    if (!_gzip.init(_fd, *conn)) {
+        return false;
+    }
+    _gzip.setChunked();
+    _gzip.deflate();
+    int result = _gzip.flushOutbuf();
+    _LOG_("_fileLength: %lld, result:%d, conn:%d\n", _fileLength, result, (int)*conn);
+    if (result < 0) {
+        return errno != EAGAIN ? false : true;
+    }
+    if (result == 0) {
+        _gzip.reset();
+        _status = SEND_DONE;
     }
 
-    return false;
+    return true;
 }
 
 void Response::setStatusLine(int status, const string &version) {
@@ -188,7 +206,6 @@ void Response::setHeadersStr(){
 }
 
 void Response::reset() {
-    _cgiBin = false;
     if (_fd > 0) {
         close(_fd);
     }
@@ -199,6 +216,10 @@ void Response::reset() {
     _headersPos = 0;
     _filePos = 0;
     _fileLength = 0;
+    _cgiBin = 0;
+    _connClose = 0;
+    _hasGzip = 0;
+    _reserve = 0;
 }
 
 END_NS

@@ -2,6 +2,7 @@
 #define __HTTPD_RESPONSE_H__
 
 #include "config.h"
+#include "httpd/gzip.h"
 #include <sys/stat.h>
 #include <string>
 #include <map>
@@ -21,14 +22,18 @@ public:
         SEND_CONTENT,
         SEND_DONE,
     };
-    Response(): _cgiBin(false), _fd(-1), _status(PARSE_REQUEST),
-        _headersPos(0), _filePos(0), _fileLength(0) {}
+    Response() {
+        reset();
+    }
     void parseRequest(const Request &request);
     void setCommonHeaders(const Request &request);
     bool sendHeaders(Connection *conn);
-    bool sendContent(Connection *conn);
-    bool connectionClose() const;
-
+    bool sendContent(Connection *conn) {
+        return _hasGzip ? sendContentChunked(conn) : sendContentOriginal(conn);
+    }
+    bool connectionClose() const {
+        return _connClose;
+    }
     bool is100Continue() const {
         return _code[0] == '1' && _code[1] == '0' && _code[2] == '0';
     }
@@ -53,19 +58,25 @@ private:
     void setContentInfo(const string &file, const struct stat &st);
     void setContentType(const string &file);
     void setHeadersStr();
+    bool sendContentOriginal(Connection *conn);
+    bool sendContentChunked(Connection *conn);
 
     string _version;
     string _code;
     string _reason;
-    bool _cgiBin;
     int _fd;
-    map<int, string> _headers;
     Status _status;
     string _headersStr;
     int _headersPos;
     off_t _filePos;
     off_t _fileLength;
+    uint8_t _cgiBin: 1;
+    uint8_t _connClose: 1;
+    uint8_t _hasGzip: 1;
+    uint8_t _reserve: 5;
     typedef map<int, string>::const_iterator HeaderIt;
+    map<int, string> _headers;
+    GZip _gzip;
 };
 
 END_NS
