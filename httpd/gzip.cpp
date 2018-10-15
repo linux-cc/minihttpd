@@ -59,18 +59,22 @@ _level(6),
 _eof(0),
 _matchAvl(0) {
     _gtree = new GTree(*this);
-    //_window=2 + _lbuf=1 + _dbuf=2 + _prev=4 + _outbuf=0.5 + _chunk.buf=2
-    _window = new uint8_t[WSIZE * 11 + HALF_WSIZE];
-    _lbuf = _window + TWO_WSIZE;
-    _dbuf = (uint16_t*)(_lbuf + WSIZE);
-    _prev = _dbuf + WSIZE;
-    _outbuf = (uint8_t*)(_prev + TWO_WSIZE);
-    _chunk.pos = _chunk.buf = _outbuf + HALF_WSIZE;
+    _window = new uint8_t[TWO_WSIZE];
+    _lbuf = new uint8_t[WSIZE];
+    _dbuf = new uint16_t[WSIZE];
+    _prev = new uint16_t[TWO_WSIZE];
+    _outbuf = new uint8_t[HALF_WSIZE];
+    _chunk.pos = _chunk.buf = new uint8_t[TWO_WSIZE];
 }
 
 GZip::~GZip() {
     delete _gtree;
     delete[] _window;
+    delete[] _lbuf;
+    delete[] _dbuf;
+    delete[] _prev;
+    delete[] _outbuf;
+    delete[] _chunk.buf;
 }
 
 bool GZip::init(int infd, int outfd) {
