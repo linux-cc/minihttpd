@@ -2,7 +2,6 @@
 #define __HTTPD_GTREE_H__
 
 #include "config.h"
-#include <string>
 
 #define WSIZE           0x8000
 #define MAX_MATCH       258
@@ -11,7 +10,6 @@
 BEGIN_NS(httpd)
 
 class GZip;
-using std::string;
 
 class GTree {
 public:

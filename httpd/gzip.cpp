@@ -1,10 +1,10 @@
 #include "httpd/gzip.h"
 #include "httpd/gtree.h"
 #include <sys/stat.h>
-#include <sys/uio.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdio.h>
 
 #define HALF_WSIZE          (WSIZE >> 1)
 #define TWO_WSIZE           (WSIZE << 1)
@@ -57,14 +57,16 @@ _outfd(-1),
 _crc(0),
 _level(6),
 _eof(0),
-_matchAvl(0) {
+_matchAvl(0),
+_chunked(0) {
     _gtree = new GTree(*this);
     _window = new uint8_t[TWO_WSIZE];
     _lbuf = new uint8_t[WSIZE];
     _dbuf = new uint16_t[WSIZE];
     _prev = new uint16_t[TWO_WSIZE];
     _outbuf = new uint8_t[HALF_WSIZE];
-    _chunk.pos = _chunk.buf = new uint8_t[TWO_WSIZE];
+    /* 64 is reserve for http chunked length and LRCF */
+    _chunk.pos = _chunk.buf = new uint8_t[TWO_WSIZE + 64];
 }
 
 GZip::~GZip() {
@@ -103,21 +105,20 @@ bool GZip::init(int infd, int outfd) {
     return true;
 }
 
-bool GZip::zip(const string &infile, const string &outfile) {
+bool GZip::zip(const char *infile, const char *outfile) {
     struct stat sbuf;
-    const char *cinfile = infile.c_str();
-    if (stat(cinfile, &sbuf) || !S_ISREG(sbuf.st_mode)) {
+    if (stat(infile, &sbuf) || !S_ISREG(sbuf.st_mode)) {
         return false;
     }
-    int infd = open(cinfile, O_RDONLY);
+    int infd = open(infile, O_RDONLY);
     if (infd < 0) {
         return false;
     }
-    string _outfile = outfile;
-    if (_outfile.empty()) {
-        _outfile = infile + ".gz";
+    char _outfile[256];
+    if (!outfile) {
+        snprintf(_outfile, sizeof(_outfile), "%s.gz", infile);
     }
-    int outfd = open(_outfile.c_str(), O_WRONLY|O_TRUNC|O_CREAT, sbuf.st_mode);
+    int outfd = open(_outfile, O_WRONLY|O_TRUNC|O_CREAT, sbuf.st_mode);
     if (outfd < 0) {
         return false;
     }
@@ -133,7 +134,7 @@ bool GZip::zip(const string &infile, const string &outfile) {
         }
     }
 
-    return finish(false);
+    return finish();
 }
 
 void GZip::deflateHigh() {
@@ -313,36 +314,29 @@ void GZip::putShort(uint16_t us) {
 void GZip::putByte(uint8_t uc) {
     _outbuf[_outcnt++] = uc;
     if (_outcnt == HALF_WSIZE) {
-        memcpy(_chunk.buf + _chunk.cnt, _outbuf, _outcnt);
-        _chunk.cnt += _outcnt;
-        _outcnt = 0;
+        makeChunked();
     }
 }
 
-bool GZip::flushChunk() {
-    if (_chunk.cnt) {
-        char length[16], lrcf[] = "\r\n";
-        struct iovec iov[3];
-        iov[0].iov_base = length;
-        iov[0].iov_len = sprintf(length, "%x%s", _chunk.cnt, lrcf);
-        iov[1].iov_base = _chunk.pos;
-        iov[1].iov_len = _chunk.cnt;
-        iov[2].iov_base = lrcf;
-        iov[2].iov_len = 2;
-        int n = writev(_outfd, iov, 3);
-        if (n < 0) {
-            return errno == EAGAIN;
-        }
+void GZip::makeChunked() {
+    int n = 0;
+    if (_chunked) {
+        n = sprintf((char*)_chunk.buf, "%x\r\n", _outcnt);
     }
-
-    return true;
+    memcpy(_chunk.buf + _chunk.cnt + n, _outbuf, _outcnt);
+    _chunk.cnt += _outcnt + n;
+    _outcnt = 0;
+    if (_chunked) {
+        _chunk.buf[_chunk.cnt++] = '\r';
+        _chunk.buf[_chunk.cnt++] = '\n';
+    }
 }
 
 bool GZip::flushOutbuf() {
     if (_chunk.cnt) {
         int n = write(_outfd, _chunk.pos, _chunk.cnt);
         if (n < 0) {
-            return false;
+            return errno == EAGAIN;
         }
         _chunk.cnt -= n;
         _chunk.pos += n;
@@ -354,17 +348,16 @@ bool GZip::flushOutbuf() {
     return true;
 }
 
-bool GZip::finish(bool isChunked) {
+bool GZip::finish() {
     if (_matchAvl) {
         _gtree->tally(0, _window[_strStart-1]);
     }
     _gtree->flushBlock(1);
     putLong(_crc);
     putLong(_bytesIn);
-    memcpy(_chunk.buf + _chunk.cnt, _outbuf, _outcnt);
-    _chunk.cnt += _outcnt;
+    makeChunked();
 
-    return isChunked ? flushChunk() : flushOutbuf();
+    return flushOutbuf();
 }
 
 void GZip::updateCrc(uint8_t *in, uint32_t len) {

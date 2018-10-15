@@ -2,12 +2,10 @@
 #define __HTTPD_GZIP_H__
 
 #include "config.h"
-#include <string>
 
 BEGIN_NS(httpd)
 
 class GTree;
-using std::string;
 
 class GZip {
 public:
@@ -16,16 +14,14 @@ public:
     void setLevel(int level) {
         _level = level;
     }
-    bool zip(const string &infile, const string &outfile = "");
+    bool zip(const char *infile, const char *outfile = NULL);
     
     bool init(int infd, int outfd);
     void deflate() {
         _level < 4 ? deflateFast() : deflateHigh();
     }
-    bool flushChunk();
-    bool finish() {
-        return finish(true);
-    }
+    bool flushOutbuf();
+    bool finish();
 
 private:
     void deflateHigh();
@@ -40,9 +36,8 @@ private:
     unsigned longestMatch(unsigned hashHead);
     void fillWindow();
     int readFile(void *buf, unsigned len);
-    bool flushOutbuf();
-    bool finish(bool isChunked);
     void updateCrc(uint8_t *in, uint32_t len);
+    void makeChunked();
     
     GTree *_gtree;
     struct Config {
@@ -55,8 +50,7 @@ private:
         uint8_t *buf;
         uint8_t *pos;
         unsigned cnt;
-        bool init;
-        Chunk():buf(NULL), pos(NULL), cnt(0), init(false) {}
+        Chunk():buf(NULL), pos(NULL), cnt(0) {}
     }_chunk;
     uint8_t *_window;
     uint8_t *_outbuf;
@@ -79,6 +73,7 @@ private:
     uint8_t _level: 4;
     uint8_t _eof: 1;
     uint8_t _matchAvl: 1;
+    uint8_t _chunked: 1;
     uint8_t _reserve: 2;
 
     static Config _configTable[];
