@@ -17,23 +17,31 @@ public:
         _level = level;
     }
     bool zip(const string &infile, const string &outfile = "");
-    bool finish();
+    
+    bool init(int infd, int outfd);
+    void deflate() {
+        _level < 4 ? deflateFast() : deflateHigh();
+    }
+    bool flushChunk();
+    bool finish() {
+        return finish(true);
+    }
 
 private:
-    bool init(int infd, int outfd);
-    bool deflate();
-    bool deflateFast();
-    bool putLong(uint32_t ui) {
-        return putShort(ui & 0xffff) && putShort(ui >> 16);
+    void deflateHigh();
+    void deflateFast();
+    void putLong(uint32_t ui) {
+        putShort(ui & 0xffff), putShort(ui >> 16);
     }
-    bool putShort(uint16_t us);
-    bool putByte(uint8_t uc);
+    void putShort(uint16_t us);
+    void putByte(uint8_t uc);
     void updateHash(uint8_t uc);
     unsigned insertString(unsigned pos);
     unsigned longestMatch(unsigned hashHead);
     void fillWindow();
-    bool flushOutbuf();
     int readFile(void *buf, unsigned len);
+    bool flushOutbuf();
+    bool finish(bool isChunked);
     void updateCrc(uint8_t *in, uint32_t len);
     
     GTree *_gtree;
@@ -43,6 +51,13 @@ private:
         uint16_t niceLength;    /* quit search above this match length */
         uint16_t maxChain;
     }_config;
+    struct Chunk {
+        uint8_t *buf;
+        uint8_t *pos;
+        unsigned cnt;
+        bool init;
+        Chunk():buf(NULL), pos(NULL), cnt(0), init(false) {}
+    }_chunk;
     uint8_t *_window;
     uint8_t *_outbuf;
     uint8_t *_lbuf;

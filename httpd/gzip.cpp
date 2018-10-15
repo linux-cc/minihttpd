@@ -1,16 +1,18 @@
 #include "httpd/gzip.h"
 #include "httpd/gtree.h"
 #include <sys/stat.h>
+#include <sys/uio.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
 #define HALF_WSIZE          (WSIZE >> 1)
 #define TWO_WSIZE           (WSIZE << 1)
 #define WMASK               (WSIZE-1)
 #define _head               (_prev+WSIZE)
-#define H_SHIFT             5
 #define MIN_LOOKAHEAD       (MAX_MATCH+MIN_MATCH+1)
 #define MAX_DIST            (WSIZE-MIN_LOOKAHEAD)
+#define H_SHIFT             5
 #define TOO_FAR             4096
 #define GZIP_MAGIC          "\037\213"
 
@@ -42,10 +44,6 @@ inline unsigned GZip::insertString(unsigned pos) {
     return _prev[pos & WMASK];
 }
 
-inline bool GZip::finish() {
-    return _gtree->flushBlock(1) && putLong(_crc) && putLong(_bytesIn) && flushOutbuf();
-}
-
 GZip::GZip():
 _outcnt(0),
 _bytesIn(0),
@@ -61,25 +59,24 @@ _level(6),
 _eof(0),
 _matchAvl(0) {
     _gtree = new GTree(*this);
-    _window = new uint8_t[TWO_WSIZE];
-    _outbuf = new uint8_t[HALF_WSIZE];
-    _lbuf = new uint8_t[WSIZE];
-    _dbuf = new uint16_t[WSIZE];
-    _prev = new uint16_t[TWO_WSIZE];
-    _config = _configTable[_level];
+    //_window=2 + _lbuf=1 + _dbuf=2 + _prev=4 + _outbuf=0.5 + _chunk.buf=2
+    _window = new uint8_t[WSIZE * 11 + HALF_WSIZE];
+    _lbuf = _window + TWO_WSIZE;
+    _dbuf = (uint16_t*)(_lbuf + WSIZE);
+    _prev = _dbuf + WSIZE;
+    _outbuf = (uint8_t*)(_prev + TWO_WSIZE);
+    _chunk.pos = _chunk.buf = _outbuf + HALF_WSIZE;
 }
 
 GZip::~GZip() {
+    delete _gtree;
     delete[] _window;
-    delete[] _lbuf;
-    delete[] _outbuf;
-    delete[] _dbuf;
-    delete[] _prev;
 }
 
 bool GZip::init(int infd, int outfd) {
     _infd = infd;
     _outfd = outfd;
+    _config = _configTable[_level];
     
     updateCrc(NULL, 0);
     memset((char*)_head, 0, WSIZE * sizeof(*_head));
@@ -124,22 +121,19 @@ bool GZip::zip(const string &infile, const string &outfile) {
     if (!init(infd, outfd)) {
         return false;
     }
-
-    while (true) {
-        if (!(_level < 4 ? deflateFast() : deflate())) {
+    
+    while (!_eof) {
+        deflate();
+        if (!flushOutbuf()) {
             return false;
         }
-        if (_eof) {
-            break;
-        }
-        fillWindow();
     }
 
-    return finish();
+    return finish(false);
 }
 
-bool GZip::deflate() {
-    while (_lookAhead) {
+void GZip::deflateHigh() {
+    while (_lookAhead && !_chunk.cnt) {
         unsigned hashHead = insertString(_strStart);
         _prevLength = _matchLength, _prevStart = _matchStart;
         if (hashHead && _prevLength < _config.maxLazy && _strStart - hashHead <= MAX_DIST) {
@@ -162,16 +156,12 @@ bool GZip::deflate() {
             _matchLength = MIN_MATCH - 1;
             _strStart++;
             if (flush) {
-                if (!_gtree->flushBlock()) {
-                    return false;
-                }
+                _gtree->flushBlock();
                 _blkStart = _strStart;
             }
         } else if (_matchAvl) {
             if (_gtree->tally(0, _window[_strStart - 1])) {
-                if (!_gtree->flushBlock()) {
-                    return false;
-                }
+                _gtree->flushBlock();
                 _blkStart = _strStart;
             }
             _strStart++;
@@ -182,18 +172,13 @@ bool GZip::deflate() {
             _lookAhead--;
         }
         if (_lookAhead < MIN_LOOKAHEAD && !_eof) {
-            break;
+            fillWindow();
         }
     }
-    if (_matchAvl && _eof) {
-        _gtree->tally(0, _window[_strStart-1]);
-    }
-
-    return true;
 }
 
-bool GZip::deflateFast() {
-    while (_lookAhead) {
+void GZip::deflateFast() {
+    while (_lookAhead && !_chunk.cnt) {
         bool flush;
         unsigned hashHead = insertString(_strStart);
         if (hashHead && _strStart - hashHead <= MAX_DIST) {
@@ -223,17 +208,13 @@ bool GZip::deflateFast() {
             _strStart++;
         }
         if (flush) {
-                if (!_gtree->flushBlock()) {
-                    return false;
-                }
-                _blkStart = _strStart;
+            _gtree->flushBlock();
+            _blkStart = _strStart;
         }
         if (_lookAhead < MIN_LOOKAHEAD && !_eof) {
-            break;
+            fillWindow();
         }
     }
-
-    return true;
 }
 
 unsigned GZip::longestMatch(unsigned hashHead) {
@@ -314,39 +295,72 @@ int GZip::readFile(void *buf, unsigned len) {
     return n;
 }
 
-bool GZip::putShort(uint16_t us) {
+void GZip::putShort(uint16_t us) {
     /* Output a 16 bit value, lsb first */
     if (_outcnt < HALF_WSIZE - 2) {
         _outbuf[_outcnt++] = us & 0xff;
         _outbuf[_outcnt++] = us >> 8;
-        return true;
     } else {
-        return putByte(us & 0xff) && putByte(us >> 8);
+        putByte(us & 0xff);
+        putByte(us >> 8);
     }
 }
 
-bool GZip::putByte(uint8_t uc) {
-    bool result = true;
+void GZip::putByte(uint8_t uc) {
     _outbuf[_outcnt++] = uc;
     if (_outcnt == HALF_WSIZE) {
-        result = flushOutbuf();
+        memcpy(_chunk.buf + _chunk.cnt, _outbuf, _outcnt);
+        _chunk.cnt += _outcnt;
+        _outcnt = 0;
     }
-
-    return result;
 }
 
-bool GZip::flushOutbuf() {
-    uint8_t *outbuf = _outbuf;
-    while (_outcnt) {
-        int n = write(_outfd, outbuf, _outcnt);
+bool GZip::flushChunk() {
+    if (_chunk.cnt) {
+        char length[16], lrcf[] = "\r\n";
+        struct iovec iov[3];
+        iov[0].iov_base = length;
+        iov[0].iov_len = sprintf(length, "%x%s", _chunk.cnt, lrcf);
+        iov[1].iov_base = _chunk.pos;
+        iov[1].iov_len = _chunk.cnt;
+        iov[2].iov_base = lrcf;
+        iov[2].iov_len = 2;
+        int n = writev(_outfd, iov, 3);
         if (n < 0) {
-            return false;
+            return errno == EAGAIN;
         }
-        _outcnt -= n;
-        outbuf += n;
     }
 
     return true;
+}
+
+bool GZip::flushOutbuf() {
+    if (_chunk.cnt) {
+        int n = write(_outfd, _chunk.pos, _chunk.cnt);
+        if (n < 0) {
+            return false;
+        }
+        _chunk.cnt -= n;
+        _chunk.pos += n;
+        if (!_chunk.cnt) {
+            _chunk.pos = _chunk.buf;
+        }
+    }
+
+    return true;
+}
+
+bool GZip::finish(bool isChunked) {
+    if (_matchAvl) {
+        _gtree->tally(0, _window[_strStart-1]);
+    }
+    _gtree->flushBlock(1);
+    putLong(_crc);
+    putLong(_bytesIn);
+    memcpy(_chunk.buf + _chunk.cnt, _outbuf, _outcnt);
+    _chunk.cnt += _outcnt;
+
+    return isChunked ? flushChunk() : flushOutbuf();
 }
 
 void GZip::updateCrc(uint8_t *in, uint32_t len) {

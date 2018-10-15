@@ -187,7 +187,7 @@ bool GTree::tally(unsigned dist, unsigned lc) {
     return (_lastL == WSIZE || _lastD == WSIZE);
 }
 
-bool GTree::flushBlock(int eof) {
+void GTree::flushBlock(int eof) {
     _flagBuf[_lastF] = _flags;
     
     build(_lDesc);
@@ -199,8 +199,9 @@ bool GTree::flushBlock(int eof) {
     compressBlock(_lDesc._tree, _dDesc._tree);
 
     initBlock();
-
-    return eof ? _gbit->winDup() : true;
+    if (eof) {
+        _gbit->winDup();
+    }
 }
 
 void GTree::build(TreeDesc &desc) {
@@ -486,22 +487,18 @@ _size(CHAR_BITS * sizeof(uint16_t)),
 _valid(0) {
 }
 
-bool GTree::GBit::sendCode(int idx, Tree *tree) {
-    return sendBits(tree[idx]._code, tree[idx]._len);
+void GTree::GBit::sendCode(int idx, Tree *tree) {
+    sendBits(tree[idx]._code, tree[idx]._len);
 }
 
-bool GTree::GBit::sendBits(int value, int length) {
-    bool result = true;
-
+void GTree::GBit::sendBits(int value, int length) {
     _buf |= value << _valid;
     if (_valid + length > _size) {
-        result = _gzip.putShort(_buf);
+        _gzip.putShort(_buf);
         _buf = (uint16_t)value >> (_size - _valid);
         length -= _size;
     }
     _valid += length;
-
-    return result;
 }
 
 unsigned GTree::GBit::reverseBits(unsigned value, int length) {
@@ -514,18 +511,14 @@ unsigned GTree::GBit::reverseBits(unsigned value, int length) {
     return result >> 1;
 }
 
-bool GTree::GBit::winDup() {
-    bool result = true;
-
+void GTree::GBit::winDup() {
     if (_valid > CHAR_BITS) {
-        result = _gzip.putShort(_buf);
+        _gzip.putShort(_buf);
     } else if (_valid > 0) {
-        result = _gzip.putByte(_buf);
+        _gzip.putByte(_buf);
     }
     _buf = 0;
     _valid = 0;
-
-    return result;
 }
 
 END_NS

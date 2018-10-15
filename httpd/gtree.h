@@ -19,7 +19,7 @@ public:
     ~GTree();
     void init();
     bool tally(unsigned dist, unsigned lc);
-    bool flushBlock(int eof = 0);
+    void flushBlock(int eof = 0);
 
 private:
     struct Tree;
@@ -87,10 +87,10 @@ private:
 class GTree::GBit {
 public:
     GBit(GZip &gzip);
-    bool sendBits(int value, int length);
-    bool sendCode(int idx, Tree *tree);
+    void sendBits(int value, int length);
+    void sendCode(int idx, Tree *tree);
     unsigned reverseBits(unsigned value, int length);
-    bool winDup();
+    void winDup();
 
 private:
     GZip &_gzip;
