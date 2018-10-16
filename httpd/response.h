@@ -1,6 +1,7 @@
 #ifndef __HTTPD_RESPONSE_H__
 #define __HTTPD_RESPONSE_H__
 
+#include "httpd/constants.h"
 #include "httpd/gzip.h"
 #include <sys/stat.h>
 #include <string>
@@ -35,7 +36,7 @@ public:
         return _connClose;
     }
     bool is100Continue() const {
-        return _code[0] == '1' && _code[1] == '0' && _code[2] == '0';
+        return _code == ResponseStatus::Continue;
     }
     Status status() const {
         return _status;
@@ -61,7 +62,7 @@ private:
 
     Connection *_conn;
     string _version;
-    string _code;
+    int _code;
     string _reason;
     int _fd;
     Status _status;

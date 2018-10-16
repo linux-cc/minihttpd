@@ -1,6 +1,5 @@
 #include "httpd/response.h"
 #include "httpd/request.h"
-#include "httpd/constants.h"
 #include "httpd/connection.h"
 #include <sys/socket.h>
 #include <sys/uio.h>
@@ -41,8 +40,7 @@ void Response::parseRequest(const Request &request) {
         if (file.empty()) {
             setStatusLine(ResponseStatus::Bad_Request, request.version());
         } else {
-            int status = parseFile(file);
-            setStatusLine(status, request.version());
+            setStatusLine(parseFile(file), request.version());
         }
     }
     setCommonHeaders(request);
@@ -55,19 +53,21 @@ void Response::setCommonHeaders(const Request &request) {
         _headers[Header::Connection] = *value;
         _connClose = !strncasecmp(value->c_str(), "close", 5);
     }    
-    value = request.getHeader(Header::Accept_Encoding);
-    if (value && value->find("gzip") != string::npos) {
-        _headers[Header::Transfer_Encoding] = "chunked";
-        _headers[Header::Content_Encoding] = "gzip";
-        _headers.erase(Header::Content_Length);
-        _acceptGz = 1;
+    if (_code == ResponseStatus::OK) {
+        value = request.getHeader(Header::Accept_Encoding);
+        if (value && value->find("gzip") != string::npos) {
+            _headers[Header::Transfer_Encoding] = "chunked";
+            _headers[Header::Content_Encoding] = "gzip";
+            _headers.erase(Header::Content_Length);
+            _acceptGz = 1;
+        }
     }
     _headers[Header::Server] = "myframe/httpd/1.1.01";
     _headers[Header::Date] = getGMTTime(0);
 }
 
 string Response::headers() const {
-    string str = _version + ' ' + _code + ' ' + _reason + CRLF;
+    string str = _version + ' ' + itoa(_code) + ' ' + _reason + CRLF;
     for (HeaderIt it = _headers.begin(); it != _headers.end(); ++it) {
         str += getFieldName(it->first) + ": " + it->second + CRLF;
     }
@@ -126,7 +126,7 @@ bool Response::sendContentChunked(Connection *conn) {
 
 void Response::setStatusLine(int status, const string &version) {
     _version = version;
-    _code = itoa(status);
+    _code = status;
     _reason = getStatusReason(status);
 }
 
