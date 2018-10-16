@@ -2,7 +2,6 @@
 #define __HTTPD_RESPONSE_H__
 
 #include "config.h"
-#include "httpd/gzip.h"
 #include <sys/stat.h>
 #include <string>
 #include <map>
@@ -76,7 +75,6 @@ private:
     uint8_t _reserve: 5;
     typedef map<int, string>::const_iterator HeaderIt;
     map<int, string> _headers;
-    GZip _gzip;
 };
 
 END_NS

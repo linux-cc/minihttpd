@@ -105,22 +105,7 @@ bool Response::sendContentOriginal(Connection *conn) {
 }
 
 bool Response::sendContentChunked(Connection *conn) {
-    if (!_gzip.init(_fd, *conn)) {
-        return false;
-    }
-    _gzip.setChunked();
-    _gzip.deflate();
-    int result = _gzip.flushOutbuf();
-    _LOG_("_fileLength: %lld, result:%d, conn:%d\n", _fileLength, result, (int)*conn);
-    if (result < 0) {
-        return errno != EAGAIN ? false : true;
-    }
-    if (result == 0) {
-        _gzip.reset();
-        _status = SEND_DONE;
-    }
-
-    return true;
+    return false;
 }
 
 void Response::setStatusLine(int status, const string &version) {

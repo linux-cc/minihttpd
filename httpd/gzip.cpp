@@ -5,15 +5,15 @@
 #include <unistd.h>
 #include <stdio.h>
 
+#define H_SHIFT             5
+#define TOO_FAR             4096
+#define GZIP_MAGIC          "\037\213"
 #define HALF_WSIZE          (WSIZE >> 1)
 #define TWO_WSIZE           (WSIZE << 1)
 #define WMASK               (WSIZE-1)
 #define _head               (_prev+WSIZE)
 #define MIN_LOOKAHEAD       (MAX_MATCH+MIN_MATCH+1)
 #define MAX_DIST            (WSIZE-MIN_LOOKAHEAD)
-#define H_SHIFT             5
-#define TOO_FAR             4096
-#define GZIP_MAGIC          "\037\213"
 
 BEGIN_NS(httpd)
 
@@ -43,16 +43,23 @@ inline unsigned GZip::insertString(unsigned pos) {
     return _prev[pos & WMASK];
 }
 
-GZip::GZip() {
+GZip::GZip():
+_outcnt(0),
+_bytesIn(0),
+_strStart(0),
+_blkStart(0),
+_insH(0),
+_infd(-1),
+_outfd(-1),
+_crc(0),
+_level(6),
+_eof(0) {
     _gtree = new GTree(*this);
     _window = new uint8_t[TWO_WSIZE];
     _lbuf = new uint8_t[WSIZE];
     _dbuf = new uint16_t[WSIZE];
     _prev = new uint16_t[TWO_WSIZE];
     _outbuf = new uint8_t[HALF_WSIZE];
-    /* 64 is reserve for http chunked length and CRLF */
-    _chunk.pos = _chunk.buf = new uint8_t[TWO_WSIZE + 64];
-    reset();
 }
 
 GZip::~GZip() {
@@ -62,16 +69,11 @@ GZip::~GZip() {
     delete[] _dbuf;
     delete[] _prev;
     delete[] _outbuf;
-    delete[] _chunk.buf;
 }
 
 bool GZip::init(int infd, int outfd) {
-    if (_infd != -1 && _outfd != -1) {
-        return true;
-    }
     _infd = infd;
     _outfd = outfd;
-    _config = _configTable[_level];
     
     updateCrc(NULL, 0);
     memset((char*)_head, 0, WSIZE * sizeof(*_head));
@@ -83,18 +85,11 @@ bool GZip::init(int infd, int outfd) {
         updateHash(_window[i]);
     }
     _gtree->init();
-    putByte(GZIP_MAGIC[0]);
-    putByte(GZIP_MAGIC[1]);
-    putByte(8); /* compression method */
-    putByte(0); /* general flags */
-    putLong(0); /* no timestamp */
-    putByte(0); /* extra flags */
-    putByte(3); /* os code assume Unix */
 
     return true;
 }
 
-bool GZip::zip(const char *infile, const char *outfile) {
+bool GZip::init(const char *infile, const char *outfile) {
     struct stat sbuf;
     if (stat(infile, &sbuf) || !S_ISREG(sbuf.st_mode)) {
         return false;
@@ -112,66 +107,56 @@ bool GZip::zip(const char *infile, const char *outfile) {
         return false;
     }
 
-    if (!init(infd, outfd)) {
-        return false;
-    }
-    
-    while (true) {
-        deflate();
-        int r = flushOutbuf();
-        if (r < 0) {
-            return false;
-        } else if (r == 0) {
-            break;
-        }
-    }
+    return init(infd, outfd);
+}
 
-    return true;
+void GZip::zip() {
+    _config = _configTable[_level];
+    putByte(GZIP_MAGIC[0]);
+    putByte(GZIP_MAGIC[1]);
+    putByte(8); /* compression method */
+    putByte(0); /* general flags */
+    putLong(0); /* no timestamp */
+    putByte(0); /* extra flags */
+    putByte(3); /* os code assume Unix */
+    _level < 4 ? deflateFast() : deflate();
+    putLong(_crc);
+    putLong(_bytesIn);
+    flushOutbuf();
 }
 
 void GZip::deflate() {
-    _level < 4 ? deflateFast() : deflateHigh();
-    if (_eof && _crc) {
-        if (_matchAvl) {
-            _gtree->tally(0, _window[_strStart-1]);
-        }
-        _gtree->flushBlock(1);
-        putLong(_crc);
-        putLong(_bytesIn);
-        makeChunked();
-        _chunk.cnt += sprintf((char*)_chunk.buf + _chunk.cnt, "%s", "0\r\n\r\n");
-        _crc = 0;
-    }
-}
-
-void GZip::deflateHigh() {
-    while (_lookAhead && !_chunk.cnt) {
+    unsigned prevMatch;
+    unsigned matchLength = MIN_MATCH - 1;
+    bool matchAvailable = false;
+    
+    while (_lookAhead) {
         unsigned hashHead = insertString(_strStart);
-        _prevLength = _matchLength, _prevStart = _matchStart;
+        _prevLength = matchLength, prevMatch = _matchStart;
         if (hashHead && _prevLength < _config.maxLazy && _strStart - hashHead <= MAX_DIST) {
-            _matchLength = longestMatch(hashHead);
-            if (_matchLength > _lookAhead) {
-                _matchLength = _lookAhead;
+            matchLength = longestMatch(hashHead);
+            if (matchLength > _lookAhead) {
+                matchLength = _lookAhead;
             }
-            if (_matchLength == MIN_MATCH && _strStart - _matchStart > TOO_FAR) {
-                _matchLength--;
+            if (matchLength == MIN_MATCH && _strStart - _matchStart > TOO_FAR) {
+                matchLength--;
             }
         }
-        if (_prevLength >= MIN_MATCH && _matchLength <= _prevLength) {
-            bool flush = _gtree->tally(_strStart - 1 - _prevStart, _prevLength - MIN_MATCH);
+        if (_prevLength >= MIN_MATCH && matchLength <= _prevLength) {
+            bool flush = _gtree->tally(_strStart - 1 - prevMatch, _prevLength - MIN_MATCH);
             _lookAhead -= _prevLength - 1;
             _prevLength -= 2;
             while (_prevLength--) {
                 hashHead = insertString(++_strStart);
             }
-            _matchAvl = 0;
-            _matchLength = MIN_MATCH - 1;
+            matchAvailable = false;
+            matchLength = MIN_MATCH - 1;
             _strStart++;
             if (flush) {
                 _gtree->flushBlock();
                 _blkStart = _strStart;
             }
-        } else if (_matchAvl) {
+        } else if (matchAvailable) {
             if (_gtree->tally(0, _window[_strStart - 1])) {
                 _gtree->flushBlock();
                 _blkStart = _strStart;
@@ -179,7 +164,7 @@ void GZip::deflateHigh() {
             _strStart++;
             _lookAhead--;
         } else {
-            _matchAvl = 1;
+            matchAvailable = true;
             _strStart++;
             _lookAhead--;
         }
@@ -187,30 +172,38 @@ void GZip::deflateHigh() {
             fillWindow();
         }
     }
+    if (matchAvailable) {
+        _gtree->tally(0, _window[_strStart-1]);
+    }
+
+    _gtree->flushBlock(1);
 }
 
 void GZip::deflateFast() {
-    while (_lookAhead && !_chunk.cnt) {
+    unsigned matchLength = 0;
+    _prevLength = MIN_MATCH - 1;
+    
+    while (_lookAhead) {
         bool flush;
         unsigned hashHead = insertString(_strStart);
         if (hashHead && _strStart - hashHead <= MAX_DIST) {
-            _matchLength = longestMatch(hashHead);
-            if (_matchLength > _lookAhead) {
-                _matchLength = _lookAhead;
+            matchLength = longestMatch(hashHead);
+            if (matchLength > _lookAhead) {
+                matchLength = _lookAhead;
             }
         }
-        if (_matchLength >= MIN_MATCH) {
-            flush = _gtree->tally(_strStart - _matchStart, _matchLength - MIN_MATCH);
-            _lookAhead -= _matchLength;
-            if (_matchLength <= _config.maxLazy) {
-                _matchLength--;
+        if (matchLength >= MIN_MATCH) {
+            flush = _gtree->tally(_strStart - _matchStart, matchLength - MIN_MATCH);
+            _lookAhead -= matchLength;
+            if (matchLength <= _config.maxLazy) {
+                matchLength--;
                 do {
                     hashHead = insertString(++_strStart);
-                } while(--_matchLength);
+                } while(--matchLength);
                 _strStart++;
             } else {
-                _strStart += _matchLength;
-                _matchLength = 0;
+                _strStart += matchLength;
+                matchLength = 0;
                 _insH = _window[_strStart];
                 updateHash(_window[_strStart + 1]);
             }
@@ -227,6 +220,8 @@ void GZip::deflateFast() {
             fillWindow();
         }
     }
+
+    _gtree->flushBlock(1);
 }
 
 unsigned GZip::longestMatch(unsigned hashHead) {
@@ -321,59 +316,22 @@ void GZip::putShort(uint16_t us) {
 void GZip::putByte(uint8_t uc) {
     _outbuf[_outcnt++] = uc;
     if (_outcnt == HALF_WSIZE) {
-        makeChunked();
+        flushOutbuf();
     }
 }
 
-void GZip::makeChunked() {
-    char *pos = (char*)_chunk.buf + _chunk.cnt;
-    if (_chunked) {
-        int n = sprintf(pos, "%x\r\n", _outcnt);
-        pos += n;
-        _chunk.cnt += n;
-    }
-    memcpy(pos, _outbuf, _outcnt);
-    _chunk.cnt += _outcnt;
-    _outcnt = 0;
-    if (_chunked) {
-        _chunk.buf[_chunk.cnt++] = '\r';
-        _chunk.buf[_chunk.cnt++] = '\n';
-    }
-}
-
-int GZip::flushOutbuf() {
-    int n = write(_outfd, _chunk.pos, _chunk.cnt);
-    if (n < 0) {
-        return n;
-    }
-    _LOG_("flushOutbuf in: %u, cnt: %u, n: %u, outfd: %d\n", _bytesIn, _chunk.cnt, n, _outfd);
-    _chunk.cnt -= n;
-    _chunk.pos += n;
-    if (!_chunk.cnt) {
-        _chunk.pos = _chunk.buf;
-        if (_eof) {
-            return 0;
+bool GZip::flushOutbuf() {
+    uint8_t *outbuf = _outbuf;
+    while (_outcnt) {
+        int n = write(_outfd, outbuf, _outcnt);
+        if (n < 0) {
+            return false;
         }
+        _outcnt -= n;
+        outbuf += n;
     }
 
-    return n;
-}
-
-void GZip::reset() {
-    _outcnt = 0;
-    _bytesIn = 0;
-    _strStart = 0;
-    _blkStart = 0;
-    _insH = 0;
-    _prevLength = MIN_MATCH - 1;
-    _matchLength = MIN_MATCH - 1;
-    _infd = -1;
-    _outfd = -1;
-    _crc = 0;
-    _level = 6;
-    _eof = 0;
-    _matchAvl = 0;
-    _chunked = 0;
+    return true;
 }
 
 void GZip::updateCrc(uint8_t *in, uint32_t len) {
