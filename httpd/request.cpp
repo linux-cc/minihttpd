@@ -1,6 +1,6 @@
 #include "httpd/request.h"
-#include "httpd/connection.h"
 #include "httpd/constants.h"
+#include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 

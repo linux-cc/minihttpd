@@ -3,6 +3,7 @@
 #include "httpd/constants.h"
 #include "httpd/connection.h"
 #include <sys/socket.h>
+#include <sys/uio.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -45,7 +46,6 @@ void Response::parseRequest(const Request &request) {
         }
     }
     setCommonHeaders(request);
-    setHeadersStr();
     _status = SEND_HEADERS;
 }
 
@@ -60,24 +60,31 @@ void Response::setCommonHeaders(const Request &request) {
         _headers[Header::Transfer_Encoding] = "chunked";
         _headers[Header::Content_Encoding] = "gzip";
         _headers.erase(Header::Content_Length);
-        _hasGzip = 1;
+        _acceptGz = 1;
     }
     _headers[Header::Server] = "myframe/httpd/1.1.01";
     _headers[Header::Date] = getGMTTime(0);
 }
 
+string Response::headers() const {
+    string str = _version + ' ' + _code + ' ' + _reason + CRLF;
+    for (HeaderIt it = _headers.begin(); it != _headers.end(); ++it) {
+        str += getFieldName(it->first) + ": " + it->second + CRLF;
+    }
+    str += CRLF;
+
+    return str;
+}
+
 bool Response::sendHeaders(Connection *conn) {
-    const char *data = _headersStr.data() + _headersPos;
-    int length = _headersStr.length();
-    int left = length - _headersPos;
-    int n = conn->send(data, left);
-    if (n < 0) {
+    string data = headers();
+    int len = data.length();
+
+    if (!conn->send(data.c_str(), len)) {
         return false;
     }
-    _headersPos += n;
-    if (_headersPos >= length) {
-        _status = _fd > 0 ? SEND_CONTENT : SEND_DONE;
-    }
+    _status = _fd > 0 ? SEND_CONTENT : SEND_DONE;
+
     return true;
 }
 
@@ -105,7 +112,16 @@ bool Response::sendContentOriginal(Connection *conn) {
 }
 
 bool Response::sendContentChunked(Connection *conn) {
-    return false;
+    _conn = conn;
+    GZip gzip(this);
+
+    if (!gzip.init()) {
+        return false;
+    }
+    gzip.zip();
+    _status = SEND_DONE;
+
+    return true;
 }
 
 void Response::setStatusLine(int status, const string &version) {
@@ -182,14 +198,6 @@ void Response::setContentType(const string &file) {
     value += "; charset=UTF-8";
 }
 
-void Response::setHeadersStr(){
-    _headersStr = _version + ' ' + _code + ' ' + _reason + CRLF;
-    for (HeaderIt it = _headers.begin(); it != _headers.end(); ++it) {
-        _headersStr += getFieldName(it->first) + ": " + it->second + CRLF;
-    }
-    _headersStr += CRLF;
-}
-
 void Response::reset() {
     if (_fd > 0) {
         close(_fd);
@@ -197,14 +205,28 @@ void Response::reset() {
     _fd = -1;
     _headers.clear();
     _status = PARSE_REQUEST;
-    _headersStr.clear();
-    _headersPos = 0;
     _filePos = 0;
     _fileLength = 0;
     _cgiBin = 0;
     _connClose = 0;
-    _hasGzip = 0;
+    _acceptGz = 0;
     _reserve = 0;
+}
+
+int Response::gzfill(void *buf, int len) {
+    return read(_fd, buf, len);
+}
+
+bool Response::gzflush(const void *buf, int len, bool eof) {
+    static char tailer[] = { CR, LF, '0', CR, LF, CR, LF, };
+    char header[16] = { 0 };
+    int hlen = sprintf(header, "%x%s", len, CRLF);
+
+    if (!_conn->send(header, hlen, buf, len, tailer, eof ? 7 : 2)) {
+        return false;
+    }
+
+    return true;
 }
 
 END_NS

@@ -11,6 +11,8 @@ class Socket {
 public:
     int recv(void *buf, size_t size, int flags = 0);
     int send(const void *buf, size_t size, int flags = 0);
+    int send(const void *buf1, size_t size1, const void *buf2, size_t size2);
+    int send(const void *buf1, size_t size1, const void *buf2, size_t size2, const void *buf3, size_t size3);
     int recvfrom(void *buf, size_t size, Sockaddr &addr, int flags = 0) {
         return ::recvfrom(_socket, buf, size, flags, addr, &addr.len());
     }

@@ -1,5 +1,6 @@
 #include "socket/socket.h"
 #include <sys/socket.h>
+#include <sys/uio.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -52,7 +53,7 @@ bool Socket::connect(const char *host, const char *service, int family, int sock
 
 int Socket::recv(void *buf, size_t size, int flags) {
     int n;
-    while (true){
+    while (true) {
 	    n = ::recv(_socket, buf, size, flags);
         if (!(n < 0 && errno == EINTR)) {
             break;
@@ -64,7 +65,7 @@ int Socket::recv(void *buf, size_t size, int flags) {
 
 int Socket::send(const void *buf, size_t size, int flags) {
     int n;
-    while (true){
+    while (true) {
 	    n = ::send(_socket, buf, size, flags);
         if (!(n < 0 && errno == EINTR)) {
             break;
@@ -72,6 +73,44 @@ int Socket::send(const void *buf, size_t size, int flags) {
     }
 
 	return n;
+}
+
+int Socket::send(const void *buf1, size_t size1, const void *buf2, size_t size2) {
+    struct iovec iov[2];
+    iov[0].iov_base = (char*)buf1;
+    iov[0].iov_len = size1;
+    iov[1].iov_base = (char*)buf2;
+    iov[1].iov_len = size2;
+    int n;
+
+    while (true) {
+        n = writev(_socket, iov, 2);
+        if (!(n < 0 && errno == EINTR)) {
+            break;
+        }
+    }
+
+    return n;
+}
+
+int Socket::send(const void *buf1, size_t size1, const void *buf2, size_t size2, const void *buf3, size_t size3) {
+    struct iovec iov[3];
+    iov[0].iov_base = (char*)buf1;
+    iov[0].iov_len = size1;
+    iov[1].iov_base = (char*)buf2;
+    iov[1].iov_len = size2;
+    iov[2].iov_base = (char*)buf3;
+    iov[2].iov_len = size3;
+    int n;
+
+    while (true) {
+        n = writev(_socket, iov, 3);
+        if (!(n < 0 && errno == EINTR)) {
+            break;
+        }
+    }
+
+    return n;
 }
 
 int Socket::setNonblock() {

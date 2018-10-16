@@ -2,20 +2,28 @@
 #define __HTTPD_GZIP_H__
 
 #include "config.h"
+#include <unistd.h>
 
 BEGIN_NS(httpd)
 
 class GTree;
 
-class GZip {
+class GCallback {
 public:
-    GZip();
+    virtual ~GCallback() {}
+    virtual int gzfill(void *buf, int len) = 0;
+    virtual bool gzflush(const void *buf, int len, bool eof) = 0;
+};
+
+class GZip : public GCallback {
+public:
+    GZip(GCallback *callback = NULL);
     ~GZip();
     void setLevel(int level) {
         _level = level;
     }
     bool init(const char *infile, const char *outfile = NULL);
-    bool init(int infd, int outfd);
+    bool init();
     void zip();
 
 private:
@@ -30,11 +38,15 @@ private:
     unsigned insertString(unsigned pos);
     unsigned longestMatch(unsigned hashHead);
     void fillWindow();
-    bool flushOutbuf();
-    int readFile(void *buf, unsigned len);
+    int fill(void *buf, unsigned len);
     void updateCrc(uint8_t *in, uint32_t len);
+    int gzfill(void *buf, int len) {
+        return read(_infd, buf, len);
+    }
+    bool gzflush(const void *buf, int len, bool eof);
     
     GTree *_gtree;
+    GCallback *_callback;
     struct Config {
         uint16_t goodLength;    /* reduce lazy search above this match length */
         uint16_t maxLazy;       /* do not perform lazy search above this match length */

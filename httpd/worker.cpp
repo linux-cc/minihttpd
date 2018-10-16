@@ -192,7 +192,7 @@ void Worker::onResponse(EPollEvent &event) {
     case Response::PARSE_REQUEST:
         response.parseRequest(request);
         request.reset(response.is100Continue());
-        _LOG_("fd: %d, Response headers:\n%s\n", (int)*conn, response.headers());
+        _LOG_("fd: %d, Response headers:\n%s\n", (int)*conn, response.headers().c_str());
     case Response::SEND_HEADERS: {
         if (!response.sendHeaders(conn)) {
             _LOG_("Response send headers error: %d:%s\n", errno, strerror(errno));

@@ -2,7 +2,6 @@
 #include "httpd/gtree.h"
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <stdio.h>
 
 #define H_SHIFT             5
@@ -43,7 +42,7 @@ inline unsigned GZip::insertString(unsigned pos) {
     return _prev[pos & WMASK];
 }
 
-GZip::GZip():
+GZip::GZip(GCallback *callback):
 _outcnt(0),
 _bytesIn(0),
 _strStart(0),
@@ -55,6 +54,7 @@ _crc(0),
 _level(6),
 _eof(0) {
     _gtree = new GTree(*this);
+    _callback = callback ? callback : this;
     _window = new uint8_t[TWO_WSIZE];
     _lbuf = new uint8_t[WSIZE];
     _dbuf = new uint16_t[WSIZE];
@@ -71,13 +71,10 @@ GZip::~GZip() {
     delete[] _outbuf;
 }
 
-bool GZip::init(int infd, int outfd) {
-    _infd = infd;
-    _outfd = outfd;
-    
+bool GZip::init() {
     updateCrc(NULL, 0);
     memset((char*)_head, 0, WSIZE * sizeof(*_head));
-    _lookAhead = readFile(_window, TWO_WSIZE);    
+    _lookAhead = fill(_window, TWO_WSIZE);
     if (_lookAhead <= 0) {
         return false;
     }
@@ -94,20 +91,20 @@ bool GZip::init(const char *infile, const char *outfile) {
     if (stat(infile, &sbuf) || !S_ISREG(sbuf.st_mode)) {
         return false;
     }
-    int infd = open(infile, O_RDONLY);
-    if (infd < 0) {
+    _infd = open(infile, O_RDONLY);
+    if (_infd < 0) {
         return false;
     }
     char _outfile[256];
     if (!outfile) {
         snprintf(_outfile, sizeof(_outfile), "%s.gz", infile);
     }
-    int outfd = open(_outfile, O_WRONLY|O_TRUNC|O_CREAT, sbuf.st_mode);
-    if (outfd < 0) {
+    _outfd = open(_outfile, O_WRONLY|O_TRUNC|O_CREAT, sbuf.st_mode);
+    if (_outfd < 0) {
         return false;
     }
 
-    return init(infd, outfd);
+    return init();
 }
 
 void GZip::zip() {
@@ -122,7 +119,7 @@ void GZip::zip() {
     _level < 4 ? deflateFast() : deflate();
     putLong(_crc);
     putLong(_bytesIn);
-    flushOutbuf();
+    _callback->gzflush(_outbuf, _outcnt, true);
 }
 
 void GZip::deflate() {
@@ -283,7 +280,7 @@ void GZip::fillWindow() {
     }
 
     if (!_eof) {
-        int n = readFile(_window + _strStart + _lookAhead, more);
+        int n = fill(_window + _strStart + _lookAhead, more);
         if (n <= 0) {
             _eof = true;
         } else {
@@ -292,8 +289,8 @@ void GZip::fillWindow() {
     }
 }
 
-int GZip::readFile(void *buf, unsigned len) {
-    int n = read(_infd, buf, len);
+int GZip::fill(void *buf, unsigned len) {
+    int n = _callback->gzfill(buf, len);
     if (n > 0) {
         updateCrc((uint8_t*)buf, n);
         _bytesIn += n;
@@ -316,19 +313,23 @@ void GZip::putShort(uint16_t us) {
 void GZip::putByte(uint8_t uc) {
     _outbuf[_outcnt++] = uc;
     if (_outcnt == HALF_WSIZE) {
-        flushOutbuf();
+        if (!_callback->gzflush(_outbuf, _outcnt, false)) {
+            abort();
+        }
+        _outcnt = 0;
     }
 }
 
-bool GZip::flushOutbuf() {
-    uint8_t *outbuf = _outbuf;
-    while (_outcnt) {
-        int n = write(_outfd, outbuf, _outcnt);
+bool GZip::gzflush(const void *buf, int len, bool eof) {
+    eof = false;
+    const char *pos = (const char*)buf;
+    while (len) {
+        int n = write(_outfd, pos, len);
         if (n < 0) {
             return false;
         }
-        _outcnt -= n;
-        outbuf += n;
+        len -= n;
+        pos += n;
     }
 
     return true;

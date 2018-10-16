@@ -10,10 +10,12 @@ BEGIN_NS(httpd)
 
 class Connection {
 public:
-    Connection(int socket = -1, int bufSize = 8192);
+    Connection(int socket = -1, int bufSize = (1 << 14));
     bool recv();
     bool send();
-    int send(const void *buf, int size);
+    bool send(const void *buf, int size);
+    bool send(const void *buf1, int size1, const void *buf2, int size2);
+    bool send(const void *buf1, int size1, const void *buf2, int size2, const void *buf3, int size3);
     void close();
     void release();
     void seek(const char *pos);
@@ -41,7 +43,8 @@ public:
     }
 
 private:
-    int copy(const void *buf, int size);
+    bool copy(const void *buf, int size, int sendn);
+    bool copy(const void *buf1, int size1, const void *buf2, int size2, int sendn);
 
     int _socket;
     int _recvIndex;
