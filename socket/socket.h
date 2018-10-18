@@ -9,6 +9,13 @@ BEGIN_NS(socket)
 
 class Socket {
 public:
+    enum Family {
+        F_UNSPEC = PF_UNSPEC,
+        F_INET4 = PF_INET,
+        F_INET6 = PF_INET6,
+        F_LOCAL = PF_LOCAL,
+    };
+public:
     int recv(void *buf, size_t size, int flags = 0);
     int send(const void *buf, size_t size, int flags = 0);
     int send(const void *buf1, size_t size1, const void *buf2, size_t size2);
@@ -48,14 +55,14 @@ protected:
 class TcpSocket : public Socket {
 public:
     explicit TcpSocket(int socket = -1): Socket(socket) {}
-    bool create(const char *host, const char *service, int family = PF_UNSPEC) {
+    bool create(const char *host, const char *service, Family family = F_UNSPEC) {
         return Socket::create(host, service, family, SOCK_STREAM, 0);
     }
-    bool connect(const char *host, const char *service, int family) {
+    bool connect(const char *host, const char *service, Family family) {
         return Socket::connect(host, service, family, SOCK_STREAM, 0);
     }
 
-    bool connect(const char *host, const char *service, int ms, int family);
+    bool connect(const char *host, const char *service, int ms, Family family);
     int accept() {
 	    return ::accept(_socket, NULL, NULL);
     }
@@ -70,15 +77,15 @@ public:
 class UdpSocket : public Socket {
 public:
     explicit UdpSocket(int socket = -1): Socket(socket) {}
-    bool create(const char *host, const char *service, int family = PF_UNSPEC) {
+    bool create(const char *host, const char *service, Family family = F_UNSPEC) {
         return Socket::create(host, service, family, SOCK_DGRAM, 0);
     }
-    bool connect(const char *host, const char *service, int family = PF_UNSPEC) {
+    bool connect(const char *host, const char *service, Family family = F_UNSPEC) {
         return Socket::connect(host, service, family, SOCK_DGRAM, 0);
     }
     using Socket::sendto;
     /* functions used by client */
-    int sendto(const char *host, const char *service, const void *buf, size_t size, int family = PF_UNSPEC, int flags = 0);
+    int sendto(const char *host, const char *service, const void *buf, size_t size, Family family = F_UNSPEC, int flags = 0);
 };
 
 END_NS

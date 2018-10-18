@@ -12,9 +12,13 @@ int main(int argc, char *argv[]) {
         printf("usage %s port ipversion[0|1|2|3]\n", argv[0]);
         return -1;
     }
-    int ip = argv[2][0];
-    int family = ip == '0' ? PF_UNSPEC : (ip == '1' ? PF_INET :
-            (ip == '2' ? PF_INET6 : PF_LOCAL));
+    TcpSocket::Family family;
+    switch(argv[2][0]) {
+    case '1': family = TcpSocket::F_INET4; break;
+    case '2': family = TcpSocket::F_INET6; break;
+    case '3': family = TcpSocket::F_LOCAL; break;
+    default: family = TcpSocket::F_UNSPEC;
+    }
     TcpSocket server;
     EPoller poller;
     if (!server.create("localhost", argv[1], family)) {

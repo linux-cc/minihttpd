@@ -128,7 +128,7 @@ void Socket::close() {
 }
 
 static int wait(int socket, int ms);
-bool TcpSocket::connect(const char *host, const char *service, int ms, int family) {
+bool TcpSocket::connect(const char *host, const char *service, int ms, Family family) {
 	int oldFlags = setNonblock();
 	if(!connect(host, service, family)) {
         if((errno != EINPROGRESS && errno != EWOULDBLOCK) || wait(_socket, ms) <= 0) {
@@ -161,7 +161,7 @@ int wait(int socket, int ms) {
     return 0;
 }
 
-int UdpSocket::sendto(const char *host, const char *service, const void *buf, size_t size, int family, int flags) {
+int UdpSocket::sendto(const char *host, const char *service, const void *buf, size_t size, Family family, int flags) {
     Addrinfo ai(family, SOCK_DGRAM, 0);
     if (ai.getaddrinfo(host, service)) {
         return -1;
