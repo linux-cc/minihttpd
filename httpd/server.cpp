@@ -10,32 +10,48 @@ USING_CLASS(thread, Mutex);
 
 static Mutex __setLock;
 
-Server::Server():
+Server::Server(int workers, int workerClients, int timeout):
 _workers(NULL),
 _slotSets(NULL),
-_slots(30),
+_workerCnt(workers),
+_workerClients(workerClients),
+_slots(timeout),
 _curSlot(0),
 _quit(false) {
     Header::initFieldName();
     ResponseStatus::initStatusReason();
 }
 
-bool Server::start(int workers, int workerClients, int timeout) {
-    _LOG_("workers: %d, workerClients: %d, timeout: %d\n", workers, workerClients, timeout);
-    if (!_server.create(NULL, "9090")) {
+Server::~Server() {
+    if (_workers) {
+        for (int i = 0; i < _workerCnt; ++i) {
+            delete _workers[i];
+        }
+        delete[] _workers;
+    }
+    if (_slotSets) {
+        delete[] _slotSets;
+    }
+}
+
+bool Server::start(const char *host, const char *service) {
+    _LOG_("workers: %d, workerClients: %d, timeout: %d\n", _workerCnt, _workerClients, _slots);
+    if (!_server.create(host, service)) {
         _LOG_("server create error:%d:%s\n", errno, strerror(errno));
         return false;
     }
     _server.setNonblock();
-    _workers = new Worker*[workers];
-    for (int i = 0; i < workers; ++i) {
-        _workers[i] = new Worker(*this, workerClients);
-        _workers[i]->start();
+    _workers = new Worker*[_workerCnt];
+    for (int i = 0; i < _workerCnt; ++i) {
+        _workers[i] = new Worker(*this, _workerClients);
+        if (!_workers[i]->start()) {
+            _LOG_("server start worker error:%d:%s\n", errno, strerror(errno));
+            return false;
+        }
     }
     _LOG_("server listen on port 9090\n");
-    _slots = timeout;
-    _slotSets = new SlotSet[timeout];    
-    _slotQ.init(_slotSets, timeout);
+    _slotSets = new SlotSet[_slots];    
+    _slotQ.init(_slotSets, _slots);
 
     return true;
 }

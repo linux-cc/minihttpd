@@ -3,11 +3,11 @@
 
 int main(int argc, char *argv[]) {
     USING_CLASS(httpd, Server);
-    Server svr;
+    Server svr(4, 8, 10);
     if (argc == 3)
-        svr.start(atoi(argv[1]), atoi(argv[2]), 10);
+        svr.start(argv[1], argv[2]);
     else
-        svr.start(2, 8, 10);
+        svr.start(argv[1], "9090");
 
     svr.run();
 

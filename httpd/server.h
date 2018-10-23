@@ -17,8 +17,9 @@ class Connection;
 
 class Server {
 public:
-    Server();
-    bool start(int workers, int workerClients, int timeout);
+    Server(int workers = 4, int workerClients = 8, int timeout = 30);
+    ~Server();
+    bool start(const char *host, const char *service);
     void update(Connection *conn, Worker *worker);
     void remove(Connection *conn, Worker *worker);
     void run();
@@ -44,6 +45,8 @@ private:
     SlotMap  _connSlot;
     Worker **_workers;
     SlotSet *_slotSets;
+    int _workerCnt;
+    int _workerClients;
     int _slots;
     int _curSlot;
     bool _quit;
