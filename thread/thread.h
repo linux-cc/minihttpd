@@ -11,9 +11,9 @@ BEGIN_NS(thread)
 
 class Thread : public Runnable {
 public:
-	Thread(Runnable *runnable = NULL, DestroyNotify notify = NULL);
-	~Thread();
-	
+    Thread(Runnable *runnable = NULL, DestroyNotify notify = NULL);
+    ~Thread();
+
     virtual bool onInit() {
         return true;
     }
@@ -24,94 +24,94 @@ public:
 
     }
 
-	bool start();
+    bool start();
     void cancel() {
-	    pthread_cancel(_pid);
+        pthread_cancel(_pid);
     }
     void join() {
-	    pthread_join(_pid, NULL);
+        pthread_join(_pid, NULL);
     }
     bool isAlive() {
-	    return pthread_kill(_pid, 0) == 0;
+        return pthread_kill(_pid, 0) == 0;
     }
-	void testCancel() {
+    void testCancel() {
         pthread_testcancel();
     }
-	pthread_t pid() {
+    pthread_t pid() {
         return _pid;
     }
-	Runnable *runnable() {
+    Runnable *runnable() {
         return _run;
     }
 
 private:
-	static void *threadFunc(void *arg);
-	static void cleanup(void *arg);
+    static void *threadFunc(void *arg);
+    static void cleanup(void *arg);
 
 private:
-	pthread_t _pid;
-	Runnable *_run;
-	DestroyNotify _notify;
+    pthread_t _pid;
+    Runnable *_run;
+    DestroyNotify _notify;
 };
 
 class Mutex {
 public:
-	Mutex(int type = PTHREAD_MUTEX_DEFAULT);
+    Mutex(int type = PTHREAD_MUTEX_DEFAULT);
     ~Mutex() {
-	    pthread_mutex_destroy(&_mutex);
+        pthread_mutex_destroy(&_mutex);
     }
     bool lock() {
-	    return (pthread_mutex_lock(&_mutex) == 0);
+        return (pthread_mutex_lock(&_mutex) == 0);
     }
     bool trylock() {
-	    return (pthread_mutex_trylock(&_mutex) == 0);
+        return (pthread_mutex_trylock(&_mutex) == 0);
     }
     bool unlock() {
-	    return (pthread_mutex_unlock(&_mutex) == 0);
+        return (pthread_mutex_unlock(&_mutex) == 0);
     }
     operator pthread_mutex_t* () {
-	    return &_mutex;
+        return &_mutex;
     }
 
 protected:
-	pthread_mutex_t _mutex;
+    pthread_mutex_t _mutex;
 };
 
 class Cond {
 public:
     Cond(Mutex &mutex): _mutex(mutex) {
-	    pthread_cond_init(&_cond, NULL); 
+        pthread_cond_init(&_cond, NULL);
     }
     ~Cond() {
-	    pthread_cond_destroy(&_cond);
+        pthread_cond_destroy(&_cond);
     }
     int broadcast() {
-	    return pthread_cond_broadcast(&_cond);
+        return pthread_cond_broadcast(&_cond);
     }
     int signal() {
-	    return pthread_cond_signal(&_cond);
+        return pthread_cond_signal(&_cond);
     }
     int wait() {
-	    return pthread_cond_wait(&_cond, _mutex);
+        return pthread_cond_wait(&_cond, _mutex);
     }
-	int timedwait(int milliSeconds);
+    int timedwait(int milliSeconds);
 
 private:
-	pthread_cond_t _cond;
-	Mutex &_mutex;
+    pthread_cond_t _cond;
+    Mutex &_mutex;
 };
 
 class AutoMutex {
 public:
-	AutoMutex(Mutex &metux):_mutex(metux), _locked(false) {
+    AutoMutex(Mutex &metux):_mutex(metux), _locked(false) {
         _locked = _mutex.lock();
     }
-	~AutoMutex() {
+    ~AutoMutex() {
         if(_locked) _mutex.unlock();
     }
 private:
-	Mutex &_mutex;
-	bool _locked;
+    Mutex &_mutex;
+    bool _locked;
 };
 
 END_NS
