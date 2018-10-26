@@ -35,6 +35,9 @@ bool Connection::send() {
             return errno == EAGAIN ? true : false;
         }
         _sendIndex -= n;
+        if (_sendIndex) {
+            memmove(_sendBuf, _sendBuf + n, _sendIndex);
+        }
     }
 
     return true;

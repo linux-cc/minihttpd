@@ -99,8 +99,8 @@ void Worker::run() {
 
 void Worker::onAccept() {
     while (true) {
-        int fd = _server.accept();
-        if (fd < 0) {
+        TcpSocket client(_server.accept());
+        if (client < 0) {
             if (errno != EWOULDBLOCK && errno != EAGAIN) {
                 _LOG_("accept error: %d:%s\n", errno, strerror(errno));
             }
@@ -110,7 +110,6 @@ void Worker::onAccept() {
             }
             break;
         }
-        TcpSocket client(fd);
         Connection *conn = _connsQ.popFront();
         if (!conn) {
             _LOG_("Connection is empty\n");
@@ -119,9 +118,9 @@ void Worker::onAccept() {
         }
         client.setNoDelay();
         client.setNonblock();
-        conn->attach(fd);
+        conn->attach(client);
         _server.update(conn, this);
-        int error = _poller.add(fd, conn);
+        int error = _poller.add(client, conn);
         if (error) {
             _LOG_("poll add client error: %d:%s\n", errno, strerror(errno));
         }
@@ -151,7 +150,6 @@ void Worker::onHandleEvent() {
 void Worker::onRequest(EPollEvent &event) {
     Connection *conn = (Connection*)event.data();
     if (!conn->recv()) {
-        _LOG_("onRequest recv error: %s\n", strerror(errno));
         closeInternal(conn);
         return;
     }
