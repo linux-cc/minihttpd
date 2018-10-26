@@ -42,7 +42,7 @@ inline int epoll_wait(int fd, epoll_event *events, int size, int timeout) {
     return kevent(fd, NULL, 0, events, size, &ts);
 }
 inline int epoll_ctl(int efd, int action, int fd, epoll_event *ev) {
-    if (action != EPOLL_CTL_DEL) {
+    if (action == EPOLL_CTL_DEL) {
         return 0;//EV_ONESHOT is set so don't need to delete
     }
     timespec ts = { 0, 0 };

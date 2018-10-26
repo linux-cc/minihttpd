@@ -130,7 +130,7 @@ void Worker::onAccept() {
             _LOG_("Worker getpeername error: %d:%s\n", errno, strerror(errno));
         }
         Peername peer(addr);
-        _LOG_("server accept: [%s|%d], fd: %d, Connection: %p\n", (const char*)peer, peer.port(), fd, conn);
+        _LOG_("server accept: [%s|%d], fd: %d, Connection: %p\n", (const char*)peer, peer.port(), (int)client, conn);
     }
 }
 
