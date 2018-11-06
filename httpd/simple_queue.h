@@ -1,9 +1,9 @@
 #ifndef __HTTPD_SIMPLE_QUEUE_H__
 #define __HTTPD_SIMPLE_QUEUE_H__
 
-#include "config.h"
+#include <stdlib.h>
 
-BEGIN_NS(httpd)
+namespace httpd {
 
 template<typename Type>
 class SimpleQueue {
@@ -65,5 +65,5 @@ private:
     int _tail;
 };
 
-END_NS
+} /* namespace httpd */
 #endif /* ifndef __HTTPD_SIMPLE_QUEUE_H__ */

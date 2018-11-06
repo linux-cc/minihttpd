@@ -1,15 +1,14 @@
 #ifndef __HTTPD_SERVER_H__
 #define __HTTPD_SERVER_H__
 
-#include "config.h"
-#include "socket/socket.h"
+#include "network/socket.h"
 #include "httpd/simple_queue.h"
 #include <set>
 #include <map>
 
-BEGIN_NS(httpd)
+namespace httpd {
 
-USING_CLASS(socket, TcpSocket);
+using network::TcpSocket;
 using std::set;
 using std::map;
 class Worker;
@@ -52,5 +51,5 @@ private:
     bool _quit;
 };
 
-END_NS
+} /* namespace httpd */
 #endif /* ifndef __HTTPD_SERVER_H__ */

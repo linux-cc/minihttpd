@@ -1,7 +1,8 @@
+#include "config.h"
 #include "httpd/gzip.h"
 
 int main(int argc, char *argv[]) {
-    USING_CLASS(httpd, GZip);
+    using httpd::GZip;
     GZip zip;
     if (argc < 2) {
         _LOG_("usage %s [-level] file\n", argv[0]);

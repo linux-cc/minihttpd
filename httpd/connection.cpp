@@ -1,9 +1,9 @@
 #include "httpd/connection.h"
-#include "socket/socket.h"
+#include "network/socket.h"
 
-BEGIN_NS(httpd)
+namespace httpd {
 
-USING_CLASS(socket, TcpSocket);
+using network::TcpSocket;
 
 Connection::Connection(int socket, int bufSize):
 _socket(socket),
@@ -142,4 +142,4 @@ void Connection::seek(const char *pos) {
     }
 }
 
-END_NS
+} /* namespace httpd */

@@ -7,7 +7,7 @@
 
 typedef void (*DestroyNotify)(void *);
 
-BEGIN_NS(thread)
+namespace thread {
 
 class Thread : public Runnable {
 public:
@@ -114,5 +114,5 @@ private:
     bool _locked;
 };
 
-END_NS
+} /* namespace thread */
 #endif /* ifndef __THREAD_THREAD_H__ */

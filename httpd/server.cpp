@@ -1,12 +1,13 @@
+#include "config.h"
 #include "httpd/server.h"
 #include "httpd/worker.h"
 #include "httpd/connection.h"
 #include "httpd/constants.h"
 
-BEGIN_NS(httpd)
+namespace httpd {
 
-USING_CLASS(thread, AutoMutex);
-USING_CLASS(thread, Mutex);
+using thread::AutoMutex;
+using thread::Mutex;
 
 static Mutex __setLock;
 
@@ -101,5 +102,5 @@ void Server::run() {
     }
 }
 
-END_NS
+} /* namespace httpd */
 

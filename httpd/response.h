@@ -7,7 +7,7 @@
 #include <string>
 #include <map>
 
-BEGIN_NS(httpd)
+namespace httpd {
 
 using std::string;
 using std::map;
@@ -76,5 +76,5 @@ private:
     map<int, string> _headers;
 };
 
-END_NS
+} /* namespace httpd */
 #endif /* ifndef __HTTPD_RESPONSE_H__ */

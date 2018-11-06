@@ -1,11 +1,11 @@
 #ifndef __SOCKET_SOCKET_H__
 #define __SOCKET_SOCKET_H__
 
-#include "socket/addrinfo.h"
+#include "network/addrinfo.h"
 #include <netinet/tcp.h>
 #include <errno.h>
 
-BEGIN_NS(socket)
+namespace network {
 
 class Socket {
 public:
@@ -88,5 +88,5 @@ public:
     int sendto(const char *host, const char *service, const void *buf, size_t size, Family family = F_UNSPEC, int flags = 0);
 };
 
-END_NS
+} /* namespace network */
 #endif /* ifndef __SOCKET_SOCKET_H__ */

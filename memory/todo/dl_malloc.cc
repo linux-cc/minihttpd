@@ -520,7 +520,9 @@ MAX_RELEASE_CHECK_RATE   default: 4095 unless not HAVE_MMAP
   disable, set to MAX_SIZE_T. This may lead to a very slight speed
   improvement at the expense of carrying around more memory.
 */
-
+#include <stdio.h>
+#define _P              printf
+#define _PN(fmt, ...)   printf(fmt"\n", ##__VA_ARGS__)
 /* Version identifier to allow people to support multiple versions */
 #ifndef DLMALLOC_VERSION
 #define DLMALLOC_VERSION 20806
@@ -3645,27 +3647,34 @@ static void internal_malloc_stats(mstate m) {
   bindex_t I;\
   compute_tree_index(S, I);\
   H = treebin_at(M, I);\
+  _PN("X: %p, S: %lu, I: %u, H: %p, tree map:%u", X, S, I, H, (M)->treemap);\
   X->index = I;\
   X->child[0] = X->child[1] = 0;\
   if (!treemap_is_marked(M, I)) {\
     mark_treemap(M, I);\
+    _PN("tree map marked: %u", (M)->treemap);\
     *H = X;\
     X->parent = (tchunkptr)H;\
     X->fd = X->bk = X;\
   }\
   else {\
     tchunkptr T = *H;\
-    size_t K = S << leftshift_for_tree_index(I);\
+    int i = leftshift_for_tree_index(I);\
+    size_t K = S << i;\
+    _PN("K: 0x%lx, S: 0x%lx, leftshift_for_tree_index: %d", K, S, i);\
     for (;;) {\
+      _PN("chunksize: %lu", chunksize(T));\
       if (chunksize(T) != S) {\
         tchunkptr* C = &(T->child[(K >> (SIZE_T_BITSIZE-SIZE_T_ONE)) & 1]);\
+        _PN("child: %lu, C: %p, *C: %p", (K >> (SIZE_T_BITSIZE-SIZE_T_ONE)), C, *C);\
         K <<= 1;\
-        if (*C != 0)\
-          T = *C;\
-        else if (RTCHECK(ok_address(M, C))) {\
+        if (*C != 0) {\
+          T = *C;_PN("T = *C: %p", T);\
+        } else if (RTCHECK(ok_address(M, C))) {\
           *C = X;\
           X->parent = T;\
           X->fd = X->bk = X;\
+          _PN("*C: %p, X->parent: %p", *C, T);\
           break;\
         }\
         else {\
@@ -3680,6 +3689,7 @@ static void internal_malloc_stats(mstate m) {
           X->fd = F;\
           X->bk = T;\
           X->parent = 0;\
+          _PN("T->fd = F->bk = X: %p, X->fd = F: %p, X->bk = T: %p", X, F, T);\
           break;\
         }\
         else {\
@@ -3711,6 +3721,7 @@ static void internal_malloc_stats(mstate m) {
 #define unlink_large_chunk(M, X) {\
   tchunkptr XP = X->parent;\
   tchunkptr R;\
+  _PN("unlink X:%p, bk:%p, parent:%p", X, X->bk, XP);\
   if (X->bk != X) {\
     tchunkptr F = X->fd;\
     R = X->bk;\
@@ -3730,6 +3741,7 @@ static void internal_malloc_stats(mstate m) {
       while ((*(CP = &(R->child[1])) != 0) ||\
              (*(CP = &(R->child[0])) != 0)) {\
         R = *(RP = CP);\
+        _PN("R:%p CP:%p, *CP:%p", R, CP, *CP);\
       }\
       if (RTCHECK(ok_address(M, RP)))\
         *RP = 0;\
@@ -3740,11 +3752,15 @@ static void internal_malloc_stats(mstate m) {
   }\
   if (XP != 0) {\
     tbinptr* H = treebin_at(M, X->index);\
+    _PN("X: %p, *H: %p", H, *H);\
     if (X == *H) {\
-      if ((*H = R) == 0) \
+      if ((*H = R) == 0) {\
         clear_treemap(M, X->index);\
+        _PN("clear tree map: %d", X->index);\
+      }\
     }\
     else if (RTCHECK(ok_address(M, XP))) {\
+      _PN("XP->child[0]:%p, X: %p", XP->child[0], X);\
       if (XP->child[0] == X) \
         XP->child[0] = R;\
       else \
@@ -3756,7 +3772,9 @@ static void internal_malloc_stats(mstate m) {
       if (RTCHECK(ok_address(M, R))) {\
         tchunkptr C0, C1;\
         R->parent = XP;\
+        _PN("R: %p", R);\
         if ((C0 = X->child[0]) != 0) {\
+          _PN("C0: %p", C0);\
           if (RTCHECK(ok_address(M, C0))) {\
             R->child[0] = C0;\
             C0->parent = R;\
@@ -3765,6 +3783,7 @@ static void internal_malloc_stats(mstate m) {
             CORRUPTION_ERROR_ACTION(M);\
         }\
         if ((C1 = X->child[1]) != 0) {\
+          _PN("C1: %p", C1);\
           if (RTCHECK(ok_address(M, C1))) {\
             R->child[1] = C1;\
             C1->parent = R;\
@@ -3900,6 +3919,7 @@ static void init_top(mstate m, mchunkptr p, size_t psize) {
   /* set size of fake trailing chunk holding overhead space only once */
   chunk_plus_offset(p, psize)->head = TOP_FOOT_SIZE;
   m->trim_check = mparams.trim_threshold; /* reset on each update */
+  _PN("init_top offset: %lu, p: %p, psize: %lu", offset, p, psize);
 }
 
 /* Initialize bins for a new mstate that is otherwise zeroed out */
@@ -4045,6 +4065,7 @@ static void* sys_alloc(mstate m, size_t nb) {
   }
 
   asize = granularity_align(nb + SYS_ALLOC_PADDING);
+  _PN("sys_alloc align size: %lu, nb: %lu", asize, nb);
   if (asize <= nb)
     return 0; /* wraparound */
   if (m->footprint_limit != 0) {
@@ -4108,6 +4129,7 @@ static void* sys_alloc(mstate m, size_t nb) {
         tsize = ssize;
       }
     }
+    _PN("sys_alloc ss: %p, tbase: %p, tsize: %lu", ss, tbase, tsize);
 
     if (tbase == CMFAIL) {    /* Cope with partial failure */
       if (br != CMFAIL) {    /* Try to use/extend the space we did get */
@@ -4199,6 +4221,7 @@ static void* sys_alloc(mstate m, size_t nb) {
           !is_extern_segment(sp) &&
           (sp->sflags & USE_MMAP_BIT) == mmap_flag &&
           segment_holds(sp, m->top)) { /* append */
+        _PN("sys_alloc append");
         sp->size += tsize;
         init_top(m, m->top, m->topsize + tsize);
       }
@@ -4211,13 +4234,16 @@ static void* sys_alloc(mstate m, size_t nb) {
         if (sp != 0 &&
             !is_extern_segment(sp) &&
             (sp->sflags & USE_MMAP_BIT) == mmap_flag) {
+          _PN("sys_alloc prepend");
           char* oldbase = sp->base;
           sp->base = tbase;
           sp->size += tsize;
           return prepend_alloc(m, tbase, oldbase, nb);
         }
-        else
+        else {
+          _PN("sys_alloc add_segment");
           add_segment(m, tbase, tsize, mmap_flag);
+        }
       }
     }
 

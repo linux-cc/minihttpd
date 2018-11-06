@@ -1,9 +1,9 @@
-#include "socket/socket.h"
-#include "socket/epoll.h"
+#include "network/socket.h"
+#include "network/epoll.h"
 #include <vector>
 
 using std::vector;
-USING_NS(socket);
+using namespace network;
 
 static bool __quit = false;
 

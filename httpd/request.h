@@ -1,12 +1,11 @@
 #ifndef __HTTPD_REQUEST_H__
 #define __HTTPD_REQUEST_H__
 
-#include "config.h"
 #include <strings.h>
 #include <string>
 #include <map>
 
-BEGIN_NS(httpd)
+namespace httpd {
 
 using std::string;
 using std::map;
@@ -101,5 +100,5 @@ private:
     uint8_t _reserve: 5;
 };
 
-END_NS
+} /* namespace httpd */
 #endif /* ifndef __HTTPD_REQUEST_H__ */

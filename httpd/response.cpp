@@ -1,3 +1,4 @@
+#include "config.h"
 #include "httpd/response.h"
 #include "httpd/request.h"
 #include "httpd/connection.h"
@@ -11,7 +12,7 @@
 #define CGI_BIN     "/cgi-bin"
 #define ROOT_PAGE   "/index.html"
 
-BEGIN_NS(httpd)
+namespace httpd {
 
 static string itoa(int i) {
     char temp[16] = { 0 };
@@ -229,4 +230,4 @@ bool Response::gzflush(const void *buf, int len, bool eof) {
     return true;
 }
 
-END_NS
+} /* namespace httpd */

@@ -1,7 +1,7 @@
-#include "socket/socket.h"
+#include "network/socket.h"
 #include <stdio.h>
 
-USING_NS(socket);
+using namespace network;
 
 static bool __quit = false;
 

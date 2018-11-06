@@ -1,13 +1,13 @@
 #ifndef __HTTPD_GTREE_H__
 #define __HTTPD_GTREE_H__
 
-#include "config.h"
+#include <stdlib.h>
 
 #define WSIZE           0x8000
 #define MAX_MATCH       258
 #define MIN_MATCH       3
 
-BEGIN_NS(httpd)
+namespace httpd {
 
 class GZip;
 
@@ -97,5 +97,5 @@ private:
     uint8_t _valid;
 };
 
-END_NS
+} /* namespace httpd */
 #endif /* ifndef __HTTPD_GTREE_H__ */

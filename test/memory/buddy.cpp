@@ -3,7 +3,7 @@
 #include <cstring>
 #include <vector>
 
-USING_NS(memory);
+using namespace memory;
 using std::vector;
 
 int main(int argc, char *argv[]) {

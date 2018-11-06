@@ -1,6 +1,8 @@
 #include "memory/dl_malloc.h"
+#include "memory/buddy.h"
 #include <stdio.h>
 
+#define MAX_FREE_NUM                16
 #define SEGMENT_PAGES               1
 #define TREEBIN_SHIFT               7
 #define SIZE_T_ZERO                 0
@@ -52,7 +54,7 @@
 #define TOP_FOOT_SIZE               (PAD_REQUEST(sizeof(Segment))+MIN_CHUNK_SIZE)
 #define PAGES(n)                    (((n) + PAGE_MASK) / PAGE_SIZE)
 
-BEGIN_NS(memory)
+namespace memory {
 
 DlMalloc::DlMalloc(Buddy &buddy):
 _buddy(buddy),
@@ -67,13 +69,14 @@ _topSize(0)
 
 void *DlMalloc::alloc(size_t size) {
     size_t nb = PAD_REQUEST(size);
-    //printf("requst size:%u, aligin:%u\n", size, nb);
+    printf("requst size:%lu, nb:%lu, _freeMap:%u, _topSize:%u\n",
+        size, nb, _freeMap, _topSize);
     if (_freeMap) {
         size_t rsize = -nb;
         uint32_t idx = computeFreeIndex(nb);
-        //printf("chunk index:%u\n", idx);
+        printf("chunk index:%u\n", idx);
         Chunk *v = getFitChunk(nb, idx, rsize);
-        //printf("getFitChunk:%p\n", v);
+        printf("getFitChunk:%p\n", v);
         if (v) {
             unlinkChunk(v);
             if (rsize < MIN_CHUNK_SIZE) {
@@ -160,7 +163,7 @@ DlMalloc::Chunk *DlMalloc::getFitChunk(size_t nb, size_t idx, size_t &rsize) {
 void DlMalloc::unlinkChunk(Chunk *chunk) {
     Chunk *cp = chunk->parent;
     Chunk *hold;
-    //printf("unlink chunk:%p, next:%p, parent:%p\n", chunk, chunk->next, cp);
+    printf("unlink chunk:%p, next:%p, parent:%p\n", chunk, chunk->next, cp);
     if (chunk->next != chunk) {
         Chunk *next = chunk->next;
         hold = chunk->prev;
@@ -170,11 +173,11 @@ void DlMalloc::unlinkChunk(Chunk *chunk) {
         }
     } else {
         Chunk **rmcp = &RIGHTMOST_CHILD(chunk);
-        //printf("right most child:%p,%p\n", rmcp, *rmcp);
+        printf("right most child:%p,%p\n", rmcp, *rmcp);
         if ((hold = *rmcp)) {
             Chunk **rmcr;
             while (*(rmcr = &RIGHTMOST_CHILD(hold))) {
-                //printf("%p right most child:%p,%p\n", hold, rmcr, *rmcr);
+                printf("%p right most child:%p,%p\n", hold, rmcr, *rmcr);
                 hold = *(rmcp = rmcr);
             }
             *rmcp = NULL;
@@ -182,15 +185,15 @@ void DlMalloc::unlinkChunk(Chunk *chunk) {
     }
     if (cp) {
         Chunk **head = &_free[chunk->index];
-        //printf("chunk head:%p, index:%u, hold:%p\n", *head, chunk->index, hold);
+        printf("chunk head:%p, index:%u, hold:%p\n", *head, chunk->index, hold);
         if (chunk == *head) {
-            //printf("chunk == *head\n");
+            printf("chunk == *head\n");
             if (!(*head = hold)) {
-                //printf("clean map index:%u\n", chunk->index);
+                printf("clean map index:%u\n", chunk->index);
                 CLEAR_FREEMAP(chunk->index);
             } 
         } else {
-            //printf("chunk != *head\n");
+            printf("chunk != *head\n");
             int child = cp->child[0] == chunk ? 0 : 1;
             cp->child[child] = hold;
         }
@@ -211,20 +214,24 @@ void DlMalloc::unlinkChunk(Chunk *chunk) {
 
 void DlMalloc::insertChunk(Chunk *chunk, size_t nb) {
     uint32_t i = computeFreeIndex(nb);
+    printf("insertChunk nb:%lu, idx: %u, freemap:%u\n", nb, i, _freeMap);
     Chunk **head = &_free[i];
     chunk->index = i;
     chunk->child[0] = chunk->child[1] = NULL;
     if (!FREEMAP_IS_MARKED(i)) {
         MARK_FREEMAP(i);
+        printf("mark map: %u\n", _freeMap);
         *head = chunk;
         chunk->parent = (Chunk*)head;
         chunk->next = chunk->prev = chunk;
     } else {
         Chunk *t = *head;
         size_t k = nb << LSH_FOR_TREE_IDX(i);
+        printf("k:%lu, lshbit: %lu\n", k, LSH_FOR_TREE_IDX(i));
         for (;;) {
             if (CHUNK_SIZE(t) != nb) {
                 Chunk **c = &(t->child[(k >> (SIZE_T_BITSIZE-SIZE_T_ONE)) & 1]);
+                printf("child: %lu, c: %p, *c: %p\n", ((k >> (SIZE_T_BITSIZE-SIZE_T_ONE)) & 1), c, *c);
                 k <<= 1;
                 if (*c) {
                     t = *c;
@@ -235,6 +242,7 @@ void DlMalloc::insertChunk(Chunk *chunk, size_t nb) {
                     break;
                 }
             } else {
+                printf("link same chunk size\n");
                 Chunk *next = t->next;
                 t->next = next->prev = chunk;
                 chunk->next = next;
@@ -248,20 +256,21 @@ void DlMalloc::insertChunk(Chunk *chunk, size_t nb) {
 
 void *DlMalloc::sysAlloc(size_t nb) {
     Segment *sp = _top ? getTopSeg() : NULL;
+    printf("sysAlloc sp: %p\n", sp);
     void *base;
     if (!sp) {
         base = _buddy.alloc(SEGMENT_PAGES);
-        ////printf("buddy allloc:%p\n", base);
+        printf("buddy allloc:%p\n", base);
         if (!base)
             return NULL;
     }
-    size_t size = SEGMENT_PAGES * PAGE_SIZE - TOP_FOOT_SIZE;
+    size_t size = SEGMENT_PAGES * _buddy.pageSize() - TOP_FOOT_SIZE;
     if (!_top) {
         _seg.base = (char*)base;
         _seg.size = size; 
         _seg.next = NULL;
         INIT_TOP(base, size);
-        //printf("init _top:%p, size:%u\n", base, size);
+        printf("init _top:%p, size:%lu\n", base, size);
     } else {
         void *mem = mergeSeg(base, size, nb);
         if (mem)
@@ -292,23 +301,28 @@ DlMalloc::Segment *DlMalloc::getTopSeg() {
 void *DlMalloc::mergeSeg(void *base, size_t size, size_t nb) {
     Segment *sp = &_seg;
     char *cbase = (char*)base;
-    while (sp && cbase != sp->base + sp->size)
+    while (sp && cbase != sp->base + sp->size) {
         sp = sp->next;
+        printf("cbase: %p, sp base + size: %p\n", cbase, sp->base + sp->size);
+    }
     if (sp && SEGMENT_HOLDS(sp, _top)) {
         sp->size += size;
         INIT_TOP(_top, _topSize + size);
+        printf("init top: %p, size: %lu\n", _top, sp->size);
     } else {
         sp = &_seg;
-        while (sp && sp->base != cbase + size)
+        while (sp && sp->base != cbase + size) {
             sp = sp->next;
+            printf("sp base: %p, cbase + size: %p\n", sp->base, cbase + size);
+        }
         if (sp) {
             char *oldbase = sp->base;
             sp->base = cbase;
             sp->size += size;
             return prependSeg(cbase, oldbase, nb);
-        }
-        else
+        } else {
             addSegment(cbase, size);
+        }
     }
     return NULL;
 }
@@ -320,7 +334,8 @@ void *DlMalloc::prependSeg(void *newBase, void *oldBase, size_t nb) {
     Chunk *pNew = CHUNK_PLUS_OFFSET(pUse, nb);
     size_t newSize = size - nb;
     SET_SIZE_CP(pUse, nb);
-
+    printf("prependSeg newBase: %p, oldBase: %p, size:%lu, newSize:%lu\n",
+        newBase, oldBase, size, newSize);
     if (pOld == _top) {
         _topSize += newSize;
         _top = pNew;
@@ -352,7 +367,7 @@ void DlMalloc::addSegment(void *base, size_t size) {
     _seg.base = (char*)base;
     _seg.size = size;
     _seg.next = newsp;
-
+    printf("addSegment base: %p, size: %lu\n", base, size);
     if (oldend - MIN_CHUNK_SIZE > oldtop) {
         Chunk *p = (Chunk*)oldtop;
         size_t psize = oldend - oldtop;
@@ -443,4 +458,4 @@ int DlMalloc::dumpChunk(char *buf, Chunk *chunk) {
     return pos;
 }
 
-END_NS
+} /* namespace memory */

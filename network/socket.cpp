@@ -1,10 +1,10 @@
-#include "socket/socket.h"
+#include "network/socket.h"
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <fcntl.h>
 #include <unistd.h>
 
-BEGIN_NS(socket)
+namespace network {
 
 bool Socket::socket(int family, int socktype, int protocol) {
     if (_socket == -1) {
@@ -176,4 +176,4 @@ int UdpSocket::sendto(const char *host, const char *service, const void *buf, si
     return -1;
 }
 
-END_NS
+} /* namespace network */

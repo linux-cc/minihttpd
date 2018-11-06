@@ -1,10 +1,10 @@
 #ifndef __HTTPD_GZIP_H__
 #define __HTTPD_GZIP_H__
 
-#include "config.h"
+#include <stdlib.h>
 #include <unistd.h>
 
-BEGIN_NS(httpd)
+namespace httpd {
 
 class GTree;
 
@@ -78,5 +78,5 @@ private:
     friend class GTree;
 };
 
-END_NS
+} /* namespace httpd */
 #endif /* ifndef __HTTPD_GZIP_H__ */

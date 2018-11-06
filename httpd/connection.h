@@ -1,12 +1,11 @@
 #ifndef __HTTPD_CONNECT_H__
 #define __HTTPD_CONNECT_H__
 
-#include "config.h"
 #include "httpd/request.h"
 #include "httpd/response.h"
 #include <unistd.h>
 
-BEGIN_NS(httpd)
+namespace httpd {
 
 class Connection {
 public:
@@ -20,10 +19,10 @@ public:
     void release();
     void seek(const char *pos);
 
-    const char *pos() const {
+    const char *begin() const {
         return _recvBuf;
     }
-    const char *last() const {
+    const char *end() const {
         return _recvBuf + _recvIndex;
     }
     operator int() {
@@ -57,5 +56,5 @@ private:
     Response _response;
 };
 
-END_NS
+} /* namespace httpd */
 #endif /* ifndef __HTTPD_CONNECT_H */

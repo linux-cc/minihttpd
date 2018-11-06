@@ -1,7 +1,7 @@
 #include "httpd/constants.h"
 #include <map>
 
-BEGIN_NS(httpd)
+namespace httpd {
 
 using std::map;
 
@@ -135,4 +135,4 @@ const string &getStatusReason(int status) {
     return __status[status];
 }
 
-END_NS
+} /* namespace httpd */

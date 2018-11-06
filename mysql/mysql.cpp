@@ -1,6 +1,6 @@
 #include "mysql/mysql.h"
 
-BEGIN_NS(mysql)
+namespace mysql {
 
 Mysql::Row::Row(MYSQL_ROW row, int num) {
     for (int i = 0; i < num; ++i) {
@@ -62,4 +62,4 @@ string Mysql::dump() const {
     return result;
 }
 
-END_NS
+} /* namespace mysql */

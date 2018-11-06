@@ -1,7 +1,7 @@
 #include "mysql/mysql.h"
 #include <stdio.h>
 
-USING_NS(mysql);
+using namespace mysql;
 
 int main(int argc, char *argv[]) {
     Mysql mysql;

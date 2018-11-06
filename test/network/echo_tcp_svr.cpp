@@ -1,9 +1,9 @@
-#include "socket/socket.h"
+#include "network/socket.h"
 #include <vector>
 #include <unistd.h>
 
 using std::vector;
-USING_NS(socket);
+using namespace network;
 
 static bool __quit = false;
 

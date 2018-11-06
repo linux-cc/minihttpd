@@ -1,16 +1,15 @@
 #ifndef __HTTPD_WORKER_H__
 #define __HTTPD_WORKER_H__
 
-#include "config.h"
 #include "thread/thread.h"
-#include "socket/epoll.h"
+#include "network/epoll.h"
 #include "httpd/simple_queue.h"
 
-BEGIN_NS(httpd)
+namespace httpd {
 
-USING_CLASS(thread, Thread);
-USING_CLASS(socket, EPoller);
-USING_CLASS(socket, EPollEvent);
+using thread::Thread;
+using network::EPoller;
+using network::EPollEvent;
 class Server;
 class Connection;
 
@@ -40,5 +39,5 @@ private:
     int _maxClients;
 };
 
-END_NS
+} /* namespace httpd */
 #endif /* ifndef __HTTPD_WORKER_H__ */

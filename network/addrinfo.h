@@ -1,12 +1,13 @@
 #ifndef __SOCKET_ADDRINFO_H__
 #define __SOCKET_ADDRINFO_H__
 
-#include "config.h"
+#include <stdlib.h>
+#include <string.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 
-BEGIN_NS(socket)
+namespace network {
 
 class Sockaddr {
 public:
@@ -106,5 +107,5 @@ private:
     addrinfo _hints;
 };
 
-END_NS
+} /* namespace network */
 #endif /* ifndef __NETWORK_ADDRINFO_H__ */

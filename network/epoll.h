@@ -1,7 +1,6 @@
 #ifndef __SOCKET_EPOLL_H__
 #define __SOCKET_EPOLL_H__
 
-#include "config.h"
 #include <unistd.h>
 #ifdef __linux__
 #include <sys/epoll.h>
@@ -19,7 +18,7 @@
 typedef struct kevent epoll_event;
 #endif /* __linux__ */
 
-BEGIN_NS(socket)
+namespace network {
 
 class EPollResult;
 
@@ -120,5 +119,5 @@ private:
     friend class EPollResult::Iterator;
 };
 
-END_NS
+} /* namespace network */
 #endif /* ifndef __SOCKET_EPOLL_H__ */

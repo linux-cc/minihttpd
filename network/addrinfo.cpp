@@ -1,8 +1,8 @@
-#include "socket/addrinfo.h"
+#include "network/addrinfo.h"
 #include <unistd.h>
 #include <stdio.h>
 
-BEGIN_NS(socket)
+namespace network { 
 
 Peername::Peername(const Sockaddr &addr) {
     const void *inaddr;
@@ -70,4 +70,4 @@ int Addrinfo::getaddrinfo(const char *host, const char *service) {
     return 0;
 }
 
-END_NS
+} /* namespace network */

@@ -1,9 +1,9 @@
 #include "memory/fixed_malloc.h"
 #include "memory/buddy.h"
 
-BEGIN_NS(memory)
+namespace memory {
 
-FixedMalloc::FixedMalloc(Buddy &buddy):
+FixedMalloc::FixedMalloc(Buddy& buddy):
 _buddy(buddy),
 _elem(0),
 _size(0),
@@ -14,8 +14,8 @@ _buffer(NULL) {
 
 bool FixedMalloc::init(int size, int elem) {
     int total = size * elem;
-    int pages = total / PAGE_SIZE;
-    if (total % PAGE_SIZE) {
+    int pages = total / _buddy.pageSize();
+    if (total % _buddy.pageSize()) {
         ++pages;
     }
     _buffer = (char*)_buddy.alloc(pages);
@@ -23,9 +23,9 @@ bool FixedMalloc::init(int size, int elem) {
         return false;
     }
     _elem = elem;
-    _size = pages * PAGE_SIZE / _elem;
+    _size = pages * _buddy.pageSize() / _elem;
 
-    char *p = _buffer;
+    char* p = _buffer;
     for(int i = 1; i < _size ; ++i) {
         *(uint16_t*)p = i;
         p += _elem;
@@ -34,20 +34,20 @@ bool FixedMalloc::init(int size, int elem) {
     return true;
 }
 
-void *FixedMalloc::alloc(int size) {
+void* FixedMalloc::alloc(int size) {
     if(size > _elem || _used >= _size) {
         return NULL;
     }
 
-    char *addr = _buffer + _free * _elem;
+    char* addr = _buffer + _free * _elem;
     _free = *(uint16_t*)addr;
     ++_used;
 
     return addr;
 }
 
-void FixedMalloc::free(void *addr) {
-    char *p = (char *)addr;
+void FixedMalloc::free(void* addr) {
+    char* p = (char*)addr;
     if(p >= _buffer && p <= _buffer + _size * _elem) {
         *(uint16_t*)p = _free;
         _free = (p - _buffer) / _elem;
@@ -64,4 +64,4 @@ void FixedMalloc::destroy() {
     _used = 0;
 }
 
-END_NS
+} /* namespace memory */

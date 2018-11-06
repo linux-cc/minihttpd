@@ -3,7 +3,7 @@
 #include <vector>
 #include <stdio.h>
 
-USING_NS(memory);
+using namespace memory;
 
 int main(int argc, char *argv[]) {
     using std::vector;

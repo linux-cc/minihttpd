@@ -1,9 +1,7 @@
 #ifndef __THREAD_RUNNABLE_H__
 #define __THREAD_RUNNABLE_H__ 
 
-#include "config.h"
-
-BEGIN_NS(thread)
+namespace thread {
 
 class Runnable
 {
@@ -12,5 +10,5 @@ public:
     virtual ~Runnable() {}
 };
 
-END_NS
+} /* namespace thread */
 #endif /* ifndef __THREAD_RUNNABLE_H__ */

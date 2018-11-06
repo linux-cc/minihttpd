@@ -1,17 +1,20 @@
+#include "config.h"
 #include "httpd/worker.h"
 #include "httpd/server.h"
 #include "httpd/request.h"
 #include "httpd/response.h"
 #include "httpd/connection.h"
-#include "socket/addrinfo.h"
+#include "network/addrinfo.h"
+#include "util/atomic.h"
 #include <math.h>
 
-BEGIN_NS(httpd)
+namespace httpd {
 
-static volatile int __accept_lock = 0;
-USING_CLASS(socket, EPollResult);
-USING_CLASS(socket, Sockaddr);
-USING_CLASS(socket, Peername);
+using network::EPollResult;
+using network::Sockaddr;
+using network::Peername;
+
+static int __accept_lock = 0;
 
 bool Worker::onInit() {
     if (!_poller.create(_maxClients)) {
@@ -38,7 +41,7 @@ void Worker::tryLockAccept(bool &holdLock) {
         disableAccept(holdLock);
         return;
     }
-    bool locked = atomic_bool_cas(&__accept_lock, 0, 1); 
+    bool locked = util::atomicBoolCas(&__accept_lock, 0, 1); 
     if (locked) {
         if (!holdLock) {
             holdLock = true;
@@ -63,7 +66,7 @@ void Worker::disableAccept(bool &holdLock) {
 }
 
 void Worker::unlockAccept() {
-    atomic_bool_cas(&__accept_lock, 1, 0);
+    util::atomicBoolCas(&__accept_lock, 1, 0);
 }
 
 void Worker::run() {
@@ -155,22 +158,22 @@ void Worker::onRequest(EPollEvent &event) {
     }
     _poller.mod(*conn, conn);
     Request &request = conn->request();
-    const char *pos = conn->pos();
-    const char *last = conn->last();
+    const char *begin = conn->begin();
+    const char *end = conn->end();
     switch(request.status()) {
     case Request::PARSE_LINE:
-        pos += request.parseStatusLine(pos, last);
+        begin += request.parseStatusLine(begin, end);
         if (request.inParseStatusLine()) {
             break;
         }
     case Request::PARSE_HEADERS:
-        pos += request.parseHeaders(pos, last);
+        begin += request.parseHeaders(begin, end);
         if (request.inParseHeaders()) {
             break;
         }
         _LOG_("fd: %d, Request headers:\n%s", (int)*conn, request.headers().c_str());
     case Request::PARSE_CONTENT:
-        pos += request.parseContent(pos, last);
+        begin += request.parseContent(begin, end);
         if (request.inParseContent()) {
             break;
         }
@@ -178,7 +181,7 @@ void Worker::onRequest(EPollEvent &event) {
         _poller.mod(*conn, conn, true);
         _LOG_("fd: %d, Request content:\n%s\n", (int)*conn, request.content().c_str());
     }
-    conn->seek(pos);
+    conn->seek(begin);
     _server.update(conn, this);
 }
 
@@ -243,5 +246,5 @@ void Worker::closeInternal(Connection *conn) {
     _server.remove(conn, this);
 }
 
-END_NS
+} /* namespace httpd */
 

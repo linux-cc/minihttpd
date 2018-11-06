@@ -1,10 +1,11 @@
+#include "config.h"
 #include "httpd/request.h"
 #include "httpd/constants.h"
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 
-BEGIN_NS(httpd)
+namespace httpd {
 
 static string urlDecode(const string &str);
 static string trim(const string &str);
@@ -20,8 +21,7 @@ _multipartFd(-1),
 _100Continue(0),
 _multipart(0),
 _multipartStatus(MULTIPART_HEADERS),
-_reserve(0){
-    _content.resize(1024);
+_reserve(0) {
 }
 
 int Request::parseStatusLine(const char *pos, const char *last) {
@@ -307,4 +307,4 @@ string extractBetween(const string &str, const string &delim1, const string &del
     return result;
 }
 
-END_NS
+} /* namespace httpd */

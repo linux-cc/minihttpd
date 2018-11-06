@@ -1,8 +1,7 @@
-#include "socket/socket.h"
-#include <vector>
+#include "network/socket.h"
+#include <stdio.h>
 
-using std::vector;
-USING_NS(socket);
+using namespace network;
 
 static bool __quit = false;
 
@@ -18,11 +17,12 @@ int main(int argc, char *argv[]) {
     case '3': family = TcpSocket::F_LOCAL; break;
     default: family = TcpSocket::F_UNSPEC;
     }
-    TcpSocket client;
-    if (!client.connect("localhost", argv[1], family)) {
-        printf("client connect error: %d:%s\n", errno, strerror(errno));
+    UdpSocket client;
+    if (family == PF_LOCAL && !client.create("client", "9000", family)) {
+        printf("client create error: %d:%s\n", errno, strerror(errno));
         return -1;
     }
+    Sockaddr addr;
     char data[1024];
     while (!__quit) {
         printf("client: ");
@@ -32,8 +32,8 @@ int main(int argc, char *argv[]) {
             printf("Done\n");
             break;
         }
-        client.send(data, strlen(data));
-        int n = client.recv(data, sizeof(data));
+        client.sendto("localhost", argv[1], data, strlen(data), family);
+        int n = client.recvfrom(data, sizeof(data), addr);
         if (n <= 0)
             break;
         data[n] = 0;

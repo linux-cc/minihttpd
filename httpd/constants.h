@@ -1,10 +1,9 @@
 #ifndef __HTTPD_CONSTANTS_H__
 #define __HTTPD_CONSTANTS_H__
 
-#include "config.h"
 #include <string>
 
-BEGIN_NS(httpd)
+namespace httpd {
 
 using std::string;
 
@@ -121,5 +120,5 @@ struct ResponseStatus {
 const string &getFieldName(int header);
 const string &getStatusReason(int status);
 
-END_NS
+} /* namespace httpd */
 #endif /* ifndef __HTTPD_CONSTANTS_H__ */

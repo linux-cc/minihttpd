@@ -1,8 +1,10 @@
-#include "socket/epoll.h"
+#include "config.h"
+#include "network/epoll.h"
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 
-BEGIN_NS(socket)
+namespace network {
 
 #ifdef __linux__
 inline void epoll_set_event(int fd, int events, void *data, epoll_event &ev) {
@@ -150,4 +152,4 @@ EPollResult &EPollResult::operator=(const EPollResult &other) {
     return *this;
 }
 
-END_NS
+} /* namespace network */

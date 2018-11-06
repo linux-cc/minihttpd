@@ -1,6 +1,6 @@
 #include "thread.h"
 
-BEGIN_NS(thread)
+namespace thread {
 
 Thread::Thread(Runnable *r, DestroyNotify notify):
 _pid(0),
@@ -67,4 +67,4 @@ int Cond::timedwait(int milliSeconds)
     return pthread_cond_timedwait(&_cond, _mutex, &ts);
 }
 
-END_NS
+} /* namespace thread */

@@ -1,9 +1,11 @@
 #ifndef __MEMORY_DL_MALLOC_H__
 #define __MEMORY_DL_MALLOC_H__
 
-#include "memory/buddy.h"
+#include <stdlib.h>
 
-BEGIN_NS(memory)
+namespace memory {
+
+class Buddy;
 
 class DlMalloc {
 public:
@@ -46,9 +48,9 @@ private:
     uint32_t _freeMap;
     Chunk *_top;
     uint32_t _topSize;
-    Chunk *_free[MAX_FREE_NUM];
+    Chunk *_free[16];
     Segment _seg;
 };
 
-END_NS
+} /* namespace memory */
 #endif /* ifndef __MEMORY_DL_MALLOC_H__ */
