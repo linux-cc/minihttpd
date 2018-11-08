@@ -13,11 +13,12 @@ public:
     }
     ~Buddy();
     void init(size_t pages);
-    void* alloc(size_t pages);
+    void* alloc(size_t size);
+    void* alloc() { return allocPages(1); }
+    void* allocPages(size_t pages);
     void free(void* addr);
-    int pageSize() const { return _pageSize; }
-    int pageMask() const { return _pageSize - 1; }
-    intptr_t pageAlign(intptr_t n) const { return (n + _pageSize - 1) & ~(_pageSize - 1); }
+    size_t pageSize() const { return _pageSize; }
+    size_t pageMask() const { return _pageSize - 1; }
     char* dump();
     char* buffer() const { return _mmap; }
 
@@ -26,7 +27,7 @@ private:
     char* _buffer;
     uint8_t* _tree;
     size_t _msize;
-    int _pageSize;
+    size_t _pageSize;
     uint8_t _depth;
 };
 

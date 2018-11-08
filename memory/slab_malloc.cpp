@@ -27,7 +27,7 @@ void* SlabMalloc::alloc(size_t size) {
     }
     size_t idx = SLAB_FREE_IDX(size);
     if (!_free[idx] || !_free[idx]->free) {
-        void* page = _buddy.alloc(1);
+        void* page = _buddy.alloc();
         if (!page) {
             return NULL;
         }

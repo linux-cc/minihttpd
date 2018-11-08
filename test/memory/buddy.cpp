@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
         printf("enter command:");
         scanf("%d %d", &cmd, &size);
         if (cmd == 1) {
-            void *p = b->alloc(size);
+            void *p = b->allocPages(size);
             if (p) {
                 v.push_back(p);
                 printf("alloc: %p, %d\n", p, size);

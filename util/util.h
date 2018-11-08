@@ -51,36 +51,36 @@ struct NoType {
     YesType dummy[2];
 };
 
-template<class T, T v>
+template<typename T, T v>
 struct IntegralConstant {
     static const T value = v;
     typedef T value_type;
     typedef IntegralConstant<T, v> type;
 };
-template <class T, T v> const T IntegralConstant<T, v>::value;
+template <typename T, T v> const T IntegralConstant<T, v>::value;
 
 typedef IntegralConstant<bool, true> TrueType;
 typedef IntegralConstant<bool, false> FalseType;
 
-template <class T> struct IsVoid: FalseType {};
+template <typename T> struct IsVoid: FalseType {};
 template <> struct IsVoid<void>: TrueType {};
 
-template <class T> struct IsConst : FalseType {};
-template <class T> struct IsConst<const T> : TrueType {};
+template <typename T> struct IsConst : FalseType {};
+template <typename T> struct IsConst<const T> : TrueType {};
 
-template<bool B, class T = void> struct EnableIf {};
-template<class T> struct EnableIf<true, T> { typedef T type; };
+template<bool B, typename T = void> struct EnableIf {};
+template<typename T> struct EnableIf<true, T> { typedef T type; };
 
-template<class> struct IsArray : FalseType {};
-template<class T, int n> struct IsArray<T[n]> : TrueType {};
-template<class T> struct IsArray<T[]> : TrueType {};
+template<typename> struct IsArray : FalseType {};
+template<typename T, int n> struct IsArray<T[n]> : TrueType {};
+template<typename T> struct IsArray<T[]> : TrueType {};
 
-template <class T> struct IsNonConstReference : FalseType {};
-template <class T> struct IsNonConstReference<T&> : TrueType {};
-template <class T> struct IsNonConstReference<const T&> : FalseType {};
+template <typename T> struct IsNonConstReference : FalseType {};
+template <typename T> struct IsNonConstReference<T&> : TrueType {};
+template <typename T> struct IsNonConstReference<const T&> : FalseType {};
 
-template <class T> struct IsPointer : FalseType {};
-template <class T> struct IsPointer<T*> : TrueType {};
+template <typename T> struct IsPointer : FalseType {};
+template <typename T> struct IsPointer<T*> : TrueType {};
 
 template <typename T>
 struct IsMoveOnlyType {

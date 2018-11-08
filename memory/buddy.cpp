@@ -3,9 +3,9 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#define SIZE_BITS           32U
+#define SIZE_BITS           (sizeof(unsigned) * __CHAR_BIT__)
 #define IS_POW2(n)          (!((n) & ((n) - 1)))
-#define LOG2(n)             (SIZE_BITS - __buildin_clz(n) - (IS_POW2(n) ? 1 : 0))
+#define LOG2(n)             (SIZE_BITS - __builtin_clz(n) - (IS_POW2(n) ? 1 : 0))
 #define LOG2PLUS1(n)        (LOG2(n) + 1)
 #define LCHILD(i)		    (((i) << 1) + 1)
 #define PARENT(i)		    ((i - 1) >> 1)
@@ -13,7 +13,8 @@
 
 namespace memory {
 
-inline uint32_t __buildin_clz(uint32_t x) {
+/*
+static uint32_t builtin_clz(uint32_t x) {
     uint32_t n = SIZE_BITS, s = n >> 1, y;
     while (s) {
         y = x >> s;
@@ -25,6 +26,7 @@ inline uint32_t __buildin_clz(uint32_t x) {
     }
     return n - 1;
 }
+*/
 
 Buddy::~Buddy() {
     munmap(_mmap, _msize);
@@ -35,7 +37,7 @@ void Buddy::init(size_t pages) {
         return;
     }
     _pageSize = sysconf(_SC_PAGESIZE);
-    if (_pageSize < 0) {
+    if (_pageSize == (size_t)-1) {
         return;
     }
     _depth = LOG2PLUS1(pages);
@@ -43,7 +45,7 @@ void Buddy::init(size_t pages) {
     size_t nodes = (pages << 1) - 1;
     _msize = (pages + 1) * _pageSize + nodes;
     _buffer = _mmap = (char*)mmap(NULL, _msize, MMAP_PROT, MMAP_FLAGS, -1, 0);
-    intptr_t addr = pageAlign((intptr_t)_buffer);
+    intptr_t addr = ((intptr_t)_buffer + pageMask()) & ~pageMask();
     if (addr != (intptr_t)_buffer) {
         _buffer = (char*)addr;
     }
@@ -54,21 +56,30 @@ void Buddy::init(size_t pages) {
     }
 }
 
-void* Buddy::alloc(size_t pages) {
+void* Buddy::alloc(size_t size) {
+    size_t pages = size / _pageSize;
+    if (size & pageMask()) {
+        ++pages;
+    }
+
+    return allocPages(pages);
+}
+
+void* Buddy::allocPages(size_t pages) {
     uint8_t n1 = LOG2PLUS1(pages);
     size_t idx = 0;
 	if (pages == 0 || _tree[idx] < n1) {
 	    return NULL;
 	}
-    uint8_t n2 = _depth + 1;
-    while (n1 != --n2) {
+    uint8_t n2 = _depth;
+    while (n1 != n2--) {
         idx = LCHILD(idx);
         if (_tree[idx] < n1) {
             ++idx;
         }
 	}
     _tree[idx] = 0;
-	size_t offset = (idx + 1) * PAGES(n2) - PAGES(_depth);
+	size_t offset = (idx + 1) * PAGES(n1) - PAGES(_depth);
     while (idx) {
         idx = PARENT(idx);
         size_t child = LCHILD(idx);
@@ -113,7 +124,6 @@ char* Buddy::dump() {
     size_t nodes = (pages << 1) - 1;
     size_t n = LOG2PLUS1(pages) + 1;
     char* buf = new char[pages + 1];
-    
     for (size_t i = 0; i < pages; ++i)
         buf[i] = '_';
     for (size_t i = 0; i < nodes; ++i) {

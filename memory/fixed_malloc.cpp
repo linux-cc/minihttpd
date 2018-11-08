@@ -13,17 +13,12 @@ _buffer(NULL) {
 }
 
 bool FixedMalloc::init(int size, int elem) {
-    int total = size * elem;
-    int pages = total / _buddy.pageSize();
-    if (total % _buddy.pageSize()) {
-        ++pages;
-    }
-    _buffer = (char*)_buddy.alloc(pages);
+    _buffer = (char*)_buddy.alloc(size * elem);
     if(!_buffer) {
         return false;
     }
     _elem = elem;
-    _size = pages * _buddy.pageSize() / _elem;
+    _size = size;
 
     char* p = _buffer;
     for(int i = 1; i < _size ; ++i) {
