@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
             }
         }
         if (cmd == 0) {
-            if (v.empty())
+            if (v.empty() || size >= v.size())
                 continue;
             vector<void*>::iterator it = v.begin();
             void *p = *(it + size);

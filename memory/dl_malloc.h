@@ -22,7 +22,6 @@ private:
     void unlinkChunk(Chunk* chunk);
     void insertChunk(Chunk* chunk, size_t nb);
     void* sysAlloc(size_t nb);
-    Segment* getTopSeg();
     void* mergeSeg(void* base, size_t size, size_t nb);
     void* prependSeg(void* newBase, void* oldBase, size_t nb);
     void addSegment(void* base, size_t size);
@@ -52,7 +51,7 @@ private:
         return i & -i;
     }
     int getLeftBits(int i) {
-        return (((1 << i) << 1) | -((1 << i) << 1)) & _freeMap;
+        return (((1 << i) << 1) | -((1 << i) << 1)) & _treeBitMap;
     }
     Chunk* leftMostChild(Chunk* chunk) {
         return chunk->child[0] ? chunk->child[0] : chunk->child[1];
@@ -67,7 +66,7 @@ private:
         return (Chunk*)((char*)chunk - offset);
     }
     void clearBitMap(int i) {
-        _freeMap &= ~(1 << i);
+        _treeBitMap &= ~(1 << i);
     }
     void setCPPBits(Chunk* chunk, size_t size) {
         chunk->head = size | BIT_CP, nextChunk(chunk, size)->head |= BIT_P;
@@ -88,10 +87,10 @@ private:
         return (Chunk*)((char*)mem - (sizeof(size_t) << 1));
     }
     void markBitMap(int i) {
-        _freeMap |= (1 << i);
+        _treeBitMap |= (1 << i);
     }
     bool bitMapIsMark(int i) {
-        return _freeMap & (1 << i);
+        return _treeBitMap & (1 << i);
     }
     bool holdsTop(Segment* seg) {
         return (char*)_top >= seg->base && (char*)_top < seg->base + seg->size;
@@ -119,7 +118,7 @@ private:
     };
     enum {
         TREEBIN_SHIFT = 7,
-        MAX_FREE_NUM = 16,
+        TREEBIN_NUM = 16,
         ALIGN_MASK = (sizeof(void*) << 1) - 1,
         SIZE_T_BITSIZE = sizeof(size_t) * __CHAR_BIT__ - 1,
     };
@@ -139,9 +138,9 @@ private:
         Segment* next;
     };
     Buddy& _buddy;
-    uint32_t _freeMap;
+    uint32_t _treeBitMap;
     Chunk* _top;
-    Chunk* _free[16];
+    Chunk* _treeBin[TREEBIN_NUM];
     Segment _head;
 };
 

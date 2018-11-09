@@ -6,17 +6,17 @@ namespace memory {
 
 DlMalloc::DlMalloc(Buddy& buddy):
 _buddy(buddy),
-_freeMap(0),
+_treeBitMap(0),
 _top(NULL)
 {
-    for (int i = 0; i < MAX_FREE_NUM; ++i) {
-        _free[i] = NULL;
+    for (int i = 0; i < TREEBIN_NUM; ++i) {
+        _treeBin[i] = NULL;
     }
 }
 
 void* DlMalloc::alloc(size_t size) {
     size_t nb = padRequest(size);
-    if (_freeMap) {
+    if (_treeBitMap) {
         size_t rsize = -nb;
         uint32_t idx = computeFreeIndex(nb);
         Chunk* v = getFitChunk(nb, idx, rsize);
@@ -33,10 +33,10 @@ void* DlMalloc::alloc(size_t size) {
             return chunk2mem(v);
         }
     }
-    size_t ts = getTopSize();
-    if (nb < ts) {
+    size_t topSize = getTopSize();
+    if (nb < topSize) {
         Chunk* oldTop = _top;
-        setTop(chunkPlusOffset(oldTop, nb), ts - nb);
+        setTop(chunkPlusOffset(oldTop, nb), topSize - nb);
         setHeadCP(oldTop, nb);
         return chunk2mem(oldTop);
     }
@@ -52,7 +52,7 @@ uint32_t DlMalloc::computeFreeIndex(size_t nb) {
 }
 
 DlMalloc::Chunk* DlMalloc::getFitChunk(size_t nb, size_t idx, size_t &rsize) {
-    Chunk* v = NULL, *t = _free[idx];
+    Chunk* v = NULL, *t = _treeBin[idx];
     if (t) {
         size_t sizebits = nb << lshForTreeIdx(idx);
         Chunk* rst = NULL;
@@ -79,7 +79,7 @@ DlMalloc::Chunk* DlMalloc::getFitChunk(size_t nb, size_t idx, size_t &rsize) {
         if (leftBits) {
             uint32_t leastBit = getLeastBit(leftBits);
             uint32_t i = __builtin_ctz(leastBit);
-            t = _free[i];
+            t = _treeBin[i];
         }
     }
     while (t) {
@@ -114,7 +114,7 @@ void DlMalloc::unlinkChunk(Chunk* chunk) {
         }
     }
     if (cp) {
-        Chunk** head = &_free[chunk->index];
+        Chunk** head = &_treeBin[chunk->index];
         if (chunk == *head) {
             if (!(*head = hold)) {
                 clearBitMap(chunk->index);
@@ -140,7 +140,7 @@ void DlMalloc::unlinkChunk(Chunk* chunk) {
 
 void DlMalloc::insertChunk(Chunk* chunk, size_t nb) {
     uint32_t i = computeFreeIndex(nb);
-    Chunk** head = &_free[i];
+    Chunk** head = &_treeBin[i];
     chunk->index = i;
     chunk->child[0] = chunk->child[1] = NULL;
     if (!bitMapIsMark(i)) {
@@ -192,22 +192,12 @@ void* DlMalloc::sysAlloc(size_t nb) {
             return mem;
         }
     }
-    size_t ts = getTopSize();
-    if (nb < ts) {
+    size_t topSize = getTopSize();
+    if (nb < topSize) {
         Chunk* oldTop = _top;
-        setTop(chunkPlusOffset(oldTop, nb), ts - nb);
+        setTop(chunkPlusOffset(oldTop, nb), topSize - nb);
         setHeadCP(oldTop, nb);
         return chunk2mem(oldTop);
-    }
-    return NULL;
-}
-
-DlMalloc::Segment* DlMalloc::getTopSeg() {
-    Segment* sp = &_head;
-    char* addr = (char*)_top;
-    for (; sp; sp = sp->next) {
-        if (addr >= sp->base && addr < sp->base + sp->size)
-            return sp;
     }
     return NULL;
 }
@@ -280,11 +270,11 @@ void DlMalloc::addSegment(void* base, size_t size) {
 }
 
 void DlMalloc::initTop(void* base, size_t size) {
-    size_t footSize = padRequest(sizeof(Segment)) + minChunkSize();
-    size_t ts = size - footSize;
+    size_t footSize = padRequest(sizeof(Segment)); 
+    size_t topSize = size - footSize;
     _top = (Chunk*)base;
-    _top->head = ts | BIT_P;
-    chunkPlusOffset(_top, ts)->head = footSize;
+    _top->head = topSize | BIT_P;
+    chunkPlusOffset(_top, topSize)->head = footSize | BIT_C;
 }
 
 void DlMalloc::free(void* addr) {
@@ -321,10 +311,10 @@ void DlMalloc::free(void* addr) {
 char* DlMalloc::dump() {
     char* buf = new char[4096];
     int pos = 0;
-    int bits = sizeof(_freeMap)*  __CHAR_BIT__;
-    pos += sprintf(buf + pos, "%s", "_freeMap:");
+    int bits = sizeof(_treeBitMap)*  __CHAR_BIT__;
+    pos += sprintf(buf + pos, "%s", "_treeBitMap:");
     for (int i = 0; i < bits; ++i) {
-        int b = (_freeMap >> (bits - 1 - i)) & 1;
+        int b = (_treeBitMap >> (bits - 1 - i)) & 1;
         pos += sprintf(buf + pos, "%d", b);
     }
     pos += sprintf(buf + pos, "%s", "\n");
@@ -344,10 +334,10 @@ char* DlMalloc::dump() {
 
 void DlMalloc::dumpChunk(char* buf) {
     int pos = 0;
-    for (int i = 0; i < MAX_FREE_NUM; ++i) {
-        if (_free[i]) {
-            pos += sprintf(buf + pos, "list[%d][%p]:", i, &_free[i]);
-            pos += dumpChunk(buf + pos, _free[i]);
+    for (int i = 0; i < TREEBIN_NUM; ++i) {
+        if (_treeBin[i]) {
+            pos += sprintf(buf + pos, "list[%d][%p]:", i, &_treeBin[i]);
+            pos += dumpChunk(buf + pos, _treeBin[i]);
         }
     }
 }
