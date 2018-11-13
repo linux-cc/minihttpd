@@ -19,24 +19,24 @@ void* DlMalloc::alloc(size_t size) {
     if (_treeMap) {
         size_t rsize = -nb;
         uint32_t idx = computeTreeIndex(nb);
-        Chunk* v = getFitChunk(nb, idx, rsize);
-        if (v) {
-            unlinkChunk(v);
+        Chunk* chunk = getFitChunk(nb, idx, rsize);
+        if (chunk) {
+            unlinkChunk(chunk);
             if (rsize < minChunkSize()) {
-                setChunkUsedWithP(v, rsize + nb);
+                setChunkUsedWithP(chunk, rsize + nb);
             } else {
-                Chunk* r = chunkPlusOffset(v, nb);
-                setChunkUsed(v, nb);
-                setChunkFreeWithP(r, rsize);
-                insertChunk(r, rsize);
+                Chunk* next = nextChunk(chunk, nb);
+                setChunkUsed(chunk, nb);
+                setChunkFreeWithP(next, rsize);
+                insertChunk(next, rsize);
             }
-            return chunk2mem(v);
+            return chunk2mem(chunk);
         }
     }
     size_t tsize = topSize();
     if (nb < tsize) {
         Chunk* oldTop = _top;
-        setTop(chunkPlusOffset(oldTop, nb), tsize - nb);
+        setTop(nextChunk(oldTop, nb), tsize - nb);
         setChunkUsed(oldTop, nb);
         return chunk2mem(oldTop);
     }
@@ -117,7 +117,7 @@ void DlMalloc::unlinkChunk(Chunk* chunk) {
         Chunk** head = &_tree[chunk->index];
         if (chunk == *head) {
             if (!(*head = hold)) {
-                clearBitMap(chunk->index);
+                clearTreeMap(chunk->index);
             } 
         } else {
             int child = cp->child[0] == chunk ? 0 : 1;
@@ -143,8 +143,8 @@ void DlMalloc::insertChunk(Chunk* chunk, size_t nb) {
     Chunk** head = &_tree[i];
     chunk->index = i;
     chunk->child[0] = chunk->child[1] = NULL;
-    if (!bitMapIsMark(i)) {
-        markBitMap(i);
+    if (!treeMapIsMark(i)) {
+        markTreeMap(i);
         *head = chunk;
         chunk->parent = (Chunk*)head;
         chunk->next = chunk->prev = chunk;
@@ -195,7 +195,7 @@ void* DlMalloc::sysAlloc(size_t nb) {
     size_t tsize = topSize();
     if (nb < tsize) {
         Chunk* oldTop = _top;
-        setTop(chunkPlusOffset(oldTop, nb), tsize - nb);
+        setTop(nextChunk(oldTop, nb), tsize - nb);
         setChunkUsed(oldTop, nb);
         return chunk2mem(oldTop);
     }
@@ -236,18 +236,17 @@ void* DlMalloc::mergeSeg(void* base, size_t size, size_t nb) {
 
 void DlMalloc::appendSeg(Segment* prev, Segment* sp, void* base, size_t size) {
     size_t fsize = footSize();
-    Chunk* next = chunkPlusOffset(sp->base, sp->size - fsize);
-    Chunk* newNext = chunkPlusOffset(base, size - fsize);
+    Chunk* next = nextChunk(sp->base, sp->size - fsize);
+    Chunk* newNext = nextChunk(base, size - fsize);
     Segment* newSp = (Segment*)chunk2mem(newNext);
     *newSp = *(Segment*)chunk2mem(next);
     newSp->size += size;
     prev->next = newSp;
     insertChunk(_top, topSize());
     if (!bitPSet(next)) {
-        size_t psize = next->prevSize;
-        Chunk* prev = chunkMinusOffset(next, psize);
+        Chunk* prev = prevChunk(next);
         unlinkChunk(prev);
-        initTop(prev, psize + size);
+        initTop(prev, next->prevSize + size);
     } else {
         initTop(next, size);
     }
@@ -256,7 +255,7 @@ void DlMalloc::appendSeg(Segment* prev, Segment* sp, void* base, size_t size) {
 void* DlMalloc::prependSeg(void* newBase, void* oldBase, size_t nb) {
     Chunk* pNew = (Chunk*)newBase;
     Chunk* pOld = (Chunk*)oldBase;
-    Chunk* chunk = chunkPlusOffset(pNew, nb);
+    Chunk* chunk = nextChunk(pNew, nb);
     size_t size = (char*)pOld - (char*)pNew - nb;
     setChunkUsed(pNew, nb);
     if (pOld == _top) {
@@ -265,7 +264,7 @@ void* DlMalloc::prependSeg(void* newBase, void* oldBase, size_t nb) {
         if (!bitCSet(pOld)) {
             size_t oldSize = chunkSize(pOld);
             unlinkChunk(pOld);
-            pOld = chunkPlusOffset(pOld, oldSize);
+            pOld = nextChunk(pOld, oldSize);
             size += oldSize;
         }
         setChunkFree(chunk, size, pOld);
@@ -288,7 +287,7 @@ void DlMalloc::addSegment(void* base, size_t size) {
     _head.size = size;
     _head.next = seg;
     if (oldSize > minChunkSize()) {
-        Chunk* n = chunkPlusOffset(oldTop, oldSize);
+        Chunk* n = nextChunk(oldTop, oldSize);
         setChunkFree(oldTop, oldSize, n);
         insertChunk(oldTop, oldSize);
     }
@@ -305,32 +304,29 @@ void DlMalloc::initTop(void* base, size_t size) {
 void DlMalloc::free(void* addr) {
     if (!addr)
         return;
-    Chunk* p = mem2chunk(addr);
-    size_t psize = chunkSize(p);
-    Chunk* next = chunkPlusOffset(p, psize);
-    if (!bitPSet(p)) {
-        size_t prevsize = p->prevSize;
-        Chunk* prev = chunkMinusOffset(p, prevsize);
-        psize += prevsize;
-        p = prev;
-        unlinkChunk(p);
+    Chunk* chunk = mem2chunk(addr);
+    size_t size = chunkSize(chunk);
+    Chunk* next = nextChunk(chunk, size);
+    if (!bitPSet(chunk)) {
+        size += chunk->prevSize;
+        chunk = prevChunk(chunk);
+        unlinkChunk(chunk);
     }
 
     if (!bitCSet(next)) {
         if (next == _top) {
-            setTop(p, topSize() + psize);
+            setTop(chunk, topSize() + size);
             return;
         } else {
-            size_t nsize = chunkSize(next);
-            psize += nsize;
+            size += chunkSize(next);
             unlinkChunk(next);
-            setChunkFreeWithP(p, psize);
+            setChunkFreeWithP(chunk, size);
         }
     } else {
-        setChunkFree(p, psize, next);
+        setChunkFree(chunk, size, next);
     }
 
-    insertChunk(p, psize);
+    insertChunk(chunk, size);
 }
 
 char* DlMalloc::dump() {

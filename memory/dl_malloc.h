@@ -42,10 +42,13 @@ private:
     size_t chunkSize(Chunk* chunk) {
         return chunk->head & ~BIT_RCP;
     }
+    Chunk* prevChunk(Chunk* chunk) {
+        return (Chunk*)((char*)chunk - chunk->prevSize);
+    }
     Chunk* nextChunk(Chunk* chunk) {
         return (Chunk*)((char*)chunk + chunkSize(chunk));
     }
-    Chunk* nextChunk(Chunk* chunk, size_t size) {
+    Chunk* nextChunk(void* chunk, size_t size) {
         return (Chunk*)((char*)chunk + size);
     }
     int getLeastBit(int i) {
@@ -60,14 +63,14 @@ private:
     Chunk*& rightMostChild(Chunk* chunk) {
         return chunk->child[1] ? chunk->child[1] : chunk->child[0];
     }
-    Chunk* chunkPlusOffset(void* chunk, size_t offset) {
-        return (Chunk*)((char*)chunk + offset);
+    void markTreeMap(int i) {
+        _treeMap |= (1 << i);
     }
-    Chunk* chunkMinusOffset(void* chunk, size_t offset) {
-        return (Chunk*)((char*)chunk - offset);
-    }
-    void clearBitMap(int i) {
+    void clearTreeMap(int i) {
         _treeMap &= ~(1 << i);
+    }
+    bool treeMapIsMark(int i) {
+        return _treeMap & (1 << i);
     }
     void setChunkUsed(Chunk* chunk, size_t size) {
         chunk->head = size | BIT_CP;
@@ -86,12 +89,6 @@ private:
     }
     Chunk* mem2chunk(void* mem) {
         return (Chunk*)((char*)mem - (sizeof(size_t) << 1));
-    }
-    void markBitMap(int i) {
-        _treeMap |= (1 << i);
-    }
-    bool bitMapIsMark(int i) {
-        return _treeMap & (1 << i);
     }
     bool holdsTop(Segment* seg) {
         return (char*)_top >= seg->base && (char*)_top < seg->base + seg->size;
