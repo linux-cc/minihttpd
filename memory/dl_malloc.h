@@ -17,12 +17,13 @@ public:
 private:
     struct Chunk;
     struct Segment;
-    uint32_t computeFreeIndex(size_t nb);
+    uint32_t computeTreeIndex(size_t nb);
     Chunk* getFitChunk(size_t nb, size_t idx, size_t &rsize);
     void unlinkChunk(Chunk* chunk);
     void insertChunk(Chunk* chunk, size_t nb);
     void* sysAlloc(size_t nb);
     void* mergeSeg(void* base, size_t size, size_t nb);
+    void appendSeg(Segment* prev, Segment* sp, void* base, size_t size);
     void* prependSeg(void* newBase, void* oldBase, size_t nb);
     void addSegment(void* base, size_t size);
     void initTop(void* base, size_t size);
@@ -36,7 +37,7 @@ private:
         return (sizeof(Chunk) + ALIGN_MASK) & ~ALIGN_MASK;
     }
     size_t lshForTreeIdx(uint32_t i) {
-        return SIZE_T_BITSIZE - ((i >> 1) + TREEBIN_SHIFT - 2);
+        return SIZE_T_BITSIZE - ((i >> 1) + TREE_SHIFT - 2);
     }
     size_t chunkSize(Chunk* chunk) {
         return chunk->head & ~BIT_RCP;
@@ -51,7 +52,7 @@ private:
         return i & -i;
     }
     int getLeftBits(int i) {
-        return (((1 << i) << 1) | -((1 << i) << 1)) & _treeBitMap;
+        return (((1 << i) << 1) | -((1 << i) << 1)) & _treeMap;
     }
     Chunk* leftMostChild(Chunk* chunk) {
         return chunk->child[0] ? chunk->child[0] : chunk->child[1];
@@ -59,26 +60,26 @@ private:
     Chunk*& rightMostChild(Chunk* chunk) {
         return chunk->child[1] ? chunk->child[1] : chunk->child[0];
     }
-    Chunk* chunkPlusOffset(Chunk* chunk, size_t offset) {
+    Chunk* chunkPlusOffset(void* chunk, size_t offset) {
         return (Chunk*)((char*)chunk + offset);
     }
-    Chunk* chunkMinusOffset(Chunk* chunk, size_t offset) {
+    Chunk* chunkMinusOffset(void* chunk, size_t offset) {
         return (Chunk*)((char*)chunk - offset);
     }
     void clearBitMap(int i) {
-        _treeBitMap &= ~(1 << i);
+        _treeMap &= ~(1 << i);
     }
-    void setCPPBits(Chunk* chunk, size_t size) {
-        chunk->head = size | BIT_CP, nextChunk(chunk, size)->head |= BIT_P;
-    }
-    void setHeadPAndFoot(Chunk* chunk, size_t size) {
-        chunk->head = size | BIT_P, nextChunk(chunk, size)->prev_foot = size;
-    }
-    void setHeadCP(Chunk* chunk, size_t size) {
+    void setChunkUsed(Chunk* chunk, size_t size) {
         chunk->head = size | BIT_CP;
     }
-    void setFreeWithP(Chunk* chunk, size_t size, Chunk *next) {
-        next->head &= ~BIT_P, setHeadPAndFoot(chunk, size);
+    void setChunkUsedWithP(Chunk* chunk, size_t size) {
+        chunk->head = size | BIT_CP, nextChunk(chunk, size)->head |= BIT_P;
+    }
+    void setChunkFree(Chunk* chunk, size_t size, Chunk *next) {
+        next->head &= ~BIT_P, setChunkFreeWithP(chunk, size);
+    }
+    void setChunkFreeWithP(Chunk* chunk, size_t size) {
+        chunk->head = size | BIT_P, nextChunk(chunk, size)->prevSize = size;
     }
     void* chunk2mem(Chunk* chunk) {
         return (char*)chunk + (sizeof(size_t) << 1);
@@ -87,10 +88,10 @@ private:
         return (Chunk*)((char*)mem - (sizeof(size_t) << 1));
     }
     void markBitMap(int i) {
-        _treeBitMap |= (1 << i);
+        _treeMap |= (1 << i);
     }
     bool bitMapIsMark(int i) {
-        return _treeBitMap & (1 << i);
+        return _treeMap & (1 << i);
     }
     bool holdsTop(Segment* seg) {
         return (char*)_top >= seg->base && (char*)_top < seg->base + seg->size;
@@ -101,11 +102,14 @@ private:
     bool bitPSet(Chunk* chunk) {
         return chunk->head & BIT_P;
     }
-    size_t getTopSize() {
+    size_t topSize() {
         return _top ? chunkSize(_top) : 0;
     }
     void setTop(Chunk* chunk, size_t size) {
-        _top = chunk, _top->head = size | BIT_P;
+        _top = chunk, _top->head = size | BIT_P, nextChunk(_top, size)->prevSize = size;
+    }
+    size_t footSize() {
+        return padRequest(sizeof(Segment) + 2 * sizeof(size_t));
     }
     
 private:
@@ -117,14 +121,14 @@ private:
         BIT_RCP = 7,
     };
     enum {
-        TREEBIN_SHIFT = 7,
-        TREEBIN_NUM = 16,
+        TREE_SHIFT = 7,
+        TREE_NUM = 16,
         ALIGN_MASK = (sizeof(void*) << 1) - 1,
         SIZE_T_BITSIZE = sizeof(size_t) * __CHAR_BIT__ - 1,
     };
 
     struct Chunk {
-        size_t prev_foot;
+        size_t prevSize;
         size_t head;
         Chunk* prev;
         Chunk* next;
@@ -138,10 +142,10 @@ private:
         Segment* next;
     };
     Buddy& _buddy;
-    uint32_t _treeBitMap;
     Chunk* _top;
-    Chunk* _treeBin[TREEBIN_NUM];
+    Chunk* _tree[TREE_NUM];
     Segment _head;
+    uint32_t _treeMap;
 };
 
 } /* namespace memory */
