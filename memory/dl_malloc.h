@@ -22,9 +22,9 @@ private:
     void unlinkChunk(Chunk* chunk);
     void insertChunk(Chunk* chunk, size_t nb);
     void* sysAlloc(size_t nb);
-    void* mergeSeg(void* base, size_t size, size_t nb);
+    void mergeSeg(void* base, size_t size, size_t nb);
     void appendSeg(Segment* prev, Segment* sp, void* base, size_t size);
-    void* prependSeg(void* newBase, void* oldBase, size_t nb);
+    void prependSeg(void* newBase, void* oldBase, size_t nb);
     void addSegment(void* base, size_t size);
     void initTop(void* base, size_t size);
     void dumpChunk(char* buf);
@@ -34,7 +34,7 @@ private:
         return (size + sizeof(size_t) + ALIGN_MASK) & ~ALIGN_MASK;
     }
     size_t minChunkSize() {
-        return (sizeof(Chunk) + ALIGN_MASK) & ~ALIGN_MASK;
+        return padRequest(1 << TREE_SHIFT);
     }
     size_t lshForTreeIdx(uint32_t i) {
         return SIZE_T_BITSIZE - ((i >> 1) + TREE_SHIFT - 2);
@@ -79,9 +79,9 @@ private:
         chunk->head = size | BIT_CP, nextChunk(chunk, size)->head |= BIT_P;
     }
     void setChunkFree(Chunk* chunk, size_t size, Chunk *next) {
-        next->head &= ~BIT_P, setChunkFreeWithP(chunk, size);
+        next->head &= ~BIT_P, setChunkFree(chunk, size);
     }
-    void setChunkFreeWithP(Chunk* chunk, size_t size) {
+    void setChunkFree(Chunk* chunk, size_t size) {
         chunk->head = size | BIT_P, nextChunk(chunk, size)->prevSize = size;
     }
     void* chunk2mem(Chunk* chunk) {
