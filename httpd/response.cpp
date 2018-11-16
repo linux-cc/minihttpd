@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
 
 #define WEB_ROOT    "./htdocs/html"
 #define CGI_BIN     "/cgi-bin"

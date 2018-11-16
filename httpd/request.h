@@ -1,6 +1,7 @@
 #ifndef __HTTPD_REQUEST_H__
 #define __HTTPD_REQUEST_H__
 
+#include <stdint.h>
 #include <strings.h>
 #include <string>
 #include <map>

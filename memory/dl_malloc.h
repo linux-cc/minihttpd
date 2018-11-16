@@ -1,7 +1,8 @@
 #ifndef __MEMORY_DL_MALLOC_H__
 #define __MEMORY_DL_MALLOC_H__
 
-#include <stdlib.h>
+#include <stdint.h>
+#include <stddef.h>
 
 namespace memory {
 
@@ -22,13 +23,14 @@ private:
     void unlinkChunk(Chunk* chunk);
     void insertChunk(Chunk* chunk, size_t nb);
     void* sysAlloc(size_t nb);
-    void mergeSeg(void* base, size_t size, size_t nb);
-    void appendSeg(Segment* prev, Segment* sp, void* base, size_t size);
-    void prependSeg(void* newBase, void* oldBase, size_t nb);
+    void mergeSeg(void* base, size_t size);
+    void appendSeg(Segment* near1, Segment* near2, void* base, size_t size);
+    void prependSeg(Segment* near, void* base, size_t size);
     void addSegment(void* base, size_t size);
     void initTop(void* base, size_t size);
     void dumpChunk(char* buf);
     int dumpChunk(char* buf, Chunk* chunk);
+    Segment* getNear(void* base, size_t size, bool append);
 
     size_t padRequest(size_t size) {
         return (size + sizeof(size_t) + ALIGN_MASK) & ~ALIGN_MASK;
@@ -106,7 +108,7 @@ private:
         _top = chunk, _top->head = size | BIT_P, nextChunk(_top, size)->prevSize = size;
     }
     size_t footSize() {
-        return padRequest(sizeof(Segment) + 2 * sizeof(size_t));
+        return padRequest(sizeof(Segment));
     }
     
 private:
@@ -136,12 +138,13 @@ private:
     struct Segment {
         char* base;
         size_t size;
+        Segment* prev;
         Segment* next;
     };
     Buddy& _buddy;
     Chunk* _top;
     Chunk* _tree[TREE_NUM];
-    Segment _head;
+    Segment *_head;
     uint32_t _treeMap;
 };
 

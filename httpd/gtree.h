@@ -1,7 +1,7 @@
 #ifndef __HTTPD_GTREE_H__
 #define __HTTPD_GTREE_H__
 
-#include <stdlib.h>
+#include <stdint.h>
 
 #define WSIZE           0x8000
 #define MAX_MATCH       258

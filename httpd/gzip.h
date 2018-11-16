@@ -1,6 +1,7 @@
 #ifndef __HTTPD_GZIP_H__
 #define __HTTPD_GZIP_H__
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
 

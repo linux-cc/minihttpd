@@ -2,6 +2,7 @@
 #define __MYSQL_MYSQL_IMPL_H__
 
 #include <mysql.h>
+#include <stdint.h>
 #include <vector>
 #include <string>
 

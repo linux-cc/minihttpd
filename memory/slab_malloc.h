@@ -1,7 +1,8 @@
 #ifndef __MEMORY_SLAB_MALLOC_H__
 #define __MEMORY_SLAB_MALLOC_H__
 
-#include <stdlib.h>
+#include <stdint.h>
+#include <stddef.h>
 
 namespace memory {
 

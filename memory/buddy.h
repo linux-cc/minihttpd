@@ -2,6 +2,7 @@
 #define __MEMORY_BUDDY_H__
 
 #include <stdlib.h>
+#include <stdint.h>
 
 namespace memory {
 

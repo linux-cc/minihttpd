@@ -9,10 +9,10 @@ CXX     = g++
 AR      = ar
 CCFLAG	= -g -Wall -D_DEBUG_
 SOFLAG  = -rcs
-INCFLAG	= -I./
+INCFLAG	= -I./ $(shell mysql_config --cflags)
 
 TEST	= $(foreach d,$(shell ls test|grep -v mysql),test/$(d))
-DIRS	= memory socket thread httpd utils $(TEST)
+DIRS	= memory mysql network thread httpd $(TEST)
 SRCS	= $(foreach d,$(DIRS),$(wildcard $(d)/*.cpp))
 OBJS	= $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRCS))
 SOOBJS	= $(filter-out $(OBJDIR)/test/%.o,$(OBJS))
