@@ -32,7 +32,7 @@ typedef CompileAssert<(bool(expr))> msg[bool(expr) ? 1 : -1] ALLOW_UNUSED
 
 #define MOVE_ONLY_TYPE_FOR_CPP_03(Type, RValue) \
 private: \
-    struct RValue{ \
+    struct RValue { \
         explicit RValue(Type* object) : object(object) {} \
         Type* object; \
     }; \

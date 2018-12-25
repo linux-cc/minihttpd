@@ -1,4 +1,5 @@
 #include "closure/bind.h"
+#include "util/scoped_ptr.h"
 #include <stdio.h>
 #include <string>
 
@@ -11,6 +12,9 @@ struct Test {
     void test(char a1, short a2, int a3, long a4, const char *a5, const std::string &a6) {
         printf("%s void(char:%d, short:%d, int:%d, long:%ld, char*:%s, string:%s)\n",
                 __FUNCTION__, a1, a2, a3, a4, a5, a6.c_str());
+    }
+    ~Test() {
+        printf("~Test\n");
     }
 };
 
@@ -54,6 +58,10 @@ void test2() {
 int main() {
     test1();
     test2();
+    util::ScopedPtr<Test> ptr1(new Test);
+    util::ScopedPtr<Test> ptr2 = ptr1.pass();
+    util::ScopedPtr<Test> ptr3;
+    ptr3 = ptr2.pass();
 
     return 0;
 }

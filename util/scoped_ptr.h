@@ -15,7 +15,7 @@ struct DefaultDeleter {
     template <typename U> DefaultDeleter(const DefaultDeleter<U>&) {
         enum { TMustBeComplete = sizeof(T) };
         enum { UMustBeComplete = sizeof(U) };
-        COMPILE_ASSERT((isConvertible<U*, T*>::value), U_ptr_must_implicitly_convert_to_T_ptr);
+        COMPILE_ASSERT((IsConvertible<U*, T*>::value), U_ptr_must_implicitly_convert_to_T_ptr);
     }
     inline void operator()(T* ptr) const {
         enum { TypeMustBeComplete = sizeof(T) };
@@ -47,8 +47,8 @@ struct FreeDeleter {
 
 template <typename T> struct IsNotRefCounted {
     enum {
-        value = !isConvertible<T*, RefCountedBase*>::value &&
-            !isConvertible<T*, RefCountedThreadSafeBase*>:: value
+        value = !IsConvertible<T*, RefCountedBase*>::value &&
+            !IsConvertible<T*, RefCountedThreadSafeBase*>:: value
     };
 };
 
@@ -138,14 +138,14 @@ public:
     
     template <typename U, typename V>
     ScopedPtr(ScopedPtr<U, V> other) : _impl(&other._impl) {
-        COMPILE_ASSERT(!isArray<U>::value, U_cannot_be_an_array);
+        COMPILE_ASSERT(!IsArray<U>::value, U_cannot_be_an_array);
     }
     
     ScopedPtr(const RValue& rvalue) : _impl(&rvalue.object->_impl) { }
     
     template <typename U, typename V>
     ScopedPtr& operator=(ScopedPtr<U, V> rhs) {
-        COMPILE_ASSERT(!isArray<U>::value, U_cannot_be_an_array);
+        COMPILE_ASSERT(!IsArray<U>::value, U_cannot_be_an_array);
         _impl.takeState(&rhs._impl);
         return *this;
     }
