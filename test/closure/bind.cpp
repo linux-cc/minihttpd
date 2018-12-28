@@ -13,9 +13,16 @@ struct Test {
         printf("%s void(char:%d, short:%d, int:%d, long:%ld, char*:%s, string:%s)\n",
                 __FUNCTION__, a1, a2, a3, a4, a5, a6.c_str());
     }
-    ~Test() {
+    virtual ~Test() {
         printf("~Test\n");
     }
+};
+
+struct Derive: public Test {
+    ~Derive () {
+        printf("~Derive\n");
+    }
+
 };
 
 void test1() {
@@ -60,8 +67,9 @@ int main() {
     test2();
     util::ScopedPtr<Test> ptr1(new Test);
     util::ScopedPtr<Test> ptr2 = ptr1.pass();
-    util::ScopedPtr<Test> ptr3;
+    util::ScopedPtr<Test> ptr3(new Derive);
     ptr3 = ptr2.pass();
+    printf("========\n");
 
     return 0;
 }

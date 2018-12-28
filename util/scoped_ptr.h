@@ -13,12 +13,9 @@ template <typename T>
 struct DefaultDeleter {
     DefaultDeleter() {}
     template <typename U> DefaultDeleter(const DefaultDeleter<U>&) {
-        enum { TMustBeComplete = sizeof(T) };
-        enum { UMustBeComplete = sizeof(U) };
         COMPILE_ASSERT((IsConvertible<U*, T*>::value), U_ptr_must_implicitly_convert_to_T_ptr);
     }
     inline void operator()(T* ptr) const {
-        enum { TypeMustBeComplete = sizeof(T) };
         delete ptr;
     }
 };
@@ -26,7 +23,6 @@ struct DefaultDeleter {
 template <typename T>
 struct DefaultDeleter<T[]> {
     inline void operator()(T* ptr) const {
-        enum { TypeMustBeComplete = sizeof(T) };
         delete[] ptr;
     }
     
@@ -37,12 +33,6 @@ private:
 template <typename T, int n>
 struct DefaultDeleter<T[n]> {
     COMPILE_ASSERT(sizeof(T) == -1, do_not_use_array_with_size_as_type);
-};
-
-struct FreeDeleter {
-    inline void operator()(void* ptr) const {
-        free(ptr);
-    }
 };
 
 template <typename T> struct IsNotRefCounted {
@@ -108,7 +98,7 @@ public:
     }
     
 private:
-    template <typename U, typename V> friend class ScopedPtrImpl;
+    //template <typename U, typename V> friend class ScopedPtrImpl;
     
     struct Data : public Deleter {
         explicit Data(T* ptr_in) : ptr(ptr_in) {}
@@ -188,7 +178,7 @@ public:
     }
     
 private:
-    template <typename U, typename V> friend class ScopedPtr;
+    //template <typename U, typename V> friend class ScopedPtr;
     ScopedPtrImpl<T, Deleter> _impl;
     
     explicit ScopedPtr(int disallowConstructionFromNull);
