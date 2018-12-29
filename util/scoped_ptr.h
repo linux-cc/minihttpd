@@ -92,17 +92,17 @@ public:
     }
     
     T* release() {
-        T* old_ptr = _data.ptr;
+        T* oldPtr = _data.ptr;
         _data.ptr = NULL;
-        return old_ptr;
+        return oldPtr;
     }
     
 private:
     //template <typename U, typename V> friend class ScopedPtrImpl;
     
     struct Data : public Deleter {
-        explicit Data(T* ptr_in) : ptr(ptr_in) {}
-        Data(T* ptr_in, const Deleter& other) : Deleter(other), ptr(ptr_in) {}
+        explicit Data(T* p) : ptr(p) {}
+        Data(T* p, const Deleter& other) : Deleter(other), ptr(p) {}
         T* ptr;
     };
     
@@ -120,9 +120,7 @@ class ScopedPtr {
     COMPILE_ASSERT(IsNotRefCounted<T>::value, T_is_refcounted_type_and_needs_scoped_refptr);
 
 public:
-    ScopedPtr() : _impl(NULL) { }
-    
-    explicit ScopedPtr(T* p) : _impl(p) { }
+    explicit ScopedPtr(T* p = NULL) : _impl(p) { }
     
     ScopedPtr(T* p, const Deleter& d) : _impl(p, d) { }
     
@@ -178,7 +176,7 @@ public:
     }
     
 private:
-    //template <typename U, typename V> friend class ScopedPtr;
+    template <typename U, typename V> friend class ScopedPtr;
     ScopedPtrImpl<T, Deleter> _impl;
     
     explicit ScopedPtr(int disallowConstructionFromNull);

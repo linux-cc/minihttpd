@@ -103,9 +103,7 @@ private:
 template <class T>
 class ScopedRefptr {
 public:
-    ScopedRefptr() : _ptr(NULL) { }
-
-    ScopedRefptr(T* p) : _ptr(p) {
+    ScopedRefptr(T* p = NULL) : _ptr(p) {
         if (_ptr) {
             _ptr->incRef();
         }
@@ -138,7 +136,7 @@ public:
         return _ptr;
     }
 
-    ScopedRefptr<T>& operator=(T* p) {
+    ScopedRefptr& operator=(T* p) {
         // AddRef first so that self assignment should work
         if (p) {
             p->incRef();
@@ -152,12 +150,12 @@ public:
         return *this;
     }
 
-    ScopedRefptr<T>& operator=(const ScopedRefptr<T>& r) {
+    ScopedRefptr& operator=(const ScopedRefptr& r) {
         return *this = r._ptr;
     }
 
     template <typename U>
-    ScopedRefptr<T>& operator=(const ScopedRefptr<U>& r) {
+    ScopedRefptr& operator=(const ScopedRefptr<U>& r) {
         return *this = r.get();
     }
 
@@ -167,7 +165,7 @@ public:
         *pp = p;
     }
 
-    void swap(ScopedRefptr<T>& r) {
+    void swap(ScopedRefptr& r) {
         swap(&r._ptr);
     }
 
