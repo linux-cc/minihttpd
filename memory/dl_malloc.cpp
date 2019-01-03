@@ -273,6 +273,7 @@ void DlMalloc::appendSeg(Segment* near1, Segment* near2, void* base, size_t size
     curr->prev->next = curr;
     curr->next = near1->next;
     curr->next->prev = curr;
+    _head = curr;
 }
 
 void DlMalloc::prependSeg(Segment* near, void* base, size_t size) {
@@ -358,7 +359,7 @@ void DlMalloc::free(void* addr) {
 char* DlMalloc::dump() {
     char* buf = new char[4096];
     int pos = 0;
-    int bits = sizeof(_treeMap)*  __CHAR_BIT__;
+    int bits = sizeof(_treeMap) *  __CHAR_BIT__;
     pos += sprintf(buf + pos, "%s", "_treeMap:");
     for (int i = 0; i < bits; ++i) {
         int b = (_treeMap >> (bits - 1 - i)) & 1;

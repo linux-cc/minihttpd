@@ -78,26 +78,33 @@ void test2() {
 void testRefptr() {
     printf("testRefptr start\n");
     util::ScopedRefptr<RBase> r1 = new RBase;
-    util::ScopedRefptr<RDerive> r2 = new RDerive;
-    util::ScopedRefptr<RBase> r3 = new RDerive;
-    util::ScopedRefptr<RBase> r4 = r1;
-    util::ScopedRefptr<RBase> r5 = r2;
+    util::ScopedRefptr<RBase> r2 = new RDerive;
+    util::ScopedRefptr<RBase> r3 = r1;
+    util::ScopedRefptr<RBase> r4 = r2;
 
     r1 = new RBase;
     r2 = new RDerive;
-    r3 = r2;
-    r4 = r1;
-    r5 = r2;
+    r3 = r1;
+    r4 = r2;
     printf("testRefptr end\n");
 }
 
 void testPtr() {
     printf("testPtr start\n");
     util::ScopedPtr<Base> p1(new Base);
-    util::ScopedPtr<Derive> p2(new Derive);
-    util::ScopedPtr<Base> p3(new Derive);
-    util::ScopedPtr<Base> p4 = p3.pass();
-    util::ScopedPtr<Base> p5 = p2.passAs<Base>();
+    util::ScopedPtr<Base> p2(new Derive);
+    util::ScopedPtr<Derive> p3(new Derive);
+    printf("=====p1: %p=====\n", &p1);
+    util::ScopedPtr<Base> p4 = p1.pass();
+    printf("=====2=====\n");
+    util::ScopedPtr<Base> p5 = p3.passAs<Base>();
+    printf("=====3=====\n");
+    util::ScopedPtr<Base> p6(p4.pass());
+    printf("=====4=====\n");
+    p4 = p2.pass();
+    printf("testPtr p4 assign\n");
+    p5 = p3.pass();
+    printf("testPtr p5 assign\n");
     printf("testPtr end\n");
 }
 
