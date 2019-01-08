@@ -82,6 +82,23 @@ template <typename T> struct IsNonConstReference<const T&> : FalseType {};
 template <typename T> struct IsPointer : FalseType {};
 template <typename T> struct IsPointer<T*> : TrueType {};
 
+template <typename T> struct IsTrivial : FalseType {};
+template <typename T> struct IsTrivial<T*> : TrueType {};
+template <> struct IsTrivial<bool> : TrueType {};
+template <> struct IsTrivial<char> : TrueType {};
+template <> struct IsTrivial<unsigned char> : TrueType {};
+template <> struct IsTrivial<short> : TrueType {};
+template <> struct IsTrivial<unsigned short> : TrueType {};
+template <> struct IsTrivial<int> : TrueType {};
+template <> struct IsTrivial<unsigned int> : TrueType {};
+template <> struct IsTrivial<long> : TrueType {};
+template <> struct IsTrivial<unsigned long> : TrueType {};
+template <> struct IsTrivial<long long> : TrueType {};
+template <> struct IsTrivial<unsigned long long> : TrueType {};
+template <> struct IsTrivial<float> : TrueType {};
+template <> struct IsTrivial<double> : TrueType {};
+template <> struct IsTrivial<long double> : TrueType {};
+
 template <typename T>
 struct IsMoveOnlyType {
     template <typename U>

@@ -32,8 +32,6 @@ public:
     
     explicit WeakRef(const Flag* flag) : _flag(flag) {}
 
-    ~WeakRef() {}
-    
     bool isValid() const { return _flag.get() && _flag->isValid(); }
     
 private:
@@ -42,8 +40,6 @@ private:
 
 class WeakRefOwner {
 public:
-    WeakRefOwner() {}
-
     ~WeakRefOwner() { invalidate(); }
     
     WeakRef getRef() const {
@@ -69,12 +65,9 @@ private:
 };
 
 class WeakPtrBase {
-public:
+protected:
     WeakPtrBase() {}
 
-    ~WeakPtrBase() {}
-    
-protected:
     explicit WeakPtrBase(const WeakRef& ref) : _ref(ref) {}
     
     WeakRef _ref;
@@ -114,9 +107,9 @@ public:
     
     T* get() const { return _ref.isValid() ? _ptr : NULL; }
     
-    T& operator*() const { return *get(); }
+    T& operator*() const { return *_ptr; }
 
-    T* operator->() const { return get(); }
+    T* operator->() const { return _ptr; }
     
     operator Testable() const { return get() ? &WeakPtr::_ptr : NULL; }
     

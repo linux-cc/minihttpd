@@ -7,66 +7,6 @@
 namespace closure {
 namespace internal {
 
-template <typename T>
-struct IgnoreResultHelper {
-    explicit IgnoreResultHelper(T functor) : _functor(functor) {}
-
-    T _functor;
-};
-
-template <typename T>
-struct IgnoreResultHelper<Callback<T> > {
-    explicit IgnoreResultHelper(const Callback<T>& functor) : _functor(functor) {}
-
-    const Callback<T>& _functor;
-};
-
-template <typename Functor>
-struct ForceVoidReturn;
-
-template <typename R>
-struct ForceVoidReturn<R()> {
-    typedef void(RunType)();
-};
-
-template <typename R, typename A1>
-struct ForceVoidReturn<R(A1)> {
-    typedef void(RunType)(A1);
-};
-
-template <typename R, typename A1, typename A2>
-struct ForceVoidReturn<R(A1, A2)> {
-    typedef void(RunType)(A1, A2);
-};
-
-template <typename R, typename A1, typename A2, typename A3>
-struct ForceVoidReturn<R(A1, A2, A3)> {
-    typedef void(RunType)(A1, A2, A3);
-};
-
-template <typename R, typename A1, typename A2, typename A3, typename A4>
-struct ForceVoidReturn<R(A1, A2, A3, A4)> {
-    typedef void(RunType)(A1, A2, A3, A4);
-};
-
-template <typename R, typename A1, typename A2, typename A3, typename A4,
-    typename A5>
-struct ForceVoidReturn<R(A1, A2, A3, A4, A5)> {
-    typedef void(RunType)(A1, A2, A3, A4, A5);
-};
-
-template <typename R, typename A1, typename A2, typename A3, typename A4,
-    typename A5, typename A6>
-struct ForceVoidReturn<R(A1, A2, A3, A4, A5, A6)> {
-    typedef void(RunType)(A1, A2, A3, A4, A5, A6);
-};
-
-template <typename R, typename A1, typename A2, typename A3, typename A4,
-    typename A5, typename A6, typename A7>
-struct ForceVoidReturn<R(A1, A2, A3, A4, A5, A6, A7)> {
-    typedef void(RunType)(A1, A2, A3, A4, A5, A6, A7);
-};
-
 template <typename Functor>
 struct FunctionTraits;
 
@@ -148,12 +88,6 @@ struct FunctorTraits {
 };
 
 template <typename T>
-struct FunctorTraits<IgnoreResultHelper<T> > {
-    typedef typename FunctorTraits<T>::RunnableType RunnableType;
-    typedef typename ForceVoidReturn<typename RunnableType::RunType>::RunType RunType;
-};
-
-template <typename T>
 struct FunctorTraits<Callback<T> > {
     typedef Callback<T> RunnableType;
     typedef typename Callback<T>::RunType RunType;
@@ -163,12 +97,6 @@ template <typename T>
 typename FunctorTraits<T>::RunnableType
 MakeRunnable(const T& t) {
     return RunnableAdapter<T>(t);
-}
-
-template <typename T>
-typename FunctorTraits<T>::RunnableType
-MakeRunnable(const IgnoreResultHelper<T>& t) {
-    return MakeRunnable(t._functor);
 }
 
 template <typename T>

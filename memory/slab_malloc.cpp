@@ -2,7 +2,6 @@
 #include "memory/buddy.h"
 #include <stdio.h>
 
-#define MAX_FREE_NUM        16
 #define ALIGN8_SIZE         8
 #define ALIGN8_MASK         7
 #define ALIGN8_SHIFT        3
@@ -14,7 +13,6 @@ namespace memory {
 
 SlabMalloc::SlabMalloc(Buddy &buddy):
 _buddy(buddy) {
-    _free = new Info*[MAX_FREE_NUM];
     for (int i = 0; i < MAX_FREE_NUM; ++i) {
         _free[i] = NULL;
     }

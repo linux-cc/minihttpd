@@ -11,9 +11,6 @@ class Buddy;
 class SlabMalloc {
 public:
     SlabMalloc(Buddy &buddy);
-    ~SlabMalloc() {
-        delete[] _free;
-    }
     void* alloc(size_t size);
     void free(void *addr);
     char* dump();
@@ -24,6 +21,9 @@ private:
     void linkSlab(size_t idx, Info* slab);
 
 private:
+    enum {
+        MAX_FREE_NUM = 16
+    };
     struct Chunk {
         Chunk* next;
     };
@@ -35,7 +35,7 @@ private:
         Info* next;
     };
     Buddy& _buddy;
-    Info** _free;
+    Info* _free[MAX_FREE_NUM];
 };
 
 } /* namespace memory */
