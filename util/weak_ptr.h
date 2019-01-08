@@ -66,8 +66,6 @@ private:
 
 class WeakPtrBase {
 protected:
-    WeakPtrBase() {}
-
     explicit WeakPtrBase(const WeakRef& ref) : _ref(ref) {}
     
     WeakRef _ref;
@@ -98,8 +96,6 @@ template <typename T>
 class WeakPtr : public internal::WeakPtrBase {
     typedef T* WeakPtr::*Testable;
 public:
-    WeakPtr() : _ptr(NULL) { }
-    
     // Allow conversion from U to T provided U "is a" T. Note that this
     // is separate from the (implicit) copy constructor.
     template <typename U>
@@ -163,7 +159,7 @@ class SupportsWeakPtr : public internal::SupportsWeakPtrBase {
 public:
     SupportsWeakPtr() {}
     
-    WeakPtr<T> AsWeakPtr() {
+    WeakPtr<T> asWeakPtr() {
         return WeakPtr<T>(_weakRefOwner.getRef(), static_cast<T*>(this));
     }
     

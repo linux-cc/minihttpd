@@ -1,6 +1,7 @@
 #include "closure/bind.h"
 #include "util/scoped_ptr.h"
 #include "util/ref_counted.h"
+#include "util/weak_ptr.h"
 #include <stdio.h>
 #include <string>
 
@@ -108,13 +109,32 @@ void testPtr() {
     printf("testPtr end\n");
 }
 
+class WeakTest : public util::SupportsWeakPtr<WeakTest> {
+public:
+    void test() {
+        printf("hello\n");
+    }
+};
+
+void testWeakPtr() {
+    WeakTest *pw = new WeakTest;
+    util::WeakPtr<WeakTest> wp = pw->asWeakPtr();
+    if (wp) {
+        wp->test();
+    }
+    delete pw;
+    if (wp) {
+        wp->test();
+    }
+}
+
 int main() {
     test1();
     test2();
     testRefptr();
     testPtr();
     printf("========\n");
-
+    testWeakPtr();
 
     return 0;
 }
