@@ -2,9 +2,9 @@
 #include "httpd/connection.h"
 #include <unistd.h>
 
-BEGIN_NS(fcgid)
+namespace fcgid {
 
-USING_CLASS(httpd, Connection);
+using httpd::Connection;
 
 Manager::Manager(int children, bool isLocal):
 _children(children),
@@ -28,7 +28,7 @@ bool Manager::start(const char *host, const char *service) {
             return true;
         }
     }
-    monitor();
+    //monitor();
 
     return true;
 }
@@ -36,16 +36,9 @@ bool Manager::start(const char *host, const char *service) {
 void Manager::process() {
     int fd = -1;
     while ((fd = _socket.accept()) > 0) {
-        Connection conn(fd);
-        int len;
-        if (!conn.recv(&len, sizeof(int))) {
-            _LOG_("Manager process recv error: %d:%s\n", errno, strerror(errno));
-            break;
-        }
-        len = ntohl(len);
-        if (!conn.recv())
+
     }
 }
 
-END_NS
+}
 

@@ -19,8 +19,8 @@ _workerClients(workerClients),
 _slots(timeout),
 _curSlot(0),
 _quit(false) {
-    Header::initFieldName();
-    ResponseStatus::initStatusReason();
+    Header::init();
+    ResponseStatus::init();
 }
 
 Server::~Server() {

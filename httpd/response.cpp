@@ -71,7 +71,7 @@ void Response::setCommonHeaders(const Request &request) {
 string Response::headers() const {
     string str = _version + ' ' + itoa(_code) + ' ' + _reason + CRLF;
     for (HeaderIt it = _headers.begin(); it != _headers.end(); ++it) {
-        str += getFieldName(it->first) + ": " + it->second + CRLF;
+        str += Header::getName(it->first) + ": " + it->second + CRLF;
     }
     str += CRLF;
 
@@ -129,7 +129,7 @@ bool Response::sendContentChunked(Connection *conn) {
 void Response::setStatusLine(int status, const string &version) {
     _version = version;
     _code = status;
-    _reason = getStatusReason(status);
+    _reason = ResponseStatus::getReason(status);
 }
 
 string Response::parseUri(const string &uri) {

@@ -59,7 +59,7 @@ inline void epoll_set_event(int fd, int events, void *data, epoll_event &ev) {
 inline int epoll_get_events(const epoll_event &ev) {
     return ev.filter;
 }
-inline int epoll_get_fd(const epoll_event &ev) {
+inline uintptr_t epoll_get_fd(const epoll_event &ev) {
     return ev.ident;
 }
 inline void *epoll_get_data(const epoll_event &ev) {

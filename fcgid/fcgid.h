@@ -1,11 +1,10 @@
 #ifndef __FCGID_H__
 #define __FCGID_H__
 
-#include "socket/socket.h"
+#include "config.h"
+#include "network/socket.h"
 
-BEGIN_NS(fcgid)
-
-USING_CLASS(socket, TcpSocket);
+namespace fcgid {
 
 class Manager {
 public:
@@ -18,8 +17,8 @@ private:
 
     int _children;
     bool _local;
-    TcpSocket _socket;
+    network::TcpSocket _socket;
 };
 
-END_NS
+}
 #endif /* ifndef __FCGID_H__ */

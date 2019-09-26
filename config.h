@@ -1,10 +1,10 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-#ifdef _DEBUG_
+#ifdef DEBUG
 #include <pthread.h>
 #include <stdio.h>
-#define _LOG_(fmt, ...)     printf("[%ld]"fmt, (intptr_t)pthread_self(), ##__VA_ARGS__)
+#define _LOG_(fmt, ...)     printf("[%ld]" fmt, (intptr_t)pthread_self(), ##__VA_ARGS__)
 //#define _LOG_(fmt, ...)     printf(fmt, ##__VA_ARGS__)
 #else
 #define _LOG_(...)    

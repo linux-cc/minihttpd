@@ -1,23 +1,22 @@
 #include "httpd/constants.h"
 #include <map>
 
+#define __INIT__(code, replace, result)\
+do {\
+string strcode = #code;\
+string::size_type p;\
+while ((p = strcode.find('_')) != string::npos)\
+strcode[p] = replace;\
+result[code] = strcode;\
+}while (0)
+
 namespace httpd {
 
 using std::map;
-
-#define __INIT__(code, replace, result)\
-do {\
-    string strcode = #code;\
-    string::size_type p;\
-    while ((p = strcode.find('_')) != string::npos)\
-        strcode[p] = replace;\
-    result[code] = strcode;\
-}while (0)
-
 static map<int, string> __fields;
 static map<int, string> __status;
 
-void Header::initFieldName() {
+void Header::init() {
     if (!__fields.empty()) {
         return;
     }
@@ -74,8 +73,12 @@ void Header::initFieldName() {
     __INIT__(Expires, '-', __fields);
     __INIT__(Last_Modified, '-', __fields);
 }
+    
+const string &Header::getName(int header) {
+    return __fields[header];
+}
 
-void ResponseStatus::initStatusReason() {
+void ResponseStatus::init() {
     if (!__status.empty()) {
         return;
     }
@@ -127,11 +130,7 @@ void ResponseStatus::initStatusReason() {
     __INIT__(HTTP_Version_Not_Supported, ' ', __status);
 }
 
-const string &getFieldName(int header) {
-    return __fields[header];
-}
-
-const string &getStatusReason(int status) {
+const string &ResponseStatus::getReason(int status) {
     return __status[status];
 }
 

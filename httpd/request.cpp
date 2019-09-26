@@ -74,13 +74,13 @@ int Request::parseHeaders(const char *pos, const char *last) {
 
 void Request::addHeader(const string &field, const string &value) {
     _headers[field] = value;
-    if (field == getFieldName(Header::Content_Length)) {
+    if (field == Header::getName(Header::Content_Length)) {
         _contentLength = atoi(value.c_str());
-    } else if (field == getFieldName(Header::Expect)) {
+    } else if (field == Header::getName(Header::Expect)) {
         if (value.size() >= 3) {
             _100Continue = (value[0] == '1' && value[1] == '0' && value[2] == '0');
         }
-    } else if (field == getFieldName(Header::Content_Type)) {
+    } else if (field == Header::getName(Header::Content_Type)) {
         _multipart = !strncasecmp(value.c_str(), "multipart/form-data", strlen("multipart/form-data"));
     }
 }
@@ -92,7 +92,7 @@ int Request::parseContent(const char *pos, const char *last) {
     }
     int length = 0;
     if (_multipart) {
-        string &type= _headers[getFieldName(Header::Content_Type)];
+        string &type= _headers[Header::getName(Header::Content_Type)];
         string::size_type eq = type.find('=');
         string boundary = "--" + trim(type.substr(eq + 1));
         length = parseMultipart(pos, last, boundary);
@@ -176,10 +176,10 @@ int Request::parseFormHeader(const char *pos, const char *last) {
 
 void Request::MultipartHeader::parse(const string &field, const string &value) {
     hasType = false;
-    if (field == getFieldName(Header::Content_Disposition)) {
+    if (field == Header::getName(Header::Content_Disposition)) {
         string::size_type p = value.find("filename");
         name = extractBetween(value, "\"", "\"", p != string::npos ? p : 0);
-    } else if (field == getFieldName(Header::Content_Type)) {
+    } else if (field == Header::getName(Header::Content_Type)) {
         hasType = true;
     }
 }
@@ -239,7 +239,7 @@ string Request::headers() const {
 }
 
 const string *Request::getHeader(int field) const {
-    string _field = getFieldName(field);
+    string _field = Header::getName(field);
     HeaderIt it = _headers.find(_field);
     
     return it != _headers.end() ? &it->second : NULL;

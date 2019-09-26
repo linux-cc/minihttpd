@@ -62,7 +62,8 @@ struct Header {
         Expires,
         Last_Modified, 
     };
-    static void initFieldName();
+    static void init();
+    static const string &getName(int header);
 };
 
 struct ResponseStatus {
@@ -114,11 +115,9 @@ struct ResponseStatus {
         Gateway_Timeout,
         HTTP_Version_Not_Supported, 
     };
-    static void initStatusReason();
+    static void init();
+    static const string &getReason(int status);
 };
-
-const string &getFieldName(int header);
-const string &getStatusReason(int status);
 
 } /* namespace httpd */
 #endif /* ifndef __HTTPD_CONSTANTS_H__ */
