@@ -1,35 +1,27 @@
 #ifndef __MEMORY_BUDDY_H__
 #define __MEMORY_BUDDY_H__
 
-#include <stdlib.h>
-#include <stdint.h>
-
 namespace memory {
 
 class Buddy {
 public:
-    Buddy(): _mmap(NULL), _tree(NULL), _msize(0), _pageSize(0), _depth(0) {}
-    explicit Buddy(size_t pages): _mmap(NULL), _tree(NULL), _msize(0), _pageSize(0), _depth(0) {
-        init(pages);
+    Buddy(): _buffer(0), _tree(0), _size(0), _blockShiftBit(0), _blockPow(0) {}
+    explicit Buddy(int blocks, int blockSize): _buffer(0), _tree(0), _size(0), _blockShiftBit(0), _blockPow(0) {
+        init(blocks, blockSize);
     }
     ~Buddy();
-    void init(size_t pages);
-    void* alloc(size_t size);
-    void* alloc() { return allocPages(1); }
-    void* allocPages(size_t pages);
+    void init(int blocks, int blockSize);
+    void* alloc(int size);
     void free(void* addr);
-    size_t pageSize() const { return _pageSize; }
-    size_t pageMask() const { return _pageSize - 1; }
     char* dump();
-    char* buffer() const { return _mmap; }
+    char* buffer() const { return _buffer; }
 
 private:
-    char* _mmap;
     char* _buffer;
-    uint8_t* _tree;
-    size_t _msize;
-    size_t _pageSize;
-    uint8_t _depth;
+    char* _tree;
+    int _size;
+    char _blockShiftBit;
+    char _blockPow;
 };
 
 } /* namespace memory */

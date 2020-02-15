@@ -22,81 +22,73 @@ bool Worker::onInit() {
         return false;
     }
 
-    _conns = new Connection[_maxClients];
-    _connsQ.init(_conns, _maxClients);
-    _eventQ.init(NULL, _maxClients);
-
     return true;
 }
 
 void Worker::onCancel() {
-    for (int i = 0; i < _maxClients; ++i) {
-        _conns[i].release();
+    for (list<Connection*>::iterator it = _connsQ.begin(); it != _connsQ.end(); it++) {
+        (*it)->release();
+        delete *it;
     }
-    delete []_conns;
+    _connsQ.clear();
 }
 
-void Worker::tryLockAccept(bool &holdLock) {
-    if (_connsQ.size() <= round(_connsQ.capacity() * 2 / 10)) {
-        disableAccept(holdLock);
-        return;
+bool Worker::tryLockAccept() {
+    if (_actives >= round(_maxClients * 2 / 10)) {
+        return false;
     }
-    bool locked = util::atomicBoolCas(&__accept_lock, 0, 1); 
+    
+    bool locked = util::atomicBoolCas(&__accept_lock, 0, 1);
     if (locked) {
-        if (!holdLock) {
-            holdLock = true;
+        if (!_acceptLock) {
+            _acceptLock = true;
             int error = _poller.add(_server);
             if (error) {
                 _LOG_("poll add server error: %d:%s\n", errno, strerror(errno));
             }
         }
+        return true;
     } else {
-        disableAccept(holdLock);
-    }
-}
-
-void Worker::disableAccept(bool &holdLock) {
-    if (holdLock) {
-        holdLock = false;
-        int error = _poller.del(_server);
-        if (error) {
-            _LOG_("poll del server error: %d:%s\n", errno, strerror(errno));
+        if (_acceptLock) {
+            _acceptLock = false;
+            int error = _poller.del(_server);
+            if (error) {
+                _LOG_("poll del server error: %d:%s\n", errno, strerror(errno));
+            }
         }
+        return false;
     }
 }
 
 void Worker::unlockAccept() {
-    util::atomicBoolCas(&__accept_lock, 1, 0);
+    if (_acceptLock) {
+        util::atomicBoolCas(&__accept_lock, 1, 0);
+    }
 }
 
 void Worker::run() {
-    bool holdLock = false;
     while (!_server.isQuit()) {
-        tryLockAccept(holdLock);
+        bool holdLock = tryLockAccept();
         EPollResult result = _poller.wait(200);
         for (EPollResult::Iterator it = result.begin(); it != result.end(); ++it) {
             if (it->isPollIn()) {
                 if (it->fd() == _server) {
                     onAccept();
-                    continue;
-                }
-                if (holdLock) {
-                    _eventQ.pushBack(&*it);
+                } else if (holdLock) {
+                    _eventQ.push_back(&*it);
                 } else {
                     onRequest(*it);
                 }
             } else if (it->isPollOut()) {
                 if (holdLock) {
-                    _eventQ.pushBack(&*it);
+                    _eventQ.push_back(&*it);
                 } else {
                     onResponse(*it);
                 }
             }
         }
-        if (holdLock) {
-            unlockAccept();
-            onHandleEvent();
-        }
+        unlockAccept();
+        onHandleEvent();
     }
 }
 
@@ -113,33 +105,34 @@ void Worker::onAccept() {
             }
             break;
         }
-        Connection *conn = _connsQ.popFront();
-        if (!conn) {
+
+        if (_connsQ.size() >= _maxClients) {
             _LOG_("Connection is empty\n");
             client.close();
             break;
         }
         client.setNoDelay();
         client.setNonblock();
+        Connection *conn;
+        if (_connsQ.empty()) {
+            conn = new Connection;
+        } else {
+            conn = _connsQ.front();
+            _connsQ.pop_front();
+        }
         conn->attach(client);
         _server.update(conn, this);
         int error = _poller.add(client, conn);
         if (error) {
             _LOG_("poll add client error: %d:%s\n", errno, strerror(errno));
         }
-
-        Sockaddr addr;
-        if (!client.getpeername(addr)) {
-            _LOG_("Worker getpeername error: %d:%s\n", errno, strerror(errno));
-        }
-        Peername peer(addr);
-        _LOG_("server accept: [%s|%d], fd: %d, Connection: %p\n", (const char*)peer, peer.port(), (int)client, conn);
+        _LOG_("server accept: [%s|%d], fd: %d, Connection: %p\n", client.getPeerName().name(), client.getPeerName().port(), (int)client, conn);
     }
 }
 
 void Worker::onHandleEvent() {
     EPollEvent *event;
-    while ((event = _eventQ.popFront())) {
+    while ((event = _eventQ.front())) {
         if (event->isPollIn()) {
             onRequest(*event);
         } else if (event->isPollOut()) {
@@ -147,6 +140,7 @@ void Worker::onHandleEvent() {
         } else {
             _LOG_("handle unknown event\n");
         }
+        _eventQ.pop_front();
     }
 }
 
@@ -157,42 +151,26 @@ void Worker::onRequest(EPollEvent &event) {
         return;
     }
     _poller.mod(*conn, conn);
-    Request &request = conn->request();
-    const char *begin = conn->begin();
-    const char *end = conn->end();
-    switch(request.status()) {
-    case Request::PARSE_LINE:
-        begin += request.parseStatusLine(begin, end);
-        if (request.inParseStatusLine()) {
-            break;
-        }
-    case Request::PARSE_HEADERS:
-        begin += request.parseHeaders(begin, end);
-        if (request.inParseHeaders()) {
-            break;
-        }
-        _LOG_("fd: %d, Request headers:\n%s", (int)*conn, request.headers().c_str());
-    case Request::PARSE_CONTENT:
-        begin += request.parseContent(begin, end);
-        if (request.inParseContent()) {
-            break;
-        }
-    case Request::PARSE_DONE:
-        _poller.mod(*conn, conn, true);
-        _LOG_("fd: %d, Request content:\n%s\n", (int)*conn, request.content().c_str());
+    Request request;
+    size_t length = request.parse(conn->begin(), conn->end());
+    if (!length) {
+        return;
     }
-    conn->seek(begin);
+    conn->seek(length);
+    if (request.isComplete()) {
+        _poller.mod(*conn, conn, true);
+    }
     _server.update(conn, this);
 }
 
 void Worker::onResponse(EPollEvent &event) {
     Connection *conn = (Connection*)event.data();
-    Request &request = conn->request();
-    Response &response = conn->response();
+    Request request;// = conn->request();
+    Response response;// = conn->response();
     switch(response.status()) {
     case Response::PARSE_REQUEST:
         response.parseRequest(request);
-        request.reset(response.is100Continue());
+        //request.reset(response.is100Continue());
         _LOG_("fd: %d, Response headers:\n%s\n", (int)*conn, response.headers().c_str());
     case Response::SEND_HEADERS: {
         if (!response.sendHeaders(conn)) {
@@ -238,7 +216,7 @@ void Worker::close(Connection *conn) {
     _poller.del(*conn);
     _LOG_("close connection: %p, fd: %d\n", conn, (int)*conn);
     conn->close();
-    _connsQ.pushBack(conn);
+    _connsQ.push_back(conn);
 }
 
 void Worker::closeInternal(Connection *conn) {

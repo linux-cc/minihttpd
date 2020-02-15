@@ -45,8 +45,15 @@ private:
 
 class Peername {
 public:
+    Peername(): _port(0) {
+        _name[0] = 0;
+    }
     Peername(const Sockaddr &addr);
-    operator const char *() const {
+    Peername(const Peername &other) {
+        *this = other;
+    }
+    Peername& operator=(const Peername &other);
+    const char *name() const {
         return _name;
     }
     int port() const {

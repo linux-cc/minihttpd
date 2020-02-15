@@ -17,7 +17,7 @@ public:
     bool send(const void *buf1, int size1, const void *buf2, int size2, const void *buf3, int size3);
     void close();
     void release();
-    void seek(const char *pos);
+    void seek(size_t size);
 
     const char *begin() const {
         return _recvBuf;
@@ -30,12 +30,6 @@ public:
     }
     void attach(int fd) {
         _socket = fd;
-    }
-    Request &request() {
-        return _request;
-    }
-    Response &response() {
-        return _response;
     }
     bool needPollOut() const {
         return _sendIndex;
@@ -52,8 +46,6 @@ private:
     int _sendBufSize;
     char *_recvBuf;
     char *_sendBuf;
-    Request _request;
-    Response _response;
 };
 
 } /* namespace httpd */

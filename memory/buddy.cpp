@@ -3,6 +3,8 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#define INVALID     -1
+
 namespace memory {
 
 /*
@@ -20,12 +22,12 @@ static uint32_t builtin_clz(uint32_t x) {
 }
 */
 
-static inline bool isPow2(int n) {
+static inline bool isPow(int n) {
     return !(n & (n - 1));
 }
 
-static inline int depth(int n) {
-    return sizeof(int) * __CHAR_BIT__ - __builtin_clz(n) + (isPow2(n) ? 0 : 1);
+static inline int pow(int n) {
+    return sizeof(int) * __CHAR_BIT__ - __builtin_clz(n) - (isPow(n) ? 1 : 0);
 }
 
 static inline int leftChild(int i) {
@@ -36,94 +38,69 @@ static inline int parent(int i) {
     return (i - 1) >> 1;
 }
 
-static inline int pagesNum(int depth) {
-    return 1 << (depth - 1);
-}
-
 Buddy::~Buddy() {
-    munmap(_mmap, _msize);
+    munmap(_buffer, _size);
 }
 
-void Buddy::init(size_t pages) {
-    if (_mmap) {
+void Buddy::init(int blocks, int blockSize) {
+    if (_buffer) {
         return;
     }
-    _pageSize = sysconf(_SC_PAGESIZE);
-    if (_pageSize == (size_t)-1) {
-        return;
-    }
-    _depth = depth(pages);
-    pages = 1 << _depth;
-    size_t nodes = (pages << 1) - 1;
-    _msize = (pages + 1) * _pageSize + nodes;
-    _buffer = _mmap = (char*)mmap(NULL, _msize, MMAP_PROT, MMAP_FLAGS, -1, 0);
-    intptr_t addr = ((intptr_t)_buffer + pageMask()) & ~pageMask();
-    if (addr != (intptr_t)_buffer) {
-        _buffer = (char*)addr;
-    }
-    _tree = (uint8_t*)_buffer + _msize - nodes;
-    _tree[0] = _depth;
-    for (size_t i = 1; i < nodes; ++i) {
+    
+    _blockShiftBit = pow(blockSize);
+    _blockPow = pow(blocks);
+    blocks = 1 << _blockPow;
+    int nodes = (blocks << 1) - 1;
+    _size = blocks * (1 << _blockShiftBit) + nodes;
+    _buffer = (char*)mmap(NULL, _size, MMAP_PROT, MMAP_FLAGS, -1, 0);
+    _tree = _buffer + _size - nodes;
+    _tree[0] = _blockPow;
+    for (int i = 1; i < nodes; ++i) {
         _tree[i] = _tree[parent(i)] - 1;
     }
 }
 
-void* Buddy::alloc(size_t size) {
-    size_t pages = size / _pageSize;
-    if (size & pageMask()) {
-        ++pages;
-    }
-
-    return allocPages(pages);
-}
-
-void* Buddy::allocPages(size_t pages) {
-    uint8_t n1 = depth(pages);
-    size_t idx = 0;
-	if (pages == 0 || _tree[idx] < n1) {
+void* Buddy::alloc(int size) {
+    char p1 = pow(size);
+	if (_blockPow < p1) {
 	    return NULL;
 	}
-    uint8_t n2 = _depth;
-    while (n1 != n2--) {
+    
+    int idx = 0;
+    char p2 = _blockPow;
+    while (p1 != p2--) {
         idx = leftChild(idx);
-        if (_tree[idx] < n1) {
+        if (_tree[idx] < p1) {
             ++idx;
         }
 	}
-    _tree[idx] = 0;
-	size_t offset = (idx + 1) * pagesNum(n1) - pagesNum(_depth);
+    _tree[idx] = INVALID;
+    
+    int offset = (idx + 1) * (1 << p1) - (1 << _blockPow);
     while (idx) {
         idx = parent(idx);
-        size_t child = leftChild(idx);
+        int child = leftChild(idx);
         _tree[idx] = MAX(_tree[child], _tree[child + 1]);
     }
 
-    return _buffer + offset * _pageSize;
+    return _buffer + offset * (1 << _blockShiftBit);
 }
 
 void Buddy::free(void* addr) {
-    char* paddr = (char*)addr;
-    size_t pages = pagesNum(_depth);
-    char* end = _buffer + pages * _pageSize;
-    if (paddr < _buffer || paddr > end) {
-        return;
-    }
-
-    size_t offset = (paddr - _buffer) / _pageSize;
-    size_t idx = offset + pages - 1;
-    uint8_t n = 1;
-    for (; _tree[idx]; idx = parent(idx)) {
+    int offset = int(((char*)addr - _buffer) >> _blockShiftBit);
+    int idx = offset + (1 << _blockPow) - 1;
+    char n = 0;
+    for (; _tree[idx] != INVALID; idx = parent(idx)) {
         ++n;
-        if (idx == 0)
-            return;
+        if (idx == 0) return;
     }
     _tree[idx] = n;
 
     while(idx) {
         idx = parent(idx);
         ++n;
-        uint8_t left = _tree[leftChild(idx)];
-        uint8_t right = _tree[leftChild(idx) + 1];
+        char left = _tree[leftChild(idx)];
+        char right = _tree[leftChild(idx) + 1];
         if (left == n - 1 && right == n - 1)
             _tree[idx] = n;
         else
@@ -132,27 +109,28 @@ void Buddy::free(void* addr) {
 }
 
 char* Buddy::dump() {
-    size_t pages = pagesNum(_depth);
-    size_t nodes = (pages << 1) - 1;
-    size_t n = _depth + 1;
-    char* buf = new char[pages + 1];
-    for (size_t i = 0; i < pages; ++i)
+    int blocks = 1 << _blockPow;
+    int nodes = (blocks << 1) - 1;
+    int n = _blockPow;
+    char* buf = new char[blocks + 1];
+    for (int i = 0; i < blocks; ++i)
         buf[i] = '_';
-    for (size_t i = 0; i < nodes; ++i) {
-        if (isPow2(i+1))
+    for (int i = 0; i < nodes; ++i) {
+        if (i && isPow(i+1))
             --n;
-        if (_tree[i]) 
+        if (_tree[i] != INVALID)
             continue;
-        if (i >= pages - 1) {
-            buf[i - pages + 1] = '*';
-        } else if (_tree[leftChild(i)] && _tree[leftChild(i) + 1]) {
-            size_t nsize = pagesNum(n);
-            size_t offset = (i + 1) * nsize - pages;
-            for (size_t j = offset; j < offset + nsize; ++j)
+
+        if (i >= blocks - 1) {
+            buf[i - blocks + 1] = '*';
+        } else if (_tree[leftChild(i)] != INVALID && _tree[leftChild(i) + 1] != INVALID) {
+            int nsize = 1 << n;
+            int offset = (i + 1) * nsize - blocks;
+            for (int j = offset; j < offset + nsize; ++j)
                 buf[j] = '*';
         }
     }
-    buf[pages] = '\0';
+    buf[blocks] = '\0';
     return buf;
 }
 

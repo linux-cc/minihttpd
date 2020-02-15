@@ -25,6 +25,14 @@ Peername::Peername(const Sockaddr &addr) {
 
     inet_ntop(family, inaddr, _name, sizeof(_name));
 }
+    
+Peername& Peername::operator=(const Peername &other) {
+    if (this != &other) {
+        strcpy(_name, other._name);
+        _port = other._port;
+    }
+    return *this;
+}
 
 Addrinfo::Addrinfo(int family, int socktype, int protocol, int flags): _result(NULL) {
     memset(&_hints, 0, sizeof(_hints));

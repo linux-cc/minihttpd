@@ -33,9 +33,7 @@ static string getGMTTime(time_t t) {
 void Response::parseRequest(const Request &request) {
     if (!request.isGet() && !request.isPost()) {
         setStatusLine(ResponseStatus::Not_Implemented, request.version());
-    } else if (!request.isHttp11()) {
-        setStatusLine(ResponseStatus::HTTP_Version_Not_Supported, request.version());
-    } else if (request.has100Continue()) {
+    } else if (request.is100Continue()) {
         setStatusLine(ResponseStatus::Continue, request.version());
     } else {
         string file = WEB_ROOT + parseUri(request.uri());
@@ -50,9 +48,9 @@ void Response::parseRequest(const Request &request) {
 }
 
 void Response::setCommonHeaders(const Request &request) {
-    const string *value = request.getHeader(Header::Connection);
+    string value = request.getHeader(Header::Connection);
     if (value) {
-        _headers[Header::Connection] = *value;
+        _headers[Header::Connection] = value;
         _connClose = !strncasecmp(value->c_str(), "close", 5);
     }    
     if (_code == ResponseStatus::OK) {

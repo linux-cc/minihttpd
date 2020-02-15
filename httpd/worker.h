@@ -3,27 +3,29 @@
 
 #include "thread/thread.h"
 #include "network/epoll.h"
-#include "httpd/simple_queue.h"
+#include <list>
 
 namespace httpd {
 
 using thread::Thread;
 using network::EPoller;
 using network::EPollEvent;
+using std::list;
 class Server;
 class Connection;
 
 class Worker: public Thread {
 public:
-    Worker(Server &server, int maxClients): _server(server), _maxClients(maxClients) {}
+    Worker(Server &server, int maxClients): _server(server), _maxClients(maxClients), _actives(0), _acceptLock(false) {}
     bool onInit();
     void run();
     void onCancel();
     void close(Connection *conn);
     
 private:
-    void tryLockAccept(bool &holdLock);
-    void disableAccept(bool &holdLock);
+    bool tryLockAccept();
+    bool enableAccept();
+    void disableAccept();
     void unlockAccept();
     void onAccept();
     void onHandleEvent();
@@ -33,10 +35,11 @@ private:
 
     Server &_server;
     EPoller _poller; 
-    SimpleQueue<Connection> _connsQ;
-    SimpleQueue<EPollEvent> _eventQ;
-    Connection *_conns;
+    list<Connection*> _connsQ;
+    list<EPollEvent*> _eventQ;
     int _maxClients;
+    int _actives;
+    bool _acceptLock;
 };
 
 } /* namespace httpd */

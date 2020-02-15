@@ -20,6 +20,8 @@
 #define CR                  '\r'
 #define LF                  '\n'
 #define CRLF                "\r\n"
+#define END_LINE            "\r\n\r\n"
+#define END_LINE_LENGTH     4
 #define MAX(a, b)           ((a) > (b) ? (a) : (b))
 #define MIN(a, b)           ((a) > (b) ? (b) : (a))
 #define MMAP_PROT           (PROT_READ|PROT_WRITE)

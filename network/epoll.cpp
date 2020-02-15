@@ -59,8 +59,8 @@ inline void epoll_set_event(int fd, int events, void *data, epoll_event &ev) {
 inline int epoll_get_events(const epoll_event &ev) {
     return ev.filter;
 }
-inline uintptr_t epoll_get_fd(const epoll_event &ev) {
-    return ev.ident;
+inline int epoll_get_fd(const epoll_event &ev) {
+    return (int)ev.ident;
 }
 inline void *epoll_get_data(const epoll_event &ev) {
     return ev.udata;
@@ -144,12 +144,6 @@ int EPoller::ctl(int fd, int action, int events, void *data) {
         _LOG_("EPoller ctl ret: %d, error: %d:%s\n", ret, errno, strerror(errno));
     }
     return ret;
-}
-
-EPollResult &EPollResult::operator=(const EPollResult &other) {
-    _events = other._events;
-    _size = other._size;
-    return *this;
 }
 
 } /* namespace network */

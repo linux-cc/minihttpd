@@ -2,15 +2,16 @@
 #define __HTTPD_SERVER_H__
 
 #include "network/socket.h"
-#include "httpd/simple_queue.h"
 #include <set>
 #include <map>
+#include <vector>
 
 namespace httpd {
 
 using network::TcpSocket;
 using std::set;
 using std::map;
+using std::vector;
 class Worker;
 class Connection;
 
@@ -39,15 +40,14 @@ private:
     TcpSocket _server;
     typedef std::pair<Connection*, Worker*> Item;
     typedef set<Item> SlotSet;
-    typedef map<Connection*, int> SlotMap;
-    SimpleQueue<SlotSet> _slotQ;
+    typedef map<Connection*, size_t> SlotMap;
+    typedef vector<SlotSet> SlotQueue;
+    
+    SlotQueue _slotQ;
     SlotMap  _connSlot;
     Worker **_workers;
-    SlotSet *_slotSets;
     int _workerCnt;
-    int _workerClients;
-    int _slots;
-    int _curSlot;
+    size_t _curSlot;
     bool _quit;
 };
 

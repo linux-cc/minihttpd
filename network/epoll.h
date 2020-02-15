@@ -66,7 +66,6 @@ class EPollResult {
 public:
     class Iterator {
     public:
-        Iterator(const Iterator& other): _index(other._index), _result(other._result) {}
         Iterator &operator++() {
             _index++;
             return *this;
@@ -83,27 +82,24 @@ public:
             return !operator==(other);
         }
         EPollEvent &operator*() {
-            return _result._events[_index];
+            return _result->_events[_index];
         }
         EPollEvent *operator->() {
             return &operator*();
         }
 
     private:
-        Iterator(int index, EPollResult &result): _index(index), _result(result) {}
+        Iterator(int index, EPollResult *result): _index(index), _result(result) {}
         int _index;
-        EPollResult &_result;
+        EPollResult *_result;
         friend class EPollResult;
     };
 
-    EPollResult(const EPollResult& other): _events(other._events), _size(other._size) {}
-    EPollResult &operator=(const EPollResult &other);
-
     Iterator begin() {
-        return Iterator(_size > 0 ? 0 : _size, *this);
+        return Iterator(_size > 0 ? 0 : _size, this);
     }
     Iterator end() {
-        return Iterator(_size, *this);
+        return Iterator(_size, this);
     }
 
 private:

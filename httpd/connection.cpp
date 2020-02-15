@@ -134,11 +134,10 @@ void Connection::release() {
     _sendBuf = NULL;
 }
 
-void Connection::seek(const char *pos) {
-    int length = pos - _recvBuf;
+void Connection::seek(size_t length) {
     if (length) {
         _recvIndex -= length;
-        memmove(_recvBuf, pos , _recvIndex);
+        memmove(_recvBuf, _recvBuf + length , _recvIndex);
     }
 }
 
