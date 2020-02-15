@@ -1,0 +1,484 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		E84CA2E423F794EA0040ADBD /* thread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2E123F794EA0040ADBD /* thread.cpp */; };
+		E84CA2ED23F795930040ADBD /* addrinfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2E723F795930040ADBD /* addrinfo.cpp */; };
+		E84CA2EE23F795930040ADBD /* epoll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2E923F795930040ADBD /* epoll.cpp */; };
+		E84CA2EF23F795930040ADBD /* socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2EA23F795930040ADBD /* socket.cpp */; };
+		E84CA2F323F795C20040ADBD /* mysql.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2F223F795C20040ADBD /* mysql.cpp */; };
+		E84CA2FD23F795D90040ADBD /* buddy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2F623F795D80040ADBD /* buddy.cpp */; };
+		E84CA2FE23F795D90040ADBD /* dl_malloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2F823F795D90040ADBD /* dl_malloc.cpp */; };
+		E84CA2FF23F795D90040ADBD /* fixed_malloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2F923F795D90040ADBD /* fixed_malloc.cpp */; };
+		E84CA30023F795D90040ADBD /* slab_malloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2FA23F795D90040ADBD /* slab_malloc.cpp */; };
+		E84CA31123F795FA0040ADBD /* gtree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA30123F795F90040ADBD /* gtree.cpp */; };
+		E84CA31223F795FA0040ADBD /* response.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA30223F795F90040ADBD /* response.cpp */; };
+		E84CA31323F795FA0040ADBD /* constants.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA30523F795FA0040ADBD /* constants.cpp */; };
+		E84CA31423F795FA0040ADBD /* worker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA30723F795FA0040ADBD /* worker.cpp */; };
+		E84CA31523F795FA0040ADBD /* gzip.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA30923F795FA0040ADBD /* gzip.cpp */; };
+		E84CA31623F795FA0040ADBD /* request.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA30B23F795FA0040ADBD /* request.cpp */; };
+		E84CA31723F795FA0040ADBD /* server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA30E23F795FA0040ADBD /* server.cpp */; };
+		E84CA31823F795FA0040ADBD /* connection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA31023F795FA0040ADBD /* connection.cpp */; };
+		E84CA31B23F796030040ADBD /* fcgid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA31923F796030040ADBD /* fcgid.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		E84CA2C623F793E00040ADBD /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		E84CA2C823F793E00040ADBD /* minihttpd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = minihttpd; sourceTree = BUILT_PRODUCTS_DIR; };
+		E84CA2DB23F794DA0040ADBD /* alloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = alloc.h; path = ../util/alloc.h; sourceTree = "<group>"; };
+		E84CA2DC23F794DA0040ADBD /* atomic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = atomic.h; path = ../util/atomic.h; sourceTree = "<group>"; };
+		E84CA2DD23F794DA0040ADBD /* scoped_ptr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = scoped_ptr.h; path = ../util/scoped_ptr.h; sourceTree = "<group>"; };
+		E84CA2DE23F794DA0040ADBD /* weak_ptr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = weak_ptr.h; path = ../util/weak_ptr.h; sourceTree = "<group>"; };
+		E84CA2DF23F794DA0040ADBD /* ref_counted.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ref_counted.h; path = ../util/ref_counted.h; sourceTree = "<group>"; };
+		E84CA2E023F794DA0040ADBD /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = util.h; path = ../util/util.h; sourceTree = "<group>"; };
+		E84CA2E123F794EA0040ADBD /* thread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = thread.cpp; path = ../thread/thread.cpp; sourceTree = "<group>"; };
+		E84CA2E223F794EA0040ADBD /* thread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = thread.h; path = ../thread/thread.h; sourceTree = "<group>"; };
+		E84CA2E323F794EA0040ADBD /* runnable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = runnable.h; path = ../thread/runnable.h; sourceTree = "<group>"; };
+		E84CA2E723F795930040ADBD /* addrinfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = addrinfo.cpp; path = ../network/addrinfo.cpp; sourceTree = "<group>"; };
+		E84CA2E823F795930040ADBD /* addrinfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = addrinfo.h; path = ../network/addrinfo.h; sourceTree = "<group>"; };
+		E84CA2E923F795930040ADBD /* epoll.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = epoll.cpp; path = ../network/epoll.cpp; sourceTree = "<group>"; };
+		E84CA2EA23F795930040ADBD /* socket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = socket.cpp; path = ../network/socket.cpp; sourceTree = "<group>"; };
+		E84CA2EB23F795930040ADBD /* epoll.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = epoll.h; path = ../network/epoll.h; sourceTree = "<group>"; };
+		E84CA2EC23F795930040ADBD /* socket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = socket.h; path = ../network/socket.h; sourceTree = "<group>"; };
+		E84CA2F123F795C20040ADBD /* mysql.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mysql.h; path = ../mysql/mysql.h; sourceTree = "<group>"; };
+		E84CA2F223F795C20040ADBD /* mysql.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mysql.cpp; path = ../mysql/mysql.cpp; sourceTree = "<group>"; };
+		E84CA2F423F795D80040ADBD /* slab_malloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = slab_malloc.h; path = ../memory/slab_malloc.h; sourceTree = "<group>"; };
+		E84CA2F523F795D80040ADBD /* buddy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = buddy.h; path = ../memory/buddy.h; sourceTree = "<group>"; };
+		E84CA2F623F795D80040ADBD /* buddy.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = buddy.cpp; path = ../memory/buddy.cpp; sourceTree = "<group>"; };
+		E84CA2F723F795D80040ADBD /* dl_malloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dl_malloc.h; path = ../memory/dl_malloc.h; sourceTree = "<group>"; };
+		E84CA2F823F795D90040ADBD /* dl_malloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dl_malloc.cpp; path = ../memory/dl_malloc.cpp; sourceTree = "<group>"; };
+		E84CA2F923F795D90040ADBD /* fixed_malloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fixed_malloc.cpp; path = ../memory/fixed_malloc.cpp; sourceTree = "<group>"; };
+		E84CA2FA23F795D90040ADBD /* slab_malloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = slab_malloc.cpp; path = ../memory/slab_malloc.cpp; sourceTree = "<group>"; };
+		E84CA2FC23F795D90040ADBD /* fixed_malloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fixed_malloc.h; path = ../memory/fixed_malloc.h; sourceTree = "<group>"; };
+		E84CA30123F795F90040ADBD /* gtree.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gtree.cpp; path = ../httpd/gtree.cpp; sourceTree = "<group>"; };
+		E84CA30223F795F90040ADBD /* response.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = response.cpp; path = ../httpd/response.cpp; sourceTree = "<group>"; };
+		E84CA30323F795F90040ADBD /* connection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = connection.h; path = ../httpd/connection.h; sourceTree = "<group>"; };
+		E84CA30423F795FA0040ADBD /* gzip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gzip.h; path = ../httpd/gzip.h; sourceTree = "<group>"; };
+		E84CA30523F795FA0040ADBD /* constants.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = constants.cpp; path = ../httpd/constants.cpp; sourceTree = "<group>"; };
+		E84CA30623F795FA0040ADBD /* server.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = server.h; path = ../httpd/server.h; sourceTree = "<group>"; };
+		E84CA30723F795FA0040ADBD /* worker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = worker.cpp; path = ../httpd/worker.cpp; sourceTree = "<group>"; };
+		E84CA30823F795FA0040ADBD /* constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = constants.h; path = ../httpd/constants.h; sourceTree = "<group>"; };
+		E84CA30923F795FA0040ADBD /* gzip.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gzip.cpp; path = ../httpd/gzip.cpp; sourceTree = "<group>"; };
+		E84CA30A23F795FA0040ADBD /* response.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = response.h; path = ../httpd/response.h; sourceTree = "<group>"; };
+		E84CA30B23F795FA0040ADBD /* request.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = request.cpp; path = ../httpd/request.cpp; sourceTree = "<group>"; };
+		E84CA30C23F795FA0040ADBD /* request.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = request.h; path = ../httpd/request.h; sourceTree = "<group>"; };
+		E84CA30D23F795FA0040ADBD /* gtree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gtree.h; path = ../httpd/gtree.h; sourceTree = "<group>"; };
+		E84CA30E23F795FA0040ADBD /* server.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = server.cpp; path = ../httpd/server.cpp; sourceTree = "<group>"; };
+		E84CA30F23F795FA0040ADBD /* worker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = worker.h; path = ../httpd/worker.h; sourceTree = "<group>"; };
+		E84CA31023F795FA0040ADBD /* connection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = connection.cpp; path = ../httpd/connection.cpp; sourceTree = "<group>"; };
+		E84CA31923F796030040ADBD /* fcgid.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fcgid.cpp; path = ../fcgid/fcgid.cpp; sourceTree = "<group>"; };
+		E84CA31A23F796030040ADBD /* fcgid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fcgid.h; path = ../fcgid/fcgid.h; sourceTree = "<group>"; };
+		E84CA31C23F796100040ADBD /* runnable_adapter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = runnable_adapter.h; path = ../closure/runnable_adapter.h; sourceTree = "<group>"; };
+		E84CA31D23F796100040ADBD /* bind.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bind.h; path = ../closure/bind.h; sourceTree = "<group>"; };
+		E84CA31E23F796100040ADBD /* bind_helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bind_helper.h; path = ../closure/bind_helper.h; sourceTree = "<group>"; };
+		E84CA31F23F796100040ADBD /* functor_traits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = functor_traits.h; path = ../closure/functor_traits.h; sourceTree = "<group>"; };
+		E84CA32023F796100040ADBD /* bind_state.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bind_state.h; path = ../closure/bind_state.h; sourceTree = "<group>"; };
+		E84CA32123F796100040ADBD /* invoker_helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = invoker_helper.h; path = ../closure/invoker_helper.h; sourceTree = "<group>"; };
+		E84CA32223F796100040ADBD /* invoker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = invoker.h; path = ../closure/invoker.h; sourceTree = "<group>"; };
+		E84CA32323F796100040ADBD /* callback.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = callback.h; path = ../closure/callback.h; sourceTree = "<group>"; };
+		E84CA32423F796100040ADBD /* callback_param_traits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = callback_param_traits.h; path = ../closure/callback_param_traits.h; sourceTree = "<group>"; };
+		E84CA32B23F797780040ADBD /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ../config.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E84CA2C523F793E00040ADBD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E84CA2BF23F793E00040ADBD = {
+			isa = PBXGroup;
+			children = (
+				E84CA2D223F794320040ADBD /* source */,
+				E84CA2C923F793E00040ADBD /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		E84CA2C923F793E00040ADBD /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E84CA2C823F793E00040ADBD /* minihttpd */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E84CA2D223F794320040ADBD /* source */ = {
+			isa = PBXGroup;
+			children = (
+				E84CA32B23F797780040ADBD /* config.h */,
+				E84CA2DA23F794B40040ADBD /* util */,
+				E84CA2D923F794AC0040ADBD /* thread */,
+				E84CA2D823F794A00040ADBD /* network */,
+				E84CA2D723F794950040ADBD /* mysql */,
+				E84CA2D623F7948C0040ADBD /* memory */,
+				E84CA2D523F7946E0040ADBD /* httpd */,
+				E84CA2D423F7944D0040ADBD /* fcgid */,
+				E84CA2D323F794410040ADBD /* closure */,
+			);
+			name = source;
+			sourceTree = "<group>";
+		};
+		E84CA2D323F794410040ADBD /* closure */ = {
+			isa = PBXGroup;
+			children = (
+				E84CA31E23F796100040ADBD /* bind_helper.h */,
+				E84CA32023F796100040ADBD /* bind_state.h */,
+				E84CA31D23F796100040ADBD /* bind.h */,
+				E84CA32423F796100040ADBD /* callback_param_traits.h */,
+				E84CA32323F796100040ADBD /* callback.h */,
+				E84CA31F23F796100040ADBD /* functor_traits.h */,
+				E84CA32123F796100040ADBD /* invoker_helper.h */,
+				E84CA32223F796100040ADBD /* invoker.h */,
+				E84CA31C23F796100040ADBD /* runnable_adapter.h */,
+			);
+			name = closure;
+			sourceTree = "<group>";
+		};
+		E84CA2D423F7944D0040ADBD /* fcgid */ = {
+			isa = PBXGroup;
+			children = (
+				E84CA31923F796030040ADBD /* fcgid.cpp */,
+				E84CA31A23F796030040ADBD /* fcgid.h */,
+			);
+			name = fcgid;
+			sourceTree = "<group>";
+		};
+		E84CA2D523F7946E0040ADBD /* httpd */ = {
+			isa = PBXGroup;
+			children = (
+				E84CA31023F795FA0040ADBD /* connection.cpp */,
+				E84CA30323F795F90040ADBD /* connection.h */,
+				E84CA30523F795FA0040ADBD /* constants.cpp */,
+				E84CA30823F795FA0040ADBD /* constants.h */,
+				E84CA30123F795F90040ADBD /* gtree.cpp */,
+				E84CA30D23F795FA0040ADBD /* gtree.h */,
+				E84CA30923F795FA0040ADBD /* gzip.cpp */,
+				E84CA30423F795FA0040ADBD /* gzip.h */,
+				E84CA30B23F795FA0040ADBD /* request.cpp */,
+				E84CA30C23F795FA0040ADBD /* request.h */,
+				E84CA30223F795F90040ADBD /* response.cpp */,
+				E84CA30A23F795FA0040ADBD /* response.h */,
+				E84CA30E23F795FA0040ADBD /* server.cpp */,
+				E84CA30623F795FA0040ADBD /* server.h */,
+				E84CA30723F795FA0040ADBD /* worker.cpp */,
+				E84CA30F23F795FA0040ADBD /* worker.h */,
+			);
+			name = httpd;
+			sourceTree = "<group>";
+		};
+		E84CA2D623F7948C0040ADBD /* memory */ = {
+			isa = PBXGroup;
+			children = (
+				E84CA2F623F795D80040ADBD /* buddy.cpp */,
+				E84CA2F523F795D80040ADBD /* buddy.h */,
+				E84CA2F823F795D90040ADBD /* dl_malloc.cpp */,
+				E84CA2F723F795D80040ADBD /* dl_malloc.h */,
+				E84CA2F923F795D90040ADBD /* fixed_malloc.cpp */,
+				E84CA2FC23F795D90040ADBD /* fixed_malloc.h */,
+				E84CA2FA23F795D90040ADBD /* slab_malloc.cpp */,
+				E84CA2F423F795D80040ADBD /* slab_malloc.h */,
+			);
+			name = memory;
+			sourceTree = "<group>";
+		};
+		E84CA2D723F794950040ADBD /* mysql */ = {
+			isa = PBXGroup;
+			children = (
+				E84CA2F223F795C20040ADBD /* mysql.cpp */,
+				E84CA2F123F795C20040ADBD /* mysql.h */,
+			);
+			name = mysql;
+			sourceTree = "<group>";
+		};
+		E84CA2D823F794A00040ADBD /* network */ = {
+			isa = PBXGroup;
+			children = (
+				E84CA2E723F795930040ADBD /* addrinfo.cpp */,
+				E84CA2E823F795930040ADBD /* addrinfo.h */,
+				E84CA2E923F795930040ADBD /* epoll.cpp */,
+				E84CA2EB23F795930040ADBD /* epoll.h */,
+				E84CA2EA23F795930040ADBD /* socket.cpp */,
+				E84CA2EC23F795930040ADBD /* socket.h */,
+			);
+			name = network;
+			sourceTree = "<group>";
+		};
+		E84CA2D923F794AC0040ADBD /* thread */ = {
+			isa = PBXGroup;
+			children = (
+				E84CA2E223F794EA0040ADBD /* thread.h */,
+				E84CA2E323F794EA0040ADBD /* runnable.h */,
+				E84CA2E123F794EA0040ADBD /* thread.cpp */,
+			);
+			name = thread;
+			sourceTree = "<group>";
+		};
+		E84CA2DA23F794B40040ADBD /* util */ = {
+			isa = PBXGroup;
+			children = (
+				E84CA2DB23F794DA0040ADBD /* alloc.h */,
+				E84CA2DC23F794DA0040ADBD /* atomic.h */,
+				E84CA2DF23F794DA0040ADBD /* ref_counted.h */,
+				E84CA2DD23F794DA0040ADBD /* scoped_ptr.h */,
+				E84CA2E023F794DA0040ADBD /* util.h */,
+				E84CA2DE23F794DA0040ADBD /* weak_ptr.h */,
+			);
+			name = util;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E84CA2C723F793E00040ADBD /* minihttpd */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E84CA2CF23F793E00040ADBD /* Build configuration list for PBXNativeTarget "minihttpd" */;
+			buildPhases = (
+				E84CA2C423F793E00040ADBD /* Sources */,
+				E84CA2C523F793E00040ADBD /* Frameworks */,
+				E84CA2C623F793E00040ADBD /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = minihttpd;
+			productName = minihttpd;
+			productReference = E84CA2C823F793E00040ADBD /* minihttpd */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E84CA2C023F793E00040ADBD /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1110;
+				ORGANIZATIONNAME = linshaohua;
+				TargetAttributes = {
+					E84CA2C723F793E00040ADBD = {
+						CreatedOnToolsVersion = 11.1;
+					};
+				};
+			};
+			buildConfigurationList = E84CA2C323F793E00040ADBD /* Build configuration list for PBXProject "minihttpd" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E84CA2BF23F793E00040ADBD;
+			productRefGroup = E84CA2C923F793E00040ADBD /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E84CA2C723F793E00040ADBD /* minihttpd */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E84CA2C423F793E00040ADBD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E84CA2FF23F795D90040ADBD /* fixed_malloc.cpp in Sources */,
+				E84CA31623F795FA0040ADBD /* request.cpp in Sources */,
+				E84CA31723F795FA0040ADBD /* server.cpp in Sources */,
+				E84CA31B23F796030040ADBD /* fcgid.cpp in Sources */,
+				E84CA31423F795FA0040ADBD /* worker.cpp in Sources */,
+				E84CA2F323F795C20040ADBD /* mysql.cpp in Sources */,
+				E84CA2EF23F795930040ADBD /* socket.cpp in Sources */,
+				E84CA31123F795FA0040ADBD /* gtree.cpp in Sources */,
+				E84CA2FD23F795D90040ADBD /* buddy.cpp in Sources */,
+				E84CA30023F795D90040ADBD /* slab_malloc.cpp in Sources */,
+				E84CA2ED23F795930040ADBD /* addrinfo.cpp in Sources */,
+				E84CA2E423F794EA0040ADBD /* thread.cpp in Sources */,
+				E84CA31523F795FA0040ADBD /* gzip.cpp in Sources */,
+				E84CA31223F795FA0040ADBD /* response.cpp in Sources */,
+				E84CA2FE23F795D90040ADBD /* dl_malloc.cpp in Sources */,
+				E84CA31823F795FA0040ADBD /* connection.cpp in Sources */,
+				E84CA2EE23F795930040ADBD /* epoll.cpp in Sources */,
+				E84CA31323F795FA0040ADBD /* constants.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		E84CA2CD23F793E00040ADBD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = /Users/linshaohua/workspace/code/minihttpd;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		E84CA2CE23F793E00040ADBD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = /Users/linshaohua/workspace/code/minihttpd;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		E84CA2D023F793E00040ADBD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				HEADER_SEARCH_PATHS = /Users/linshaohua/workspace/code/minihttpd;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		E84CA2D123F793E00040ADBD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				HEADER_SEARCH_PATHS = /Users/linshaohua/workspace/code/minihttpd;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E84CA2C323F793E00040ADBD /* Build configuration list for PBXProject "minihttpd" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E84CA2CD23F793E00040ADBD /* Debug */,
+				E84CA2CE23F793E00040ADBD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E84CA2CF23F793E00040ADBD /* Build configuration list for PBXNativeTarget "minihttpd" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E84CA2D023F793E00040ADBD /* Debug */,
+				E84CA2D123F793E00040ADBD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E84CA2C023F793E00040ADBD /* Project object */;
+}

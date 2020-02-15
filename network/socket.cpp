@@ -161,7 +161,7 @@ int wait(int socket, int ms) {
     return 0;
 }
 
-int UdpSocket::sendto(const char *host, const char *service, const void *buf, size_t size, Family family, int flags) {
+size_t UdpSocket::sendto(const char *host, const char *service, const void *buf, size_t size, Family family, int flags) {
     Addrinfo ai(family, SOCK_DGRAM, 0);
     if (ai.getaddrinfo(host, service)) {
         return -1;

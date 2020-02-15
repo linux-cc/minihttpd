@@ -89,7 +89,7 @@ public:
     }
     using Socket::sendto;
     /* functions used by client */
-    int sendto(const char *host, const char *service, const void *buf, size_t size, Family family = F_UNSPEC, int flags = 0);
+    size_t sendto(const char *host, const char *service, const void *buf, size_t size, Family family = F_UNSPEC, int flags = 0);
 };
 
 } /* namespace network */

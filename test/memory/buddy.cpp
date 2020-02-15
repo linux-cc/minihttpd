@@ -8,17 +8,17 @@ using std::vector;
 
 int main(int argc, char *argv[]) {
     vector<void*> v;
-    Buddy *b = new Buddy(32);
+    Buddy *b = new Buddy(32, 1);
     char *buf = b->dump();
     printf("\ndump: %s\n", buf);
     delete []buf;
     printf("buffer: %p\n", b->buffer());
     for (;;) {
         int cmd, size;
-        printf("enter command:");
+        printf("enter command(1/0 size):");
         scanf("%d %d", &cmd, &size);
         if (cmd == 1) {
-            void *p = b->allocPages(size);
+            void *p = b->alloc(size);
             if (p) {
                 v.push_back(p);
                 printf("alloc: %p, %d\n", p, size);
