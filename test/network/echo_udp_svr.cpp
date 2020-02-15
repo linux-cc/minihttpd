@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
         }
         buf[n] = 0;
         Peername peer(addr);
-        printf("receive data[%s|%d]: %s", (const char*)peer, peer.port(), buf);
+        printf("receive data[%s|%d]: %s", peer.name(), peer.port(), buf);
         if (server.sendto(buf, n, addr) <= 0) {
             printf("server sendto error: %d:%s\n", errno, strerror(errno));
         }

@@ -1,41 +1,36 @@
 #ifndef __MEMORY_SLAB_MALLOC_H__
 #define __MEMORY_SLAB_MALLOC_H__
 
-#include <stdint.h>
-#include <stddef.h>
-
 namespace memory {
 
 class Buddy;
-
 class SlabMalloc {
 public:
     SlabMalloc(Buddy &buddy);
-    void* alloc(size_t size);
+    void *alloc(int size);
     void free(void *addr);
-    char* dump();
+    char *dump();
 
 private:
-    struct Info;
-    void initPage(size_t idx, void* page);
-    void linkSlab(size_t idx, Info* slab);
+    struct SlabInfo;
+    void initPage(int idx, void *page);
+    void linkSlab(int idx, SlabInfo *slab);
 
-private:
     enum {
         MAX_FREE_NUM = 16
     };
     struct Chunk {
-        Chunk* next;
+        Chunk *next;
     };
-    struct Info {
-        uint16_t chunkSize;
-        uint16_t allocated;
-        Chunk* free;
-        Info* prev;
-        Info* next;
+    struct SlabInfo {
+        short chunkSize;
+        short allocated;
+        Chunk *free;
+        SlabInfo *prev;
+        SlabInfo *next;
     };
-    Buddy& _buddy;
-    Info* _free[MAX_FREE_NUM];
+    SlabInfo *_free[MAX_FREE_NUM];
+    Buddy &_buddy;
 };
 
 } /* namespace memory */

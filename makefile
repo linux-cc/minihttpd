@@ -14,8 +14,8 @@ INCFLAG	= -I./ $(shell mysql_config --cflags)
 SOLIBS  = $(shell mysql_config --libs)
 APPLIBS = -L$(LIBDIR) -l$(LIBNAME) $(SOLIBS) -lpthread
 
-TEST	= $(foreach d,$(shell ls test),test/$(d))
-DIRS	= memory mysql network thread httpd $(TEST)
+TEST	= $(foreach d,$(shell ls test|grep -v httpd),test/$(d))
+DIRS	= memory mysql network thread $(TEST)
 SRCS	= $(foreach d,$(DIRS),$(wildcard $(d)/*.cpp))
 OBJS	= $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRCS))
 SOOBJS	= $(filter-out $(OBJDIR)/test/%.o,$(OBJS))
@@ -31,9 +31,8 @@ all : dir lib app
 lib : $(TARGET)
 
 dir:
-	@-rm -rf $(TMPDIR)
-	@-mkdir $(TMPDIR)
-	@-mkdir -p $(foreach d, $(DIRS), $(OBJDIR)/$(d))
+	@$(foreach d, $(TMPDIR), $(shell if [ ! -d $(d) ]; then mkdir $(d); fi))
+	@$(foreach d, $(DIRS), $(shell if [ ! -d $(OBJDIR)/$(d) ]; then mkdir -p $(OBJDIR)/$(d); fi))
 
 $(TARGET) : $(SOOBJS)	
 	$(CXX) $(SOFLAG) $@ $^ $(SOLIBS)

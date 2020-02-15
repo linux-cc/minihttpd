@@ -43,7 +43,6 @@ int main(int argc, char *argv[]) {
         for (int i = 0; n > 0 && i < (int)vfds.size(); ++i) {
             if (n == 0 || !FD_ISSET(vfds[i], &rfds))
                 continue;
-            Sockaddr addr;
             TcpSocket &sock = vfds[i];
             if (sock == server) {
                 int fd = server.accept();
@@ -57,25 +56,19 @@ int main(int argc, char *argv[]) {
                 FD_SET(client, &fds);
                 if (client > maxFd) 
                     maxFd = client;
-                if (!client.getpeername(addr)) {
-                    printf("server getpeername error: %d:%s\n", errno, strerror(errno));
-                }
-                Peername peer(addr);
-                printf("server accept: [%s|%d]\n", (const char*)peer, peer.port());
+                Peername peer = client.getPeerName();
+                printf("server accept: [%s|%d]\n", peer.name(), peer.port());
             } else {
-                if (!sock.getpeername(addr)) {
-                    printf("server getpeername error: %d:%s\n", errno, strerror(errno));
-                }
-                Peername peer(addr);
+                Peername peer = sock.getPeerName();
                 int len = sock.recv(buf, 1024);
                 if (len <= 0) {
-                    printf("client[%s|%d]: close, len:%d\n", (const char*)peer, peer.port(), len);
+                    printf("client[%s|%d]: close, len:%d\n", peer.name(), peer.port(), len);
                     FD_CLR(sock, &fds);
                     sock.close();
                     vfds.erase(vfds.begin() + i);
                 } else {
                     buf[len] = 0;
-                    printf("receive data[%s|%d]: %s", (const char*)peer, peer.port(), buf);
+                    printf("receive data[%s|%d]: %s", peer.name(), peer.port(), buf);
                     sock.send(buf, len);
                 }
             }

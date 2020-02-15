@@ -61,10 +61,11 @@ void Buddy::init(int blocks, int blockSize) {
 }
 
 void* Buddy::alloc(int size) {
-    char p1 = pow(size);
-	if (_blockPow < p1) {
-	    return NULL;
-	}
+    int mask = (1 << _blockShiftBit) - 1;
+    char p1 = pow((size + mask & ~mask) >> _blockShiftBit);
+    if (_blockPow < p1) {
+        return NULL;
+    }
     
     int idx = 0;
     char p2 = _blockPow;
@@ -86,7 +87,7 @@ void* Buddy::alloc(int size) {
     return _buffer + offset * (1 << _blockShiftBit);
 }
 
-void Buddy::free(void* addr) {
+void Buddy::free(void *addr) {
     int offset = int(((char*)addr - _buffer) >> _blockShiftBit);
     int idx = offset + (1 << _blockPow) - 1;
     char n = 0;
@@ -112,7 +113,7 @@ char* Buddy::dump() {
     int blocks = 1 << _blockPow;
     int nodes = (blocks << 1) - 1;
     int n = _blockPow;
-    char* buf = new char[blocks + 1];
+    char *buf = new char[blocks + 1];
     for (int i = 0; i < blocks; ++i)
         buf[i] = '_';
     for (int i = 0; i < nodes; ++i) {

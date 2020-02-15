@@ -11,14 +11,14 @@ public:
     }
     ~Buddy();
     void init(int blocks, int blockSize);
-    void* alloc(int size);
-    void free(void* addr);
-    char* dump();
-    char* buffer() const { return _buffer; }
+    void *alloc(int size);
+    void free(void *addr);
+    char *dump();
+    char *buffer() const { return _buffer; }
 
 private:
-    char* _buffer;
-    char* _tree;
+    char *_buffer;
+    char *_tree;
     int _size;
     char _blockShiftBit;
     char _blockPow;

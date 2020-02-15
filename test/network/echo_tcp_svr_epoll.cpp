@@ -37,7 +37,6 @@ int main(int argc, char *argv[]) {
     while (!__quit) {
         EPollResult result = poller.wait(1000);
         for (EPollResult::Iterator it = result.begin(); it != result.end(); ++it) {
-            Sockaddr addr;
             if (it->fd() == server) {
                 while (1) {
                     int fd = server.accept();
@@ -50,26 +49,20 @@ int main(int argc, char *argv[]) {
                     TcpSocket client(fd);
                     client.setNonblock();
                     poller.add(client);
-                    if (!client.getpeername(addr)) {
-                        printf("server getpeername error: %d:%s\n", errno, strerror(errno));
-                    }
-                    Peername peer(addr);
-                    printf("server accept: [%s|%d]\n", (const char*)peer, peer.port());
+                    Peername peer = client.getPeerName();
+                    printf("server accept: [%s|%d]\n", peer.name(), peer.port());
                 }
             } else {
                 TcpSocket client(it->fd());
-                if (!client.getpeername(addr)) {
-                    printf("server getpeername error: %d:%s\n", errno, strerror(errno));
-                }
-                Peername peer(addr);
+                Peername peer = client.getPeerName();
                 int len = client.recv(buf, 1024);
                 if (len <= 0) {
-                    printf("client[%s|%d]: close, len:%d\n", (const char*)peer, peer.port(), len);
+                    printf("client[%s|%d]: close, len:%d\n", peer.name(), peer.port(), len);
                     poller.del(client);
                     client.close();
                 } else {
                     buf[len] = 0;
-                    printf("receive data[%s|%d]: %s", (const char*)peer, peer.port(), buf);
+                    printf("receive data[%s|%d]: %s", peer.name(), peer.port(), buf);
                     client.send(buf, len);
                     poller.mod(client);
                 }

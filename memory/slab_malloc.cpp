@@ -8,6 +8,7 @@
 #define ALIGN8(n)           (((n) + ALIGN8_MASK) & ~ALIGN8_MASK)
 #define SLAB_MAX_SIZE       (MAX_FREE_NUM << ALIGN8_SHIFT)
 #define SLAB_FREE_IDX(n)    (((n) >> ALIGN8_SHIFT) - 1)
+#define PAGE_SIZE           1024
 
 namespace memory {
 
@@ -18,21 +19,19 @@ _buddy(buddy) {
     }
 }
 
-void* SlabMalloc::alloc(size_t size) {
+void *SlabMalloc::alloc(int size) {
     size = ALIGN8(size);
     if (size > SLAB_MAX_SIZE) {
         return NULL;
     }
-    size_t idx = SLAB_FREE_IDX(size);
+    int idx = SLAB_FREE_IDX(size);
     if (!_free[idx] || !_free[idx]->free) {
-        void* page = _buddy.alloc();
-        if (!page) {
-            return NULL;
-        }
+        void *page = _buddy.alloc(PAGE_SIZE);
+        if (!page) return NULL;
         initPage(idx, page);
     }
-    Info* slab = _free[idx];
-    Chunk* chunk = slab->free;
+    SlabInfo *slab = _free[idx];
+    Chunk *chunk = slab->free;
     slab->free = chunk->next;
     ++slab->allocated;
     if (!slab->free) {
@@ -42,14 +41,14 @@ void* SlabMalloc::alloc(size_t size) {
     return chunk;
 }
 
-void SlabMalloc::initPage(size_t idx, void *page) {
-    Info* slab = (Info*)page;
+void SlabMalloc::initPage(int idx, void *page) {
+    SlabInfo *slab = (SlabInfo*)page;
     slab->allocated = 0;
     slab->chunkSize = (idx + 1) << ALIGN8_SHIFT;
     slab->free = (Chunk*)(slab + 1);
-    size_t n = (_buddy.pageSize() - sizeof(Info)) / slab->chunkSize;
-    Chunk* chunk = slab->free;
-    for (size_t i = 0; i < n - 1; ++i) {
+    int n = (PAGE_SIZE - sizeof(SlabInfo)) / slab->chunkSize;
+    Chunk *chunk = slab->free;
+    for (int i = 0; i < n - 1; ++i) {
         chunk->next = (Chunk*)((char*)chunk + slab->chunkSize);
         chunk = chunk->next;
     }
@@ -57,8 +56,8 @@ void SlabMalloc::initPage(size_t idx, void *page) {
     linkSlab(idx, slab);
 }
 
-void SlabMalloc::linkSlab(size_t idx, Info* slab) {
-    Info* header = _free[idx];
+void SlabMalloc::linkSlab(int idx, SlabInfo *slab) {
+    SlabInfo *header = _free[idx];
     if (!header) {
         slab->next = slab;
         slab->prev = slab;
@@ -72,7 +71,7 @@ void SlabMalloc::linkSlab(size_t idx, Info* slab) {
 }
 
 void SlabMalloc::free(void* addr) {
-    Info* slab = (Info*)((intptr_t)addr & ~_buddy.pageMask());
+    SlabInfo* slab = (SlabInfo*)((intptr_t)addr & ~(PAGE_SIZE - 1));
     bool wasEmpty = !slab->free;
     Chunk* chunk = (Chunk*)addr;
     chunk->next = slab->free;
@@ -80,10 +79,10 @@ void SlabMalloc::free(void* addr) {
     --slab->allocated;
     
     if (wasEmpty || !slab->allocated) {
-        Info* next = slab->next, *prev = slab->prev;
+        SlabInfo *next = slab->next, *prev = slab->prev;
         prev->next = next;
         next->prev = prev;
-        size_t idx = SLAB_FREE_IDX(slab->chunkSize);
+        int idx = SLAB_FREE_IDX(slab->chunkSize);
         if (_free[idx] == slab) {
             _free[idx] = next == slab ? NULL : next;
         }
@@ -99,13 +98,14 @@ char* SlabMalloc::dump() {
     char* buf = new char[4096];
     int pos = 0;
     for (int i = 0; i < MAX_FREE_NUM; ++i) {
-        Info* slab = _free[i];
+        SlabInfo* slab = _free[i];
         if (slab) {
-            int chunksize = (i + 1) * ALIGN8_SIZE;
-            pos += sprintf(buf + pos, "[%d][%p]free: %p\n", chunksize, slab, slab->free);
-            Info* next = slab->next;
+            pos += sprintf(buf + pos, "[%02d][%p]prev: %p, next: %p, chunksize: %03d, allocated: %03d, free: %p\n",
+                           i, slab, slab->prev, slab->next, slab->chunkSize, slab->allocated, slab->free);
+            SlabInfo* next = slab->next;
             while (next != slab) {
-                pos += sprintf(buf + pos, "[%d][%p]free: %p\n", chunksize, next, next->free);
+                pos += sprintf(buf + pos, "[%02d][%p]prev: %p, next: %p, chunksize: %03d, allocated: %03d, free: %p\n",
+                               i, next, next->prev, next->next, next->chunkSize, next->allocated, next->free);
                 next = next->next;
             }
         }

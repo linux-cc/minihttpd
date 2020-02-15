@@ -13,8 +13,6 @@
 		E84CA2EF23F795930040ADBD /* socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2EA23F795930040ADBD /* socket.cpp */; };
 		E84CA2F323F795C20040ADBD /* mysql.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2F223F795C20040ADBD /* mysql.cpp */; };
 		E84CA2FD23F795D90040ADBD /* buddy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2F623F795D80040ADBD /* buddy.cpp */; };
-		E84CA2FE23F795D90040ADBD /* dl_malloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2F823F795D90040ADBD /* dl_malloc.cpp */; };
-		E84CA2FF23F795D90040ADBD /* fixed_malloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2F923F795D90040ADBD /* fixed_malloc.cpp */; };
 		E84CA30023F795D90040ADBD /* slab_malloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2FA23F795D90040ADBD /* slab_malloc.cpp */; };
 		E84CA31123F795FA0040ADBD /* gtree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA30123F795F90040ADBD /* gtree.cpp */; };
 		E84CA31223F795FA0040ADBD /* response.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA30223F795F90040ADBD /* response.cpp */; };
@@ -61,11 +59,7 @@
 		E84CA2F423F795D80040ADBD /* slab_malloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = slab_malloc.h; path = ../memory/slab_malloc.h; sourceTree = "<group>"; };
 		E84CA2F523F795D80040ADBD /* buddy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = buddy.h; path = ../memory/buddy.h; sourceTree = "<group>"; };
 		E84CA2F623F795D80040ADBD /* buddy.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = buddy.cpp; path = ../memory/buddy.cpp; sourceTree = "<group>"; };
-		E84CA2F723F795D80040ADBD /* dl_malloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dl_malloc.h; path = ../memory/dl_malloc.h; sourceTree = "<group>"; };
-		E84CA2F823F795D90040ADBD /* dl_malloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dl_malloc.cpp; path = ../memory/dl_malloc.cpp; sourceTree = "<group>"; };
-		E84CA2F923F795D90040ADBD /* fixed_malloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fixed_malloc.cpp; path = ../memory/fixed_malloc.cpp; sourceTree = "<group>"; };
 		E84CA2FA23F795D90040ADBD /* slab_malloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = slab_malloc.cpp; path = ../memory/slab_malloc.cpp; sourceTree = "<group>"; };
-		E84CA2FC23F795D90040ADBD /* fixed_malloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fixed_malloc.h; path = ../memory/fixed_malloc.h; sourceTree = "<group>"; };
 		E84CA30123F795F90040ADBD /* gtree.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gtree.cpp; path = ../httpd/gtree.cpp; sourceTree = "<group>"; };
 		E84CA30223F795F90040ADBD /* response.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = response.cpp; path = ../httpd/response.cpp; sourceTree = "<group>"; };
 		E84CA30323F795F90040ADBD /* connection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = connection.h; path = ../httpd/connection.h; sourceTree = "<group>"; };
@@ -192,10 +186,6 @@
 			children = (
 				E84CA2F623F795D80040ADBD /* buddy.cpp */,
 				E84CA2F523F795D80040ADBD /* buddy.h */,
-				E84CA2F823F795D90040ADBD /* dl_malloc.cpp */,
-				E84CA2F723F795D80040ADBD /* dl_malloc.h */,
-				E84CA2F923F795D90040ADBD /* fixed_malloc.cpp */,
-				E84CA2FC23F795D90040ADBD /* fixed_malloc.h */,
 				E84CA2FA23F795D90040ADBD /* slab_malloc.cpp */,
 				E84CA2F423F795D80040ADBD /* slab_malloc.h */,
 			);
@@ -304,7 +294,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E84CA2FF23F795D90040ADBD /* fixed_malloc.cpp in Sources */,
 				E84CA31623F795FA0040ADBD /* request.cpp in Sources */,
 				E84CA31723F795FA0040ADBD /* server.cpp in Sources */,
 				E84CA31B23F796030040ADBD /* fcgid.cpp in Sources */,
@@ -318,7 +307,6 @@
 				E84CA2E423F794EA0040ADBD /* thread.cpp in Sources */,
 				E84CA31523F795FA0040ADBD /* gzip.cpp in Sources */,
 				E84CA31223F795FA0040ADBD /* response.cpp in Sources */,
-				E84CA2FE23F795D90040ADBD /* dl_malloc.cpp in Sources */,
 				E84CA31823F795FA0040ADBD /* connection.cpp in Sources */,
 				E84CA2EE23F795930040ADBD /* epoll.cpp in Sources */,
 				E84CA31323F795FA0040ADBD /* constants.cpp in Sources */,
@@ -443,7 +431,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				HEADER_SEARCH_PATHS = /Users/linshaohua/workspace/code/minihttpd;
+				HEADER_SEARCH_PATHS = (
+					/Users/linshaohua/workspace/code/minihttpd,
+					/Users/linshaohua/Applications/mysql/include,
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -452,7 +443,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				HEADER_SEARCH_PATHS = /Users/linshaohua/workspace/code/minihttpd;
+				HEADER_SEARCH_PATHS = (
+					/Users/linshaohua/workspace/code/minihttpd,
+					/Users/linshaohua/Applications/mysql/include,
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
