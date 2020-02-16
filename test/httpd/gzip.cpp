@@ -1,4 +1,3 @@
-#include "config.h"
 #include "httpd/gzip.h"
 
 int main(int argc, char *argv[]) {

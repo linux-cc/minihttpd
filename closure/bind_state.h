@@ -1,16 +1,17 @@
 #ifndef __CLOSURE_BIND_STATE_H__
 #define __CLOSURE_BIND_STATE_H__
 
-#include "util/ref_counted.h"
+#include "util/scoped_ref.h"
 #include "closure/invoker.h"
 #include "closure/bind_helper.h"
+#include "memory/allocater.h"
 
 namespace closure {
 namespace internal {
 
 class BindStateBase : public util::RefCountedThreadSafe<BindStateBase> {
 protected:
-    friend class RefCountedThreadSafe<BindStateBase>;
+    friend class memory::Allocater<BindStateBase>;
     virtual ~BindStateBase() { }
 };
 

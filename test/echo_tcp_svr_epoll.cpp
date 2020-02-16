@@ -1,4 +1,3 @@
-#include "config.h"
 #include "network/socket.h"
 #include "network/epoll.h"
 #include <vector>

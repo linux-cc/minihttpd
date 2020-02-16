@@ -1,5 +1,5 @@
-#include "config.h"
-#include "memory/buddy.h"
+#include "util/config.h"
+#include "memory/buddy_malloc.h"
 #include <sys/mman.h>
 #include <unistd.h>
 
@@ -38,11 +38,11 @@ static inline int parent(int i) {
     return (i - 1) >> 1;
 }
 
-Buddy::~Buddy() {
+BuddyMalloc::~BuddyMalloc() {
     munmap(_buffer, _size);
 }
 
-void Buddy::init(int blocks, int blockSize) {
+void BuddyMalloc::init(int blocks, int blockSize) {
     if (_buffer) {
         return;
     }
@@ -50,17 +50,19 @@ void Buddy::init(int blocks, int blockSize) {
     _blockShiftBit = pow(blockSize);
     _blockPow = pow(blocks);
     blocks = 1 << _blockPow;
+    blockSize = 1 << _blockShiftBit;
     int nodes = (blocks << 1) - 1;
-    _size = blocks * (1 << _blockShiftBit) + nodes;
+    _size = blocks * blockSize + nodes;
     _buffer = (char*)mmap(NULL, _size, MMAP_PROT, MMAP_FLAGS, -1, 0);
     _tree = _buffer + _size - nodes;
     _tree[0] = _blockPow;
     for (int i = 1; i < nodes; ++i) {
         _tree[i] = _tree[parent(i)] - 1;
     }
+    _LOG_("blockShiftBit: %d(%d), blockPow: %d(%d), buffer: %p", _blockShiftBit, blockSize, _blockPow, blocks, _buffer);
 }
 
-void* Buddy::alloc(int size) {
+void* BuddyMalloc::alloc(int size) {
     int mask = (1 << _blockShiftBit) - 1;
     char p1 = pow((size + mask & ~mask) >> _blockShiftBit);
     if (_blockPow < p1) {
@@ -78,6 +80,8 @@ void* Buddy::alloc(int size) {
     _tree[idx] = INVALID;
     
     int offset = (idx + 1) * (1 << p1) - (1 << _blockPow);
+    _LOG_("size: %d, pow(size): %d(%d blocks), idx: %d, offset: %d, alloc: %p",
+          size, p1, 1 << p1, idx, offset, _buffer + offset * (1 << _blockShiftBit));
     while (idx) {
         idx = parent(idx);
         int child = leftChild(idx);
@@ -87,7 +91,7 @@ void* Buddy::alloc(int size) {
     return _buffer + offset * (1 << _blockShiftBit);
 }
 
-void Buddy::free(void *addr) {
+void BuddyMalloc::free(const void *addr) {
     int offset = int(((char*)addr - _buffer) >> _blockShiftBit);
     int idx = offset + (1 << _blockPow) - 1;
     char n = 0;
@@ -96,20 +100,17 @@ void Buddy::free(void *addr) {
         if (idx == 0) return;
     }
     _tree[idx] = n;
-
-    while(idx) {
+    _LOG_("addr: %p, idx: %d, offset: %d", addr, idx, offset);
+    while (idx) {
         idx = parent(idx);
         ++n;
         char left = _tree[leftChild(idx)];
         char right = _tree[leftChild(idx) + 1];
-        if (left == n - 1 && right == n - 1)
-            _tree[idx] = n;
-        else
-            _tree[idx] = MAX(left, right);
+        _tree[idx] = (left == n - 1 && right == n - 1) ? n : MAX(left, right);
     }
 }
 
-char* Buddy::dump() {
+char* BuddyMalloc::dump() {
     int blocks = 1 << _blockPow;
     int nodes = (blocks << 1) - 1;
     int n = _blockPow;

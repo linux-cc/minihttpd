@@ -11,7 +11,7 @@ using util::TrueType;
 using util::FalseType;
 using util::YesType;
 using util::NoType;
-using util::ScopedRefptr;
+using util::ScopedRef;
 using util::WeakPtr;
 using util::IsPointer;
 using util::IsConvertible;
@@ -99,9 +99,9 @@ struct UnwrapTraits<ConstRefWrapper<T> > {
 };
 
 template <typename T>
-struct UnwrapTraits<ScopedRefptr<T> > {
+struct UnwrapTraits<ScopedRef<T> > {
     typedef T* ForwardType;
-    static ForwardType unwrap(const ScopedRefptr<T>& o) { return o.get(); }
+    static ForwardType unwrap(const ScopedRef<T>& o) { return o.get(); }
 };
 
 template <typename T>
@@ -154,9 +154,9 @@ struct MaybeRefcount<true, T*> {
 };
 
 template <typename T>
-struct MaybeRefcount<true, ScopedRefptr<T> > {
-    static void incRef(const ScopedRefptr<T>&) {}
-    static void decRef(const ScopedRefptr<T>&) {}
+struct MaybeRefcount<true, ScopedRef<T> > {
+    static void incRef(const ScopedRef<T>&) {}
+    static void decRef(const ScopedRef<T>&) {}
 };
 
 template <typename T>

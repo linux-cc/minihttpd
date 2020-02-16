@@ -7,15 +7,14 @@ TMPDIR  = $(BINDIR) $(LIBDIR) $(OBJDIR)
 
 CXX		= g++
 FLAG    = -g
-CCFLAG	= $(FLAG) -Wall -fPIC -D_DEBUG_
+CCFLAG	= $(FLAG) -Wall -fPIC #-D_DEBUG_
 SOFLAG	= $(FLAG) -shared -o
 APPFLAG = $(FLAG) -o
 INCFLAG	= -I./ $(shell mysql_config --cflags)
 SOLIBS  = $(shell mysql_config --libs)
 APPLIBS = -L$(LIBDIR) -l$(LIBNAME) $(SOLIBS) -lpthread
 
-TEST	= $(foreach d,$(shell ls test|grep -v httpd),test/$(d))
-DIRS	= memory mysql network thread $(TEST)
+DIRS	= memory mysql network thread util test 
 SRCS	= $(foreach d,$(DIRS),$(wildcard $(d)/*.cpp))
 OBJS	= $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRCS))
 SOOBJS	= $(filter-out $(OBJDIR)/test/%.o,$(OBJS))

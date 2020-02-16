@@ -3,16 +3,16 @@
 
 namespace memory {
 
-class Buddy {
+class BuddyMalloc {
 public:
-    Buddy(): _buffer(0), _tree(0), _size(0), _blockShiftBit(0), _blockPow(0) {}
-    explicit Buddy(int blocks, int blockSize): _buffer(0), _tree(0), _size(0), _blockShiftBit(0), _blockPow(0) {
+    BuddyMalloc(): _buffer(0), _tree(0), _size(0), _blockShiftBit(0), _blockPow(0) {}
+    explicit BuddyMalloc(int blocks, int blockSize): _buffer(0), _tree(0), _size(0), _blockShiftBit(0), _blockPow(0) {
         init(blocks, blockSize);
     }
-    ~Buddy();
+    ~BuddyMalloc();
     void init(int blocks, int blockSize);
     void *alloc(int size);
-    void free(void *addr);
+    void free(const void *addr);
     char *dump();
     char *buffer() const { return _buffer; }
 

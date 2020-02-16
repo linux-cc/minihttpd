@@ -1,6 +1,6 @@
 #include "closure/bind.h"
 #include "util/scoped_ptr.h"
-#include "util/ref_counted.h"
+#include "util/scoped_ref.h"
 #include "util/weak_ptr.h"
 #include <stdio.h>
 #include <string>
@@ -78,10 +78,10 @@ void test2() {
 
 void testRefptr() {
     printf("testRefptr start\n");
-    util::ScopedRefptr<RBase> r1 = new RBase;
-    util::ScopedRefptr<RBase> r2 = new RDerive;
-    util::ScopedRefptr<RBase> r3 = r1;
-    util::ScopedRefptr<RBase> r4 = r2;
+    util::ScopedRef<RBase> r1 = new RBase;
+    util::ScopedRef<RBase> r2 = new RDerive;
+    util::ScopedRef<RBase> r3 = r1;
+    util::ScopedRef<RBase> r4 = r2;
 
     r1 = new RBase;
     r2 = new RDerive;

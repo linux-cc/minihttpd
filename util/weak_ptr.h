@@ -1,7 +1,8 @@
 #ifndef __UTIL_WEAK_PTR_H__
 #define __UTIL_WEAK_PTR_H__
 
-#include "util/ref_counted.h"
+#include "util/scoped_ref.h"
+#include "memory/allocater.h"
 
 namespace util {
 
@@ -25,7 +26,7 @@ public:
         
         bool _isValid;
 
-        friend class RefCountedThreadSafe<Flag>;
+        friend class memory::Allocater<Flag>;
     };
     
     WeakRef() {}
@@ -35,7 +36,7 @@ public:
     bool isValid() const { return _flag.get() && _flag->isValid(); }
     
 private:
-    ScopedRefptr<const Flag> _flag;
+    ScopedRef<const Flag> _flag;
 };
 
 class WeakRefOwner {
@@ -50,7 +51,7 @@ public:
     }
     
     bool hasRef() const {
-        return _flag.get() && !_flag->hasOneRef();
+        return _flag.get() && _flag->hasRef();
     }
     
     void invalidate() {
@@ -61,7 +62,7 @@ public:
     }
     
 private:
-    mutable ScopedRefptr<WeakRef::Flag> _flag;
+    mutable ScopedRef<WeakRef::Flag> _flag;
 };
 
 class WeakPtrBase {

@@ -1,14 +1,16 @@
 #ifndef __UTIL_REF_COUNTED_H__
 #define __UTIL_REF_COUNTED_H__
 
-#include "util/util.h"
 #include "util/atomic.h"
+#include "memory/allocater.h"
 
 namespace util {
 
 class RefCountedBase {
 public:
-    bool hasOneRef() const { return _count == 1; }
+    bool hasRef() const { return _count > 1; }
+    
+    int refConut() const { return _count; }
 
 protected:
     RefCountedBase() : _count(0) {}
@@ -27,8 +29,10 @@ private:
 
 class RefCountedThreadSafeBase {
 public:
-    bool hasOneRef() const { return _count == 1; }
+    bool hasRef() const { return _count > 1; }
 
+    int refConut() const { return _count; }
+    
 protected:
     RefCountedThreadSafeBase() : _count(0) {}
 
@@ -44,35 +48,39 @@ private:
     DISALLOW_COPY_AND_ASSIGN(RefCountedThreadSafeBase);
 };
 
-template <typename T>
+template <class T, typename Traits> class RefCounted;
+template<typename T>
+struct DefaultRefCountedTraits {
+    static void destruct(const T* x) { RefCounted<T, DefaultRefCountedTraits>::deleteInternal(x); }
+};
+
+template <typename T, typename Traits = DefaultRefCountedTraits<T> >
 class RefCounted : public RefCountedBase {
 public:
     RefCounted() {}
 
-    void incRef() const {
-        RefCountedBase::incRef();
-    }
+    void incRef() const { RefCountedBase::incRef(); }
 
     void decRef() const {
         if (RefCountedBase::decRef()) {
-            delete static_cast<const T*>(this);
+            Traits::destruct(static_cast<const T*>(this));
         }
     }
 
 protected:
     ~RefCounted() {}
-
-private:
-    DISALLOW_COPY_AND_ASSIGN(RefCounted<T>);
+    
+    static void deleteInternal(const T *x) { memory::Allocater<T>::Delete(x); }
+    
+    friend struct DefaultRefCountedTraits<T>;
+    
+    DISALLOW_COPY_AND_ASSIGN(RefCounted);
 };
 
 template <class T, typename Traits> class RefCountedThreadSafe;
-
 template<typename T>
 struct DefaultRefCountedThreadSafeTraits {
-    static void Destruct(const T* x) {
-        RefCountedThreadSafe<T, DefaultRefCountedThreadSafeTraits>::DeleteInternal(x);
-    }
+    static void destruct(const T* x) { RefCountedThreadSafe<T, DefaultRefCountedThreadSafeTraits>::deleteInternal(x); }
 };
 
 template <class T, typename Traits = DefaultRefCountedThreadSafeTraits<T> >
@@ -80,63 +88,65 @@ class RefCountedThreadSafe : public RefCountedThreadSafeBase {
 public:
     RefCountedThreadSafe() {}
 
-    void incRef() const {
-        RefCountedThreadSafeBase::incRef();
-    }
+    void incRef() const { RefCountedThreadSafeBase::incRef(); }
 
     void decRef() const {
         if (RefCountedThreadSafeBase::decRef()) {
-            Traits::Destruct(static_cast<const T*>(this));
+            Traits::destruct(static_cast<const T*>(this));
         }
     }
 
 protected:
     ~RefCountedThreadSafe() {}
 
-private:
+    static void deleteInternal(const T *x) { memory::Allocater<T>::Delete(x); }
+    
     friend struct DefaultRefCountedThreadSafeTraits<T>;
-    static void DeleteInternal(const T* x) { delete x; }
-
+    
     DISALLOW_COPY_AND_ASSIGN(RefCountedThreadSafe);
 };
 
 template <class T>
-class ScopedRefptr {
+class ScopedRef {
 public:
-    ScopedRefptr(T* p = NULL) : _ptr(p) {
+    ScopedRef(T *p = NULL) : _ptr(p) {
         if (_ptr) {
             _ptr->incRef();
         }
     }
 
-    ScopedRefptr(const ScopedRefptr& r) : _ptr(r._ptr) {
+    ScopedRef(const ScopedRef &r) : _ptr(r._ptr) {
         if (_ptr) {
             _ptr->incRef();
         }
     }
 
     template <typename U>
-    ScopedRefptr(const ScopedRefptr<U>& r) : _ptr(r.get()) {
+    ScopedRef(const ScopedRef<U> &r) : _ptr(r.get()) {
         if (_ptr) {
             _ptr->incRef();
         }
     }
 
-    ~ScopedRefptr() {
+    ~ScopedRef() {
         if (_ptr) {
             _ptr->decRef();
         }
     }
 
-    T* get() const { return _ptr; }
+    T *get() const { return _ptr; }
 
-    operator T*() const { return _ptr; }
+    operator T *() const { return _ptr; }
 
-    T* operator->() const {
+    T *operator->() const {
         return _ptr;
     }
+    
+    T &operator *() const {
+        return *_ptr;
+    }
 
-    ScopedRefptr& operator=(T* p) {
+    ScopedRef &operator=(T* p) {
         // AddRef first so that self assignment should work
         if (p) {
             p->incRef();
@@ -150,33 +160,28 @@ public:
         return *this;
     }
 
-    ScopedRefptr& operator=(const ScopedRefptr& r) {
+    ScopedRef &operator=(const ScopedRef &r) {
         return *this = r._ptr;
     }
 
     template <typename U>
-    ScopedRefptr& operator=(const ScopedRefptr<U>& r) {
+    ScopedRef &operator=(const ScopedRef<U> &r) {
         return *this = r.get();
     }
 
-    void swap(T** pp) {
-        T* p = _ptr;
+    void swap(T **pp) {
+        T *p = _ptr;
         _ptr = *pp;
         *pp = p;
     }
 
-    void swap(ScopedRefptr& r) {
+    void swap(ScopedRef &r) {
         swap(&r._ptr);
     }
 
 protected:
     T* _ptr;
 };
-
-template <typename T>
-ScopedRefptr<T> makeScopedRefptr(T* t) {
-    return ScopedRefptr<T>(t);
-}
 
 } /* namespace util */
 

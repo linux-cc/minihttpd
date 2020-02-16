@@ -1,7 +1,7 @@
 #ifndef __FCGID_H__
 #define __FCGID_H__
 
-#include "config.h"
+#include "util/config.h"
 #include "network/socket.h"
 
 namespace fcgid {

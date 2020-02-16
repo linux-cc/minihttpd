@@ -1,5 +1,6 @@
+#include "util/config.h"
 #include "memory/slab_malloc.h"
-#include "memory/buddy.h"
+#include "memory/buddy_malloc.h"
 #include <stdio.h>
 
 #define ALIGN8_SIZE         8
@@ -8,23 +9,22 @@
 #define ALIGN8(n)           (((n) + ALIGN8_MASK) & ~ALIGN8_MASK)
 #define SLAB_MAX_SIZE       (MAX_FREE_NUM << ALIGN8_SHIFT)
 #define SLAB_FREE_IDX(n)    (((n) >> ALIGN8_SHIFT) - 1)
-#define PAGE_SIZE           1024
+#define PAGE_SIZE           4096
 
 namespace memory {
 
-SlabMalloc::SlabMalloc(Buddy &buddy):
-_buddy(buddy) {
+SlabMalloc::SlabMalloc(BuddyMalloc &buddy): _buddy(buddy) {
     for (int i = 0; i < MAX_FREE_NUM; ++i) {
         _free[i] = NULL;
     }
 }
 
 void *SlabMalloc::alloc(int size) {
-    size = ALIGN8(size);
-    if (size > SLAB_MAX_SIZE) {
+    int alignSize = ALIGN8(size);
+    if (alignSize > SLAB_MAX_SIZE) {
         return NULL;
     }
-    int idx = SLAB_FREE_IDX(size);
+    int idx = SLAB_FREE_IDX(alignSize);
     if (!_free[idx] || !_free[idx]->free) {
         void *page = _buddy.alloc(PAGE_SIZE);
         if (!page) return NULL;
@@ -37,6 +37,8 @@ void *SlabMalloc::alloc(int size) {
     if (!slab->free) {
         _free[idx] = slab->next;
     }
+    _LOG_("slab: {idx: %d, this: %p, prev: %p, next: %p, size: %03d, allocated: %03d, free: %p}, size: %d, alloc: %p\n",
+          idx, slab, slab->prev, slab->next, slab->chunkSize, slab->allocated, slab->free, size, chunk);
 
     return chunk;
 }
@@ -70,14 +72,15 @@ void SlabMalloc::linkSlab(int idx, SlabInfo *slab) {
     _free[idx] = slab;
 }
 
-void SlabMalloc::free(void* addr) {
+void SlabMalloc::free(const void* addr) {
     SlabInfo* slab = (SlabInfo*)((intptr_t)addr & ~(PAGE_SIZE - 1));
     bool wasEmpty = !slab->free;
     Chunk* chunk = (Chunk*)addr;
     chunk->next = slab->free;
     slab->free = chunk;
     --slab->allocated;
-    
+    _LOG_("slab: {idx: %d, this: %p, prev: %p, next: %p, size: %03d, allocated: %03d, free: %p}, addr: %p, wasEmpty: %d\n",
+          SLAB_FREE_IDX(slab->chunkSize), slab, slab->prev, slab->next, slab->chunkSize, slab->allocated, slab->free, addr, wasEmpty);
     if (wasEmpty || !slab->allocated) {
         SlabInfo *next = slab->next, *prev = slab->prev;
         prev->next = next;

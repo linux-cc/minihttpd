@@ -28,7 +28,7 @@ protected:
             && _polymorphicInvoke == other._polymorphicInvoke;
     }
     
-    ScopedRefptr<BindStateBase> _bindState;
+    ScopedRef<BindStateBase> _bindState;
     typedef void(*InvokeFuncStorage)(void);
     InvokeFuncStorage _polymorphicInvoke;
 };

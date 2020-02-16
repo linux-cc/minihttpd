@@ -3,12 +3,12 @@
 
 namespace memory {
 
-class Buddy;
+class BuddyMalloc;
 class SlabMalloc {
 public:
-    SlabMalloc(Buddy &buddy);
+    SlabMalloc(BuddyMalloc &buddy);
     void *alloc(int size);
-    void free(void *addr);
+    void free(const void *addr);
     char *dump();
 
 private:
@@ -17,7 +17,7 @@ private:
     void linkSlab(int idx, SlabInfo *slab);
 
     enum {
-        MAX_FREE_NUM = 16
+        MAX_FREE_NUM = 32
     };
     struct Chunk {
         Chunk *next;
@@ -30,7 +30,7 @@ private:
         SlabInfo *next;
     };
     SlabInfo *_free[MAX_FREE_NUM];
-    Buddy &_buddy;
+    BuddyMalloc &_buddy;
 };
 
 } /* namespace memory */
