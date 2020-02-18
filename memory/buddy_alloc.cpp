@@ -68,7 +68,7 @@ void BuddyAlloc::init(int blocks, int blockSize, int pageSize) {
     for (int i = 1; i < nodes; ++i) {
         _tree[i] = _tree[parent(i)] - 1;
     }
-    _LOG_("blockShiftBit: %d(%d), blockPow: %d(%d), buffer: %p, pageSize: %d", _blockShiftBit, blockSize, _blocksPow, blocks, _buffer, _pageSize);
+    _LOG_("blocksPow: %d(%d), blockShiftBit: %d(%d), buffer: %p, pageSize: %d", _blocksPow, blocks, _blockShiftBit, blockSize, _buffer, _pageSize);
 }
 
 void* BuddyAlloc::alloc(int size) {

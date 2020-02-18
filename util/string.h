@@ -58,12 +58,12 @@ public:
     String &replace(int pos, int length, const char *str) { if (str && *str) replace(pos, length, str, (int)strlen(str)); return *this; }
     String &replace(int pos, int length, const char *str, int strlen);
     
-    int find(const String &str, int pos = 0) const;
+    int find(const String &str, int pos = 0) const { return find(str.data(), pos); }
     int find(const char *str, int pos = 0) const;
     int find(const char *str, int pos, int n) const;
     int find(char c, int pos = 0) const;
     
-    String substr(int pos = 0, int length = npos);
+    String substr(int pos = 0, int length = npos) { return String(*this, pos, length); }
     
     int refCount() const { return empty() ? 0 : _ptr->refConut(); }
     

@@ -54,6 +54,13 @@ int main(int argc, char *argv[]) {
         str11.replace(i, util::String::npos, str1);
         P_STR("str11.replace(%d, %d, %s)", str11, i, util::String::npos, str1.data());
     }
+    for (int i = 0; i < str7.length(); i++) {
+        printf("str7(%s).find(str1(%s), %d): %d\n", str7.data(), str1.data(), i, str7.find(str1, i));
+        printf("str7(%s).find(%s, %d, %d): %d\n", str7.data(), str1.data(), i, str7.length() - i, str7.find(str1.data(), i, str7.length() - i));
+        printf("str7(%s).find(hello, %d): %d\n", str7.data(), i, str7.find("hello", i));
+        printf("str7(%s).find(l, %d): %d\n", str7.data(), i, str7.find('l', i));
+        printf("str7(%s).substr(%d, %d): %s\n", str7.data(), i, i + 1, str7.substr(i, i + 1).data());
+    }
 
     return 0;
 }

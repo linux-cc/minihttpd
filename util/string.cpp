@@ -61,6 +61,44 @@ String &String::replace(int pos, int length, const char *str, int strlen) {
     return *this;
 }
 
+int String::find(const char *str, int pos) const {
+    int index = npos;
+    if (!empty() && pos < length() && str && *str) {
+        const char *src = data();
+        const char *p = strstr(src + pos, str);
+        if (p) index = int(p - src);
+    }
+    
+    return index;
+}
+
+int String::find(const char *str, int pos, int n) const {
+    int index = npos;
+    int strn = (int)strlen(str);
+    if (!empty() && str && *str && pos < n && n < strn) {
+        const char *src = data();
+        char *pn = (char*)str + n;
+        char cn = *pn;
+        *pn = 0;
+        const char *p = strstr(src + pos, str);
+        *pn = cn;
+        if (p) index = int(p - src);
+    }
+    
+    return index;
+}
+
+int String::find(char c, int pos) const {
+    int index = npos;
+    if (!empty() && pos < length()) {
+        const char *src = data();
+        const char *p = strchr(src + pos, c);
+        if (p) index = int(p - src);
+    }
+    
+    return index;
+}
+
 String &String::append(const char *str, int length) {
     if (appendEnabled(str, length)) {
         int oldLength = _ptr->_length;
