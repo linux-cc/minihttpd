@@ -1,4 +1,4 @@
-#include "memory/buddy_malloc.h"
+#include "memory/buddy_alloc.h"
 #include <cstdio>
 #include <cstring>
 #include <vector>
@@ -8,7 +8,7 @@ using std::vector;
 
 int main(int argc, char *argv[]) {
     vector<void*> v;
-    BuddyMalloc *b = new BuddyMalloc(32, 1);
+    BuddyAlloc *b = new BuddyAlloc(32, 1);
     char *buf = b->dump();
     printf("\ndump: %s\n", buf);
     delete []buf;

@@ -1,9 +1,13 @@
 #include "util/config.h"
-#include "memory/buddy_malloc.h"
+#include "memory/buddy_alloc.h"
 #include <sys/mman.h>
 #include <unistd.h>
 
-#define INVALID     -1
+#define INVALID             -1
+#define BLOCK_MASK          ((1 << _blockShiftBit) - 1)
+#define BLOCK_ALIGN(n)      (((n) + BLOCK_MASK) & ~BLOCK_MASK)
+#define BLOCK_NUM(n)        (BLOCK_ALIGN(n) >> _blockShiftBit)
+#define PAGE_ALIGN(n)       (((n) + _pageSize - 1) & ~(_pageSize - 1))
 
 namespace memory {
 
@@ -38,39 +42,43 @@ static inline int parent(int i) {
     return (i - 1) >> 1;
 }
 
-BuddyMalloc::~BuddyMalloc() {
-    munmap(_buffer, _size);
+BuddyAlloc::~BuddyAlloc() {
+    munmap(_maddr, _size);
 }
 
-void BuddyMalloc::init(int blocks, int blockSize) {
-    if (_buffer) {
+void BuddyAlloc::init(int blocks, int blockSize, int pageSize) {
+    if (_maddr) {
         return;
     }
     
+    _pageSize = (int)sysconf(_SC_PAGESIZE);
+    if (pageSize > _pageSize) {
+        _pageSize = PAGE_ALIGN(pageSize);
+    }
     _blockShiftBit = pow(blockSize);
-    _blockPow = pow(blocks);
-    blocks = 1 << _blockPow;
+    _blocksPow = pow(blocks);
+    blocks = 1 << _blocksPow;
     blockSize = 1 << _blockShiftBit;
     int nodes = (blocks << 1) - 1;
-    _size = blocks * blockSize + nodes;
-    _buffer = (char*)mmap(NULL, _size, MMAP_PROT, MMAP_FLAGS, -1, 0);
-    _tree = _buffer + _size - nodes;
-    _tree[0] = _blockPow;
+    _size = PAGE_ALIGN(blocks * blockSize + nodes);
+    _maddr = (char*)mmap(NULL, _size, MMAP_PROT, MMAP_FLAGS, -1, 0);
+    _buffer = (char*)PAGE_ALIGN((intptr_t)_maddr);
+    _tree = _buffer - _maddr > nodes ? _maddr : _maddr + _size - nodes;
+    _tree[0] = _blocksPow;
     for (int i = 1; i < nodes; ++i) {
         _tree[i] = _tree[parent(i)] - 1;
     }
-    _LOG_("blockShiftBit: %d(%d), blockPow: %d(%d), buffer: %p", _blockShiftBit, blockSize, _blockPow, blocks, _buffer);
+    _LOG_("blockShiftBit: %d(%d), blockPow: %d(%d), buffer: %p, pageSize: %d", _blockShiftBit, blockSize, _blocksPow, blocks, _buffer, _pageSize);
 }
 
-void* BuddyMalloc::alloc(int size) {
-    int mask = (1 << _blockShiftBit) - 1;
-    char p1 = pow((size + mask & ~mask) >> _blockShiftBit);
-    if (_blockPow < p1) {
+void* BuddyAlloc::alloc(int size) {
+    int idx = 0;
+    char p1 = pow(BLOCK_NUM(size));
+    if (_tree[idx] < p1) {
         return NULL;
     }
     
-    int idx = 0;
-    char p2 = _blockPow;
+    char p2 = _blocksPow;
     while (p1 != p2--) {
         idx = leftChild(idx);
         if (_tree[idx] < p1) {
@@ -79,7 +87,7 @@ void* BuddyMalloc::alloc(int size) {
 	}
     _tree[idx] = INVALID;
     
-    int offset = (idx + 1) * (1 << p1) - (1 << _blockPow);
+    int offset = (idx + 1) * (1 << p1) - (1 << _blocksPow);
     _LOG_("size: %d, pow(size): %d(%d blocks), idx: %d, offset: %d, alloc: %p",
           size, p1, 1 << p1, idx, offset, _buffer + offset * (1 << _blockShiftBit));
     while (idx) {
@@ -91,9 +99,9 @@ void* BuddyMalloc::alloc(int size) {
     return _buffer + offset * (1 << _blockShiftBit);
 }
 
-void BuddyMalloc::free(const void *addr) {
+void BuddyAlloc::free(const void *addr) {
     int offset = int(((char*)addr - _buffer) >> _blockShiftBit);
-    int idx = offset + (1 << _blockPow) - 1;
+    int idx = offset + (1 << _blocksPow) - 1;
     char n = 0;
     for (; _tree[idx] != INVALID; idx = parent(idx)) {
         ++n;
@@ -110,10 +118,10 @@ void BuddyMalloc::free(const void *addr) {
     }
 }
 
-char* BuddyMalloc::dump() {
-    int blocks = 1 << _blockPow;
+char* BuddyAlloc::dump() {
+    int blocks = 1 << _blocksPow;
     int nodes = (blocks << 1) - 1;
-    int n = _blockPow;
+    int n = _blocksPow;
     char *buf = new char[blocks + 1];
     for (int i = 0; i < blocks; ++i)
         buf[i] = '_';

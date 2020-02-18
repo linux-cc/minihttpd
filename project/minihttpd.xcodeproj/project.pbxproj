@@ -12,8 +12,8 @@
 		E84CA2EE23F795930040ADBD /* epoll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2E923F795930040ADBD /* epoll.cpp */; };
 		E84CA2EF23F795930040ADBD /* socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2EA23F795930040ADBD /* socket.cpp */; };
 		E84CA2F323F795C20040ADBD /* mysql.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2F223F795C20040ADBD /* mysql.cpp */; };
-		E84CA2FD23F795D90040ADBD /* buddy_malloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2F623F795D80040ADBD /* buddy_malloc.cpp */; };
-		E84CA30023F795D90040ADBD /* slab_malloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2FA23F795D90040ADBD /* slab_malloc.cpp */; };
+		E84CA2FD23F795D90040ADBD /* buddy_alloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2F623F795D80040ADBD /* buddy_alloc.cpp */; };
+		E84CA30023F795D90040ADBD /* slab_alloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2FA23F795D90040ADBD /* slab_alloc.cpp */; };
 		E84CA31B23F796030040ADBD /* fcgid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA31923F796030040ADBD /* fcgid.cpp */; };
 		E8F4E72123F8290100A66E44 /* allocater.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E8F4E72023F8290100A66E44 /* allocater.cpp */; };
 		E8F4E73223F8F58600A66E44 /* string.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E8F4E73123F8F58600A66E44 /* string.cpp */; };
@@ -50,10 +50,10 @@
 		E84CA2EC23F795930040ADBD /* socket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = socket.h; path = ../network/socket.h; sourceTree = "<group>"; };
 		E84CA2F123F795C20040ADBD /* mysql.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mysql.h; path = ../mysql/mysql.h; sourceTree = "<group>"; };
 		E84CA2F223F795C20040ADBD /* mysql.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mysql.cpp; path = ../mysql/mysql.cpp; sourceTree = "<group>"; };
-		E84CA2F423F795D80040ADBD /* slab_malloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = slab_malloc.h; path = ../memory/slab_malloc.h; sourceTree = "<group>"; };
-		E84CA2F523F795D80040ADBD /* buddy_malloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = buddy_malloc.h; path = ../memory/buddy_malloc.h; sourceTree = "<group>"; };
-		E84CA2F623F795D80040ADBD /* buddy_malloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = buddy_malloc.cpp; path = ../memory/buddy_malloc.cpp; sourceTree = "<group>"; };
-		E84CA2FA23F795D90040ADBD /* slab_malloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = slab_malloc.cpp; path = ../memory/slab_malloc.cpp; sourceTree = "<group>"; };
+		E84CA2F423F795D80040ADBD /* slab_alloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = slab_alloc.h; path = ../memory/slab_alloc.h; sourceTree = "<group>"; };
+		E84CA2F523F795D80040ADBD /* buddy_alloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = buddy_alloc.h; path = ../memory/buddy_alloc.h; sourceTree = "<group>"; };
+		E84CA2F623F795D80040ADBD /* buddy_alloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = buddy_alloc.cpp; path = ../memory/buddy_alloc.cpp; sourceTree = "<group>"; };
+		E84CA2FA23F795D90040ADBD /* slab_alloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = slab_alloc.cpp; path = ../memory/slab_alloc.cpp; sourceTree = "<group>"; };
 		E84CA31923F796030040ADBD /* fcgid.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fcgid.cpp; path = ../fcgid/fcgid.cpp; sourceTree = "<group>"; };
 		E84CA31A23F796030040ADBD /* fcgid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fcgid.h; path = ../fcgid/fcgid.h; sourceTree = "<group>"; };
 		E84CA31C23F796100040ADBD /* runnable_adapter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = runnable_adapter.h; path = ../closure/runnable_adapter.h; sourceTree = "<group>"; };
@@ -144,10 +144,10 @@
 			isa = PBXGroup;
 			children = (
 				E8F4E72223F8296F00A66E44 /* allocater.h */,
-				E84CA2F623F795D80040ADBD /* buddy_malloc.cpp */,
-				E84CA2F523F795D80040ADBD /* buddy_malloc.h */,
-				E84CA2FA23F795D90040ADBD /* slab_malloc.cpp */,
-				E84CA2F423F795D80040ADBD /* slab_malloc.h */,
+				E84CA2F623F795D80040ADBD /* buddy_alloc.cpp */,
+				E84CA2F523F795D80040ADBD /* buddy_alloc.h */,
+				E84CA2FA23F795D90040ADBD /* slab_alloc.cpp */,
+				E84CA2F423F795D80040ADBD /* slab_alloc.h */,
 				E8F4E72023F8290100A66E44 /* allocater.cpp */,
 			);
 			name = memory;
@@ -269,9 +269,9 @@
 				E84CA31B23F796030040ADBD /* fcgid.cpp in Sources */,
 				E84CA2F323F795C20040ADBD /* mysql.cpp in Sources */,
 				E84CA2EF23F795930040ADBD /* socket.cpp in Sources */,
-				E84CA2FD23F795D90040ADBD /* buddy_malloc.cpp in Sources */,
+				E84CA2FD23F795D90040ADBD /* buddy_alloc.cpp in Sources */,
 				E8F4E72123F8290100A66E44 /* allocater.cpp in Sources */,
-				E84CA30023F795D90040ADBD /* slab_malloc.cpp in Sources */,
+				E84CA30023F795D90040ADBD /* slab_alloc.cpp in Sources */,
 				E84CA2ED23F795930040ADBD /* addrinfo.cpp in Sources */,
 				E84CA2E423F794EA0040ADBD /* thread.cpp in Sources */,
 				E8F4E73223F8F58600A66E44 /* string.cpp in Sources */,
