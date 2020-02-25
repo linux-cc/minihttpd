@@ -1,7 +1,7 @@
 #ifndef __CLOSURE_BIND_HELPER_H__
 #define __CLOSURE_BIND_HELPER_H__
 
-#include "util/util.h"
+#include "util/template_util.h"
 #include "util/weak_ptr.h"
 
 namespace closure {

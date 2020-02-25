@@ -1,4 +1,5 @@
 #include "thread.h"
+#include <sys/time.h>
 
 namespace thread {
 
@@ -12,13 +13,13 @@ _notify(notify) {
 }
 
 Thread::~Thread() {
-    onCancel();
-    if(_run && _notify)
+    if (_run && _notify) {
         _notify(_run);
+    }
 }
 
 bool Thread::start() {
-    if(!onInit())
+    if (!onInit())
         return false;
 
     pthread_attr_t attr;
@@ -37,6 +38,7 @@ void *Thread::threadFunc(void *arg) {
     Thread *thr = (Thread *)arg;
     //	pthread_cleanup_push(cleanup, thr);
     thr->_run->run();
+    thr->onCancel();
     //	pthread_cleanup_pop(0);
 
     return NULL;
@@ -57,12 +59,13 @@ Mutex::Mutex(int type) {
     pthread_mutex_init(&_mutex, &attr);
 }
 
-int Cond::timedwait(int milliSeconds)
-{
+int Cond::wait(int milliSeconds) {
     struct timespec ts;
-
-    ts.tv_sec = milliSeconds / 1000;
-    ts.tv_nsec = (milliSeconds % 1000) * 1000;
+    struct timeval now;
+    
+    gettimeofday(&now, NULL);
+    ts.tv_sec = now.tv_sec + milliSeconds / 1000;
+    ts.tv_nsec = now.tv_usec * 1000 + (milliSeconds % 1000) * 1000000;
 
     return pthread_cond_timedwait(&_cond, _mutex, &ts);
 }

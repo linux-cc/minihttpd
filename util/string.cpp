@@ -1,24 +1,27 @@
 #include "util/string.h"
+#include "util/algorithm.h"
 
 namespace util {
-    
-String::String(const String &str, int pos, int length) {
+
+const size_t String::npos = -1;
+
+String::String(const String &str, size_t pos, size_t length) {
     if (!str.empty() && pos < str.length() && length) {
         const char *data = str.data() + pos;
-        int rest = str.length() - pos;
+        size_t rest = str.length() - pos;
         if (length == npos || length > rest) {
             length = rest;
         }
-        _ptr = memory::Allocater<Value>::New(data, length);
+        _ptr = memory::SimpleAlloc<Value>::New(data, length);
     }
 }
 
-String &String::erase(int pos, int length) {
+String &String::erase(size_t pos, size_t length) {
     if (!empty()) {
         if (_ptr->hasRef()) {
-            _ptr = memory::Allocater<Value>::New(_ptr->_data, _ptr->_length);
+            _ptr = memory::SimpleAlloc<Value>::New(_ptr->_data, _ptr->_length);
         }
-        int end = pos + length;
+        size_t end = pos + length;
         if (length == npos || end >= _ptr->_length) {
             _ptr->_length = pos;
             _ptr->_data[pos] = 0;
@@ -31,10 +34,10 @@ String &String::erase(int pos, int length) {
     return *this;
 }
 
-String &String::replace(int pos, int length, const String &str, int subpos, int sublen) {
-    int strlen = str.length();
+String &String::replace(size_t pos, size_t length, const String &str, size_t subpos, size_t sublen) {
+    size_t strlen = str.length();
     if (!str.empty() && subpos < strlen && sublen) {
-        int subend = subpos + sublen;
+        size_t subend = subpos + sublen;
         if (sublen == npos || sublen > strlen) {
             subend = strlen;
         }
@@ -44,10 +47,10 @@ String &String::replace(int pos, int length, const String &str, int subpos, int 
     return *this;
 }
 
-String &String::replace(int pos, int length, const char *str, int strlen) {
+String &String::replace(size_t pos, size_t length, const char *str, size_t strlen) {
     if (str && *str && strlen > 0 && appendEnabled(str, strlen)) {
-        int end = pos + length;
-        int oldLength = _ptr->_length;
+        size_t end = pos + length;
+        size_t oldLength = _ptr->_length;
         if (length == npos || end > oldLength) {
             end = oldLength;
         }
@@ -61,47 +64,41 @@ String &String::replace(int pos, int length, const char *str, int strlen) {
     return *this;
 }
 
-int String::find(const char *str, int pos) const {
-    int index = npos;
+size_t String::find(const char *str, size_t pos) const {
+    size_t index = npos;
     if (!empty() && pos < length() && str && *str) {
         const char *src = data();
-        const char *p = strstr(src + pos, str);
-        if (p) index = int(p - src);
+        index = sundaySearch(src + pos, str);
     }
     
     return index;
 }
 
-int String::find(const char *str, int pos, int n) const {
-    int index = npos;
-    int strn = (int)strlen(str);
+size_t String::find(const char *str, size_t pos, size_t n) const {
+    size_t index = npos;
+    size_t strn = strlen(str);
     if (!empty() && str && *str && pos < n && n < strn) {
         const char *src = data();
-        char *pn = (char*)str + n;
-        char cn = *pn;
-        *pn = 0;
-        const char *p = strstr(src + pos, str);
-        *pn = cn;
-        if (p) index = int(p - src);
+        index = sundaySearch(src + pos, str, n);
     }
     
     return index;
 }
 
-int String::find(char c, int pos) const {
-    int index = npos;
+size_t String::find(char c, size_t pos) const {
+    size_t index = npos;
     if (!empty() && pos < length()) {
         const char *src = data();
         const char *p = strchr(src + pos, c);
-        if (p) index = int(p - src);
+        if (p) index = p - src;
     }
     
     return index;
 }
 
-String &String::append(const char *str, int length) {
+String &String::append(const char *str, size_t length) {
     if (appendEnabled(str, length)) {
-        int oldLength = _ptr->_length;
+        size_t oldLength = _ptr->_length;
         _ptr->resize(oldLength + length);
         memcpy(_ptr->_data + oldLength, str, length);
     }
@@ -109,31 +106,31 @@ String &String::append(const char *str, int length) {
     return *this;
 }
 
-bool String::appendEnabled(const char *str, int length) {
+bool String::appendEnabled(const char *str, size_t length) {
     if (empty()) {
-        _ptr = memory::Allocater<Value>::New(str, length);
+        _ptr = memory::SimpleAlloc<Value>::New(str, length);
         return false;
     } else {
         if (_ptr->hasRef()) {
-            _ptr = memory::Allocater<Value>::New(_ptr->_data, _ptr->_length);
+            _ptr = memory::SimpleAlloc<Value>::New(_ptr->_data, _ptr->_length);
         }
         return true;
     }
 }
 
-String::Value::Value(const char *data, int length) {
+String::Value::Value(const char *data, size_t length) {
     _capacity = (_length = length) << 1;
-    _data = memory::Allocater<char[]>::New(_capacity);
+    _data = memory::SimpleAlloc<char[]>::New(_capacity);
     memcpy(_data, data, _length);
     _data[_length] = 0;
 }
 
-void String::Value::resize(int length) {
+void String::Value::resize(size_t length) {
     if (length >= _capacity) {
-        int newCapacity = length << 1;
-        char *newData = memory::Allocater<char[]>::New(newCapacity);
+        size_t newCapacity = length << 1;
+        char *newData = memory::SimpleAlloc<char[]>::New(newCapacity);
         memcpy(newData, _data, _length);
-        memory::Allocater<char[]>::Delete(_data, _capacity);
+        memory::SimpleAlloc<char[]>::Delete(_data, _capacity);
         _data = newData;
         _capacity = newCapacity;
     }
@@ -142,7 +139,7 @@ void String::Value::resize(int length) {
 }
 
 String::CharProxy &String::CharProxy::operator=(char c) {
-    _str._ptr = memory::Allocater<Value>::New(_str.data(), _str.length());
+    _str._ptr = memory::SimpleAlloc<Value>::New(_str.data(), _str.length());
     _str._ptr->_data[_index] = c;
     return *this;
 }

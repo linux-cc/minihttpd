@@ -51,7 +51,7 @@ void BuddyAlloc::init(int blocks, int blockSize, int pageSize) {
         return;
     }
     
-    _pageSize = (int)sysconf(_SC_PAGESIZE);
+    _pageSize = sysconf(_SC_PAGESIZE);
     if (pageSize > _pageSize) {
         _pageSize = PAGE_ALIGN(pageSize);
     }
@@ -71,7 +71,7 @@ void BuddyAlloc::init(int blocks, int blockSize, int pageSize) {
     _LOG_("blocksPow: %d(%d), blockShiftBit: %d(%d), buffer: %p, pageSize: %d", _blocksPow, blocks, _blockShiftBit, blockSize, _buffer, _pageSize);
 }
 
-void* BuddyAlloc::alloc(int size) {
+void* BuddyAlloc::alloc(size_t size) {
     int idx = 0;
     char p1 = pow(BLOCK_NUM(size));
     if (_tree[idx] < p1) {

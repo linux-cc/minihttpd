@@ -4,14 +4,14 @@
 #include "util/scoped_ref.h"
 #include "closure/invoker.h"
 #include "closure/bind_helper.h"
-#include "memory/allocater.h"
+#include "memory/simple_alloc.h"
 
 namespace closure {
 namespace internal {
 
 class BindStateBase : public util::RefCountedThreadSafe<BindStateBase> {
 protected:
-    friend class memory::Allocater<BindStateBase>;
+    friend class memory::SimpleAlloc<BindStateBase>;
     virtual ~BindStateBase() { }
 };
 

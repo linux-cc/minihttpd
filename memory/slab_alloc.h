@@ -1,14 +1,16 @@
 #ifndef __MEMORY_SLAB_ALLOC_H__
 #define __MEMORY_SLAB_ALLOC_H__
 
+#include <stddef.h>
+
 namespace memory {
 
 class BuddyAlloc;
 class SlabAlloc {
 public:
     SlabAlloc(BuddyAlloc &buddy);
-    void *alloc(int size);
-    void free(const void *addr, int size);
+    void *alloc(size_t size);
+    void free(const void *addr, size_t size);
     static int magic() { return SLAB_MAGIC; }
     static int maxSlabSize() { return SLAB_MAX_SIZE; }
     char *dump();

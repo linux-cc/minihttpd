@@ -3,7 +3,7 @@
 
 namespace util {
 
-#ifdef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
+#ifdef __GNUC__
 template<typename T>
 inline T atomicAddAndFetch(T* ptr, T value) {
     return __sync_add_and_fetch(ptr, value);

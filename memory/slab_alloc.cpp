@@ -15,7 +15,7 @@ SlabAlloc::SlabAlloc(BuddyAlloc &buddy): _buddy(buddy) {
     }
 }
 
-void *SlabAlloc::alloc(int size) {
+void *SlabAlloc::alloc(size_t size) {
     int alignSize = ALIGN8(size);
     if (alignSize > SLAB_MAX_SIZE) {
         return _buddy.alloc(size);
@@ -70,7 +70,7 @@ void SlabAlloc::linkSlab(int idx, SlabInfo *slab) {
     _free[idx] = slab;
 }
 
-void SlabAlloc::free(const void* addr, int size) {
+void SlabAlloc::free(const void* addr, size_t size) {
     int alignSize = ALIGN8(size);
     if (alignSize > SLAB_MAX_SIZE) {
         return _buddy.free(addr);

@@ -2,7 +2,7 @@
 #define __UTIL_REF_COUNTED_H__
 
 #include "util/atomic.h"
-#include "memory/allocater.h"
+#include "memory/simple_alloc.h"
 
 namespace util {
 
@@ -70,7 +70,7 @@ public:
 protected:
     ~RefCounted() {}
     
-    static void deleteInternal(const T *x) { memory::Allocater<T>::Delete(x); }
+    static void deleteInternal(const T *x) { memory::SimpleAlloc<T>::Delete(x); }
     
     friend struct DefaultRefCountedTraits<T>;
     
@@ -99,7 +99,7 @@ public:
 protected:
     ~RefCountedThreadSafe() {}
 
-    static void deleteInternal(const T *x) { memory::Allocater<T>::Delete(x); }
+    static void deleteInternal(const T *x) { memory::SimpleAlloc<T>::Delete(x); }
     
     friend struct DefaultRefCountedThreadSafeTraits<T>;
     

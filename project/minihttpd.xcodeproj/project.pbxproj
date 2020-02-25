@@ -15,7 +15,17 @@
 		E84CA2FD23F795D90040ADBD /* buddy_alloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2F623F795D80040ADBD /* buddy_alloc.cpp */; };
 		E84CA30023F795D90040ADBD /* slab_alloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA2FA23F795D90040ADBD /* slab_alloc.cpp */; };
 		E84CA31B23F796030040ADBD /* fcgid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E84CA31923F796030040ADBD /* fcgid.cpp */; };
-		E8F4E72123F8290100A66E44 /* allocater.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E8F4E72023F8290100A66E44 /* allocater.cpp */; };
+		E857FC732401758B00ADE1F5 /* buffer_queue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E857FC712401758B00ADE1F5 /* buffer_queue.cpp */; };
+		E87BAB7223FC32B000285364 /* response.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E87BAB6223FC32B000285364 /* response.cpp */; };
+		E87BAB7323FC32B000285364 /* gzip.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E87BAB6323FC32B000285364 /* gzip.cpp */; };
+		E87BAB7423FC32B000285364 /* request.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E87BAB6623FC32B000285364 /* request.cpp */; };
+		E87BAB7523FC32B000285364 /* connection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E87BAB6723FC32B000285364 /* connection.cpp */; };
+		E87BAB7623FC32B000285364 /* gtree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E87BAB6D23FC32B000285364 /* gtree.cpp */; };
+		E87BAB7723FC32B000285364 /* server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E87BAB6E23FC32B000285364 /* server.cpp */; };
+		E87BAB7823FC32B000285364 /* constants.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E87BAB6F23FC32B000285364 /* constants.cpp */; };
+		E87BAB7923FC32B000285364 /* worker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E87BAB7023FC32B000285364 /* worker.cpp */; };
+		E8D305F724041CD400108949 /* algorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E8D305F524041CD400108949 /* algorithm.cpp */; };
+		E8F4E72123F8290100A66E44 /* simple_alloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E8F4E72023F8290100A66E44 /* simple_alloc.cpp */; };
 		E8F4E73223F8F58600A66E44 /* string.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E8F4E73123F8F58600A66E44 /* string.cpp */; };
 /* End PBXBuildFile section */
 
@@ -38,7 +48,7 @@
 		E84CA2DD23F794DA0040ADBD /* scoped_ptr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = scoped_ptr.h; path = ../util/scoped_ptr.h; sourceTree = "<group>"; };
 		E84CA2DE23F794DA0040ADBD /* weak_ptr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = weak_ptr.h; path = ../util/weak_ptr.h; sourceTree = "<group>"; };
 		E84CA2DF23F794DA0040ADBD /* scoped_ref.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = scoped_ref.h; path = ../util/scoped_ref.h; sourceTree = "<group>"; };
-		E84CA2E023F794DA0040ADBD /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = util.h; path = ../util/util.h; sourceTree = "<group>"; };
+		E84CA2E023F794DA0040ADBD /* template_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = template_util.h; path = ../util/template_util.h; sourceTree = "<group>"; };
 		E84CA2E123F794EA0040ADBD /* thread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = thread.cpp; path = ../thread/thread.cpp; sourceTree = "<group>"; };
 		E84CA2E223F794EA0040ADBD /* thread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = thread.h; path = ../thread/thread.h; sourceTree = "<group>"; };
 		E84CA2E323F794EA0040ADBD /* runnable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = runnable.h; path = ../thread/runnable.h; sourceTree = "<group>"; };
@@ -65,8 +75,30 @@
 		E84CA32223F796100040ADBD /* invoker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = invoker.h; path = ../closure/invoker.h; sourceTree = "<group>"; };
 		E84CA32323F796100040ADBD /* callback.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = callback.h; path = ../closure/callback.h; sourceTree = "<group>"; };
 		E84CA32423F796100040ADBD /* callback_param_traits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = callback_param_traits.h; path = ../closure/callback_param_traits.h; sourceTree = "<group>"; };
-		E8F4E72023F8290100A66E44 /* allocater.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = allocater.cpp; path = ../memory/allocater.cpp; sourceTree = "<group>"; };
-		E8F4E72223F8296F00A66E44 /* allocater.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = allocater.h; path = ../memory/allocater.h; sourceTree = "<group>"; };
+		E852BF8F2400D37C00405638 /* simple_list.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = simple_list.h; path = ../util/simple_list.h; sourceTree = "<group>"; };
+		E852BF912400E6CD00405638 /* simple_queue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = simple_queue.h; path = ../util/simple_queue.h; sourceTree = "<group>"; };
+		E857FC712401758B00ADE1F5 /* buffer_queue.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = buffer_queue.cpp; path = ../util/buffer_queue.cpp; sourceTree = "<group>"; };
+		E857FC722401758B00ADE1F5 /* buffer_queue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = buffer_queue.h; path = ../util/buffer_queue.h; sourceTree = "<group>"; };
+		E87BAB6223FC32B000285364 /* response.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = response.cpp; path = ../httpd/response.cpp; sourceTree = "<group>"; };
+		E87BAB6323FC32B000285364 /* gzip.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gzip.cpp; path = ../httpd/gzip.cpp; sourceTree = "<group>"; };
+		E87BAB6423FC32B000285364 /* response.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = response.h; path = ../httpd/response.h; sourceTree = "<group>"; };
+		E87BAB6523FC32B000285364 /* gzip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gzip.h; path = ../httpd/gzip.h; sourceTree = "<group>"; };
+		E87BAB6623FC32B000285364 /* request.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = request.cpp; path = ../httpd/request.cpp; sourceTree = "<group>"; };
+		E87BAB6723FC32B000285364 /* connection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = connection.cpp; path = ../httpd/connection.cpp; sourceTree = "<group>"; };
+		E87BAB6823FC32B000285364 /* server.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = server.h; path = ../httpd/server.h; sourceTree = "<group>"; };
+		E87BAB6923FC32B000285364 /* request.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = request.h; path = ../httpd/request.h; sourceTree = "<group>"; };
+		E87BAB6A23FC32B000285364 /* gtree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gtree.h; path = ../httpd/gtree.h; sourceTree = "<group>"; };
+		E87BAB6B23FC32B000285364 /* constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = constants.h; path = ../httpd/constants.h; sourceTree = "<group>"; };
+		E87BAB6C23FC32B000285364 /* connection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = connection.h; path = ../httpd/connection.h; sourceTree = "<group>"; };
+		E87BAB6D23FC32B000285364 /* gtree.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gtree.cpp; path = ../httpd/gtree.cpp; sourceTree = "<group>"; };
+		E87BAB6E23FC32B000285364 /* server.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = server.cpp; path = ../httpd/server.cpp; sourceTree = "<group>"; };
+		E87BAB6F23FC32B000285364 /* constants.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = constants.cpp; path = ../httpd/constants.cpp; sourceTree = "<group>"; };
+		E87BAB7023FC32B000285364 /* worker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = worker.cpp; path = ../httpd/worker.cpp; sourceTree = "<group>"; };
+		E87BAB7123FC32B000285364 /* worker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = worker.h; path = ../httpd/worker.h; sourceTree = "<group>"; };
+		E8D305F524041CD400108949 /* algorithm.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = algorithm.cpp; path = ../util/algorithm.cpp; sourceTree = "<group>"; };
+		E8D305F624041CD400108949 /* algorithm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = algorithm.h; path = ../util/algorithm.h; sourceTree = "<group>"; };
+		E8F4E72023F8290100A66E44 /* simple_alloc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = simple_alloc.cpp; path = ../memory/simple_alloc.cpp; sourceTree = "<group>"; };
+		E8F4E72223F8296F00A66E44 /* simple_alloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = simple_alloc.h; path = ../memory/simple_alloc.h; sourceTree = "<group>"; };
 		E8F4E72723F84AEB00A66E44 /* libmysqlclient.21.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmysqlclient.21.dylib; path = "../../../../Applications/mysql-8.0.18-macos10.14-x86_64/lib/libmysqlclient.21.dylib"; sourceTree = "<group>"; };
 		E8F4E72B23F84B4D00A66E44 /* libmysqlclient.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmysqlclient.a; path = "../../../../Applications/mysql-8.0.18-macos10.14-x86_64/lib/libmysqlclient.a"; sourceTree = "<group>"; };
 		E8F4E73023F8E0A600A66E44 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ../util/config.h; sourceTree = "<group>"; };
@@ -104,6 +136,7 @@
 		E84CA2D223F794320040ADBD /* source */ = {
 			isa = PBXGroup;
 			children = (
+				E87BAB6123FC329600285364 /* httpd */,
 				E84CA2DA23F794B40040ADBD /* util */,
 				E84CA2D923F794AC0040ADBD /* thread */,
 				E84CA2D823F794A00040ADBD /* network */,
@@ -143,12 +176,12 @@
 		E84CA2D623F7948C0040ADBD /* memory */ = {
 			isa = PBXGroup;
 			children = (
-				E8F4E72223F8296F00A66E44 /* allocater.h */,
+				E8F4E72223F8296F00A66E44 /* simple_alloc.h */,
 				E84CA2F623F795D80040ADBD /* buddy_alloc.cpp */,
 				E84CA2F523F795D80040ADBD /* buddy_alloc.h */,
 				E84CA2FA23F795D90040ADBD /* slab_alloc.cpp */,
 				E84CA2F423F795D80040ADBD /* slab_alloc.h */,
-				E8F4E72023F8290100A66E44 /* allocater.cpp */,
+				E8F4E72023F8290100A66E44 /* simple_alloc.cpp */,
 			);
 			name = memory;
 			sourceTree = "<group>";
@@ -192,12 +225,41 @@
 				E84CA2DC23F794DA0040ADBD /* atomic.h */,
 				E84CA2DF23F794DA0040ADBD /* scoped_ref.h */,
 				E84CA2DD23F794DA0040ADBD /* scoped_ptr.h */,
-				E84CA2E023F794DA0040ADBD /* util.h */,
+				E84CA2E023F794DA0040ADBD /* template_util.h */,
 				E84CA2DE23F794DA0040ADBD /* weak_ptr.h */,
 				E805558223F81CCE00ADE5C4 /* string.h */,
 				E8F4E73123F8F58600A66E44 /* string.cpp */,
+				E852BF8F2400D37C00405638 /* simple_list.h */,
+				E852BF912400E6CD00405638 /* simple_queue.h */,
+				E857FC712401758B00ADE1F5 /* buffer_queue.cpp */,
+				E857FC722401758B00ADE1F5 /* buffer_queue.h */,
+				E8D305F524041CD400108949 /* algorithm.cpp */,
+				E8D305F624041CD400108949 /* algorithm.h */,
 			);
 			name = util;
+			sourceTree = "<group>";
+		};
+		E87BAB6123FC329600285364 /* httpd */ = {
+			isa = PBXGroup;
+			children = (
+				E87BAB6723FC32B000285364 /* connection.cpp */,
+				E87BAB6C23FC32B000285364 /* connection.h */,
+				E87BAB6F23FC32B000285364 /* constants.cpp */,
+				E87BAB6B23FC32B000285364 /* constants.h */,
+				E87BAB6D23FC32B000285364 /* gtree.cpp */,
+				E87BAB6A23FC32B000285364 /* gtree.h */,
+				E87BAB6323FC32B000285364 /* gzip.cpp */,
+				E87BAB6523FC32B000285364 /* gzip.h */,
+				E87BAB6623FC32B000285364 /* request.cpp */,
+				E87BAB6923FC32B000285364 /* request.h */,
+				E87BAB6223FC32B000285364 /* response.cpp */,
+				E87BAB6423FC32B000285364 /* response.h */,
+				E87BAB6E23FC32B000285364 /* server.cpp */,
+				E87BAB6823FC32B000285364 /* server.h */,
+				E87BAB7023FC32B000285364 /* worker.cpp */,
+				E87BAB7123FC32B000285364 /* worker.h */,
+			);
+			name = httpd;
 			sourceTree = "<group>";
 		};
 		E8F4E72623F84AEB00A66E44 /* Frameworks */ = {
@@ -266,16 +328,26 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E87BAB7823FC32B000285364 /* constants.cpp in Sources */,
+				E8D305F724041CD400108949 /* algorithm.cpp in Sources */,
 				E84CA31B23F796030040ADBD /* fcgid.cpp in Sources */,
 				E84CA2F323F795C20040ADBD /* mysql.cpp in Sources */,
+				E87BAB7723FC32B000285364 /* server.cpp in Sources */,
+				E857FC732401758B00ADE1F5 /* buffer_queue.cpp in Sources */,
+				E87BAB7423FC32B000285364 /* request.cpp in Sources */,
+				E87BAB7623FC32B000285364 /* gtree.cpp in Sources */,
 				E84CA2EF23F795930040ADBD /* socket.cpp in Sources */,
 				E84CA2FD23F795D90040ADBD /* buddy_alloc.cpp in Sources */,
-				E8F4E72123F8290100A66E44 /* allocater.cpp in Sources */,
+				E87BAB7523FC32B000285364 /* connection.cpp in Sources */,
+				E8F4E72123F8290100A66E44 /* simple_alloc.cpp in Sources */,
 				E84CA30023F795D90040ADBD /* slab_alloc.cpp in Sources */,
 				E84CA2ED23F795930040ADBD /* addrinfo.cpp in Sources */,
 				E84CA2E423F794EA0040ADBD /* thread.cpp in Sources */,
+				E87BAB7223FC32B000285364 /* response.cpp in Sources */,
 				E8F4E73223F8F58600A66E44 /* string.cpp in Sources */,
 				E84CA2EE23F795930040ADBD /* epoll.cpp in Sources */,
+				E87BAB7323FC32B000285364 /* gzip.cpp in Sources */,
+				E87BAB7923FC32B000285364 /* worker.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

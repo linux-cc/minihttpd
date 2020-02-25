@@ -1,5 +1,5 @@
-#ifndef __UTIL_UTIL_H__
-#define __UTIL_UTIL_H__
+#ifndef __UTIL_TEMPLATE_UTIL_H__
+#define __UTIL_TEMPLATE_UTIL_H__
 
 #include <stdlib.h>
 
@@ -14,8 +14,8 @@
 #endif /* ifdef __GNUC__ */
 
 #define DISALLOW_COPY_AND_ASSIGN(Type) \
-    Type(const Type&);\
-    Type& operator=(const Type&)
+    Type(Type&);\
+    Type& operator=(Type&)
 
 #define DISALLOW_IMPLICIT_CONSTRUCTORS(Type) \
     Type();\
@@ -29,20 +29,6 @@ template <bool> struct CompileAssert {};
 #define COMPILE_ASSERT(expr, msg) \
 typedef CompileAssert<(bool(expr))> msg[bool(expr) ? 1 : -1] ALLOW_UNUSED
 #endif /* #if __cplusplus >= 201103L */
-
-#define MOVE_ONLY_TYPE_FOR_CPP_03(Type, RValue) \
-private: \
-    struct RValue { \
-        explicit RValue(Type* obj) : object(obj) {} \
-        Type* object; \
-    }; \
-    Type(Type&); \
-    Type& operator=(Type&); \
-public: \
-    operator RValue() { return RValue(this); } \
-    Type pass() { return Type(RValue(this)); } \
-    typedef void MoveOnlyTypeForCPP03; \
-private:
 
 namespace util {
     
@@ -128,5 +114,5 @@ struct IsConvertible : IntegralConstant<bool,
 
 }; /* namespace util */
 
-#endif /* __UTIL_UTIL_H__ */
+#endif /* __UTIL_TEMPLATE_UTIL_H__ */
 

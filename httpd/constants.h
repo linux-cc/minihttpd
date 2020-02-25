@@ -1,11 +1,11 @@
 #ifndef __HTTPD_CONSTANTS_H__
 #define __HTTPD_CONSTANTS_H__
 
-#include <string>
+namespace util {
+class String;
+}
 
 namespace httpd {
-
-using std::string;
 
 struct Header {
     enum {
@@ -60,10 +60,10 @@ struct Header {
         Content_Range,
         Content_Type,
         Expires,
-        Last_Modified, 
+        Last_Modified,
+        Header_Num,
     };
-    static void init();
-    static const string &getName(int header);
+    static const util::String &getName(int header);
 };
 
 struct ResponseStatus {
@@ -113,10 +113,10 @@ struct ResponseStatus {
         Bad_Gateway,
         Service_Unavailable,
         Gateway_Timeout,
-        HTTP_Version_Not_Supported, 
+        HTTP_Version_Not_Supported,
+        Status_Num,
     };
-    static void init();
-    static const string &getReason(int status);
+    static const util::String &getReason(int status);
 };
 
 } /* namespace httpd */

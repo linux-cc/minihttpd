@@ -20,11 +20,16 @@
 #define CR                  '\r'
 #define LF                  '\n'
 #define CRLF                "\r\n"
-#define END_LINE            "\r\n\r\n"
-#define END_LINE_LENGTH     4
+#define CRLF_CRLF           "\r\n\r\n"
+#define CRLF_CRLF_SIZE      4
 #define MAX(a, b)           ((a) > (b) ? (a) : (b))
 #define MIN(a, b)           ((a) > (b) ? (b) : (a))
 #define MMAP_PROT           (PROT_READ|PROT_WRITE)
 #define MMAP_FLAGS          (MAP_ANONYMOUS|MAP_PRIVATE)
+
+#define MAX_WORKER          4
+#define MAX_WORKER_CONN     8
+#define CONN_TIMEOUT        10
+#define BUFFER_SIZE         8192
 
 #endif /* ifndef __CONFIG_H__ */

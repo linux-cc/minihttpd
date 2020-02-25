@@ -1,12 +1,13 @@
-#include "config.h"
+#include "util/config.h"
+#include "util/atomic.h"
 #include "httpd/worker.h"
 #include "httpd/server.h"
 #include "httpd/request.h"
 #include "httpd/response.h"
 #include "httpd/connection.h"
 #include "network/addrinfo.h"
-#include "util/atomic.h"
 #include <math.h>
+#include <errno.h>
 
 namespace httpd {
 
@@ -17,7 +18,7 @@ using network::Peername;
 static int __accept_lock = 0;
 
 bool Worker::onInit() {
-    if (!_poller.create(_maxClients)) {
+    if (!_poller.create(MAX_WORKER_CONN)) {
         _LOG_("poller create false\n");
         return false;
     }
@@ -25,16 +26,8 @@ bool Worker::onInit() {
     return true;
 }
 
-void Worker::onCancel() {
-    for (list<Connection*>::iterator it = _connsQ.begin(); it != _connsQ.end(); it++) {
-        (*it)->release();
-        delete *it;
-    }
-    _connsQ.clear();
-}
-
 bool Worker::tryLockAccept() {
-    if (_actives >= round(_maxClients * 2 / 10)) {
+    if (_actives >= round(MAX_WORKER_CONN * 2 / 10)) {
         return false;
     }
     
@@ -75,13 +68,13 @@ void Worker::run() {
                 if (it->fd() == _server) {
                     onAccept();
                 } else if (holdLock) {
-                    _eventQ.push_back(&*it);
+                    _eventList.push(&*it);
                 } else {
                     onRequest(*it);
                 }
             } else if (it->isPollOut()) {
                 if (holdLock) {
-                    _eventQ.push_back(&*it);
+                    _eventList.push(&*it);
                 } else {
                     onResponse(*it);
                 }
@@ -106,22 +99,16 @@ void Worker::onAccept() {
             break;
         }
 
-        if (_connsQ.size() >= _maxClients) {
+        if (_connsList.size() >= MAX_WORKER_CONN) {
             _LOG_("Connection is empty\n");
             client.close();
             break;
         }
         client.setNoDelay();
         client.setNonblock();
-        Connection *conn;
-        if (_connsQ.empty()) {
-            conn = new Connection;
-        } else {
-            conn = _connsQ.front();
-            _connsQ.pop_front();
-        }
-        conn->attach(client);
-        _server.update(conn, this);
+        Connection *conn = memory::SimpleAlloc<Connection>::New(client);
+        _connsList.push(conn);
+        _server._eventQ.enqueue(Server::Item(conn));
         int error = _poller.add(client, conn);
         if (error) {
             _LOG_("poll add client error: %d:%s\n", errno, strerror(errno));
@@ -132,35 +119,43 @@ void Worker::onAccept() {
 
 void Worker::onHandleEvent() {
     EPollEvent *event;
-    while ((event = _eventQ.front())) {
+    while (_eventList.pop(event)) {
         if (event->isPollIn()) {
             onRequest(*event);
         } else if (event->isPollOut()) {
             onResponse(*event);
         } else {
-            _LOG_("handle unknown event\n");
+            _LOG_("handle unknown event, fd: %d, connection: %p\n", event->fd(), event->data());
         }
-        _eventQ.pop_front();
     }
 }
 
 void Worker::onRequest(EPollEvent &event) {
     Connection *conn = (Connection*)event.data();
-    if (!conn->recv()) {
-        closeInternal(conn);
-        return;
-    }
-    _poller.mod(*conn, conn);
-    Request request;
-    size_t length = request.parse(conn->begin(), conn->end());
-    if (!length) {
-        return;
-    }
-    conn->seek(length);
-    if (request.isComplete()) {
-        _poller.mod(*conn, conn, true);
-    }
-    _server.update(conn, this);
+    do {
+        if (!conn->recv()) {
+            close(conn);
+            break;
+        }
+        
+        _poller.mod(conn->fd(), conn);
+        String buf;
+        if (!conn->recvHeaders(buf)) break;
+        
+        Request *request = conn->getRequest();
+        bool done = request->parseHeaders(buf);
+        if (!done) {
+            if (request->isMultipart()) {
+                
+            } else {
+                size_t n = conn->recv(request->contentPos(), request->contentLength());
+                if (!request->isParseContentDone(n)) break;
+            }
+        }
+        _poller.mod(conn->fd(), conn, true);
+        conn->setRequest(NULL);
+    } while (0);
+    _server._eventQ.enqueue(Server::Item(conn));
 }
 
 void Worker::onResponse(EPollEvent &event) {
@@ -175,7 +170,7 @@ void Worker::onResponse(EPollEvent &event) {
     case Response::SEND_HEADERS: {
         if (!response.sendHeaders(conn)) {
             _LOG_("Response send headers error: %d:%s\n", errno, strerror(errno));
-            closeInternal(conn);
+            close(conn);
             return;
         }
         if (response.inSendHeaders()) {
@@ -185,7 +180,7 @@ void Worker::onResponse(EPollEvent &event) {
     case Response::SEND_CONTENT:
         if (!response.sendContent(conn)) {
             _LOG_("Response send content error: %d:%s\n", errno, strerror(errno));
-            closeInternal(conn);
+            close(conn);
             return;
         }
         if (response.inSendContent()) {
@@ -194,34 +189,30 @@ void Worker::onResponse(EPollEvent &event) {
     case Response::SEND_DONE:
         if (!conn->send()) {
             _LOG_("Response send buffer error: %d:%s\n", errno, strerror(errno));
-            closeInternal(conn);
+            close(conn);
             return;
         }
-        if (!conn->needPollOut()) {
+        if (conn->sendCompleted()) {
             if (response.connectionClose()) {
-                closeInternal(conn);
+                close(conn);
             }
             response.reset();
-            _poller.mod(*conn, conn);
+            _poller.mod(conn->fd(), conn);
             return;
         }
     }
-    int error = _poller.mod(*conn, conn, true);
+    int error = _poller.mod(conn->fd(), conn, true);
     if (error) {
         _LOG_("onResponse poll mode: %d:%s\n", errno, strerror(errno));
     }
 }
 
 void Worker::close(Connection *conn) {
-    _poller.del(*conn);
+    _poller.del(conn->fd());
     _LOG_("close connection: %p, fd: %d\n", conn, (int)*conn);
     conn->close();
-    _connsQ.push_back(conn);
-}
-
-void Worker::closeInternal(Connection *conn) {
-    close(conn);
-    _server.remove(conn, this);
+    _connsList.erase(conn);
+    memory::SimpleAlloc<Connection>::Delete(conn);
 }
 
 } /* namespace httpd */

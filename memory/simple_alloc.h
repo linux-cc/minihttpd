@@ -1,16 +1,39 @@
-#ifndef __MEMORY_ALLOC_H__
-#define __MEMORY_ALLOC_H__
+#ifndef __MEMORY_SIMPLE_ALLOC_H__
+#define __MEMORY_SIMPLE_ALLOC_H__
 
 #include <new>
-#include "util/util.h"
+#include "util/template_util.h"
+#include "memory/buddy_alloc.h"
+#include "memory/slab_alloc.h"
+#include "thread/thread.h"
 
 namespace memory {
 
-void *allocate(int size);
-void deallocate(const void *addr, int size);
+class Allocater {
+public:
+    Allocater(int blocks, int blockSize): _buddy(blocks, blockSize), _slab(_buddy) {}
+    
+    void *alloc(size_t size) { return _slab.alloc(size); }
+    void free(const void *addr, size_t size) { return _slab.free(addr, size); }
+    
+    static void setLocalKey(pthread_key_t *localKey) { _localKey = localKey; }
+    static void setGlobalKey(pthread_key_t *globalKey) { _globalKey = globalKey; }
+    
+    static pthread_key_t &getLocalKey() { return *_localKey; }
+    static pthread_key_t &getGlobalKey() { return *_globalKey; }
+    
+private:
+    BuddyAlloc _buddy;
+    SlabAlloc _slab;
+    static pthread_key_t *_localKey;
+    static pthread_key_t *_globalKey;
+};
+
+void *allocate(size_t size);
+void deallocate(const void *addr, size_t size);
 
 template <typename T>
-class Allocater {
+class SimpleAlloc {
 public:
     static T *New() {
         void *p = allocate(sizeof(T));
@@ -19,6 +42,12 @@ public:
     
     template <typename P1>
     static T *New(const P1& p1) {
+        void *p = allocate(sizeof(T));
+        return construct(util::IsTrivial<T>(), p, p1);
+    }
+    
+    template <typename P1>
+    static T *New(P1& p1) {
         void *p = allocate(sizeof(T));
         return construct(util::IsTrivial<T>(), p, p1);
     }
@@ -50,7 +79,11 @@ private:
     static T *construct(util::TrueType, void *p) { return (T*)p; }
     static T *construct(util::FalseType, void *p) { return new (p) T(); }
     template <typename P1>
+    static T *construct(util::TrueType, void *p, const P1 &p1) { return *(T*)p = p1; }
+    template <typename P1>
     static T *construct(util::FalseType, void *p, const P1 &p1) { return new (p) T(p1); }
+    template <typename P1>
+    static T *construct(util::FalseType, void *p, P1 &p1) { return new (p) T(p1); }
     template <typename P1, typename P2>
     static T *construct(util::FalseType, void *p, const P1 &p1, const P2 &p2) { return new (p) T(p1, p2); }
     template <typename P1, typename P2, typename P3>
@@ -62,24 +95,24 @@ private:
 };
 
 template <typename T>
-class Allocater<T[]> {
+class SimpleAlloc<T[]> {
 public:
-    static T *New(int size) {
+    static T *New(size_t size) {
         void *p = allocate(sizeof(T) * size);
         return construct(util::IsTrivial<T>(), p, size);
     }
     
-    static void Delete(const T *addr, int size) {
+    static void Delete(const T *addr, size_t size) {
         destruct(util::IsTrivial<T>(), addr, size);
         deallocate(addr, sizeof(T) * size);
     }
     
 private:
-    static T *construct(util::TrueType, void *p, int size) { return (T*)p; }
-    static T *construct(util::FalseType, void *p, int size) { return new (p) T[size]; }
-    static void destruct(util::TrueType, const T* p, int size) { }
-    static void destruct(util::FalseType, const T* p, int size) {
-        for (int i = 0; i < size; i++) {
+    static T *construct(util::TrueType, void *p, size_t size) { return (T*)p; }
+    static T *construct(util::FalseType, void *p, size_t size) { return new (p) T[size]; }
+    static void destruct(util::TrueType, const T* p, size_t size) { }
+    static void destruct(util::FalseType, const T* p, size_t size) {
+        for (size_t i = 0; i < size; i++) {
             const T *pi = p + i;
             pi->~T();
         }
@@ -88,5 +121,5 @@ private:
 
 } /* namespace memory */
 
-#endif /* __UTIL_ALLOC_H__ */
+#endif /* __MEMORY_SIMPLE_ALLOC_H__ */
 

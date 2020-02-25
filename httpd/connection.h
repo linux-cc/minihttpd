@@ -1,51 +1,44 @@
 #ifndef __HTTPD_CONNECT_H__
 #define __HTTPD_CONNECT_H__
 
+#include "util/buffer_queue.h"
+#include "util/string.h"
+#include "util/scoped_ptr.h"
 #include "httpd/request.h"
 #include "httpd/response.h"
+#include "network/socket.h"
 #include <unistd.h>
 
 namespace httpd {
 
+using namespace util;
 class Connection {
 public:
-    Connection(int socket = -1, int bufSize = (1 << 14));
+    Connection(int socket = -1): _socket(socket) {}
     bool recv();
+    bool recvHeaders(String &buf) { return _recvQ.dequeueHeaders(buf); }
+    size_t recv(void *buf, size_t size) { return _recvQ.dequeue(buf, size); }
+    
     bool send();
-    bool send(const void *buf, int size);
-    bool send(const void *buf1, int size1, const void *buf2, int size2);
-    bool send(const void *buf1, int size1, const void *buf2, int size2, const void *buf3, int size3);
-    void close();
-    void release();
-    void seek(size_t size);
+    bool send(const String &buf) { return send(buf.data(), buf.length()); }
+    bool send(const void *buf, size_t size) { return _sendQ.enqueue(buf, size); }
+    bool sendCompleted() { return _sendQ.empty(); }
+    void close() { network::TcpSocket(_socket).close(); }
 
-    const char *begin() const {
-        return _recvBuf;
-    }
-    const char *end() const {
-        return _recvBuf + _recvIndex;
-    }
-    operator int() {
-        return _socket;
-    }
-    void attach(int fd) {
-        _socket = fd;
-    }
-    bool needPollOut() const {
-        return _sendIndex;
-    }
-
+    int fd() const { return _socket; }
+    void attach(int fd) { _socket = fd; }
+    
+    void setRequest(Request *req) { _req.reset(req); }
+    void setResponse(Response *resp) { _resp.reset(resp); }
+    Request *getRequest();
+    Response *getResponse();
+    
 private:
-    bool copy(const void *buf, int size, int sendn);
-    bool copy(const void *buf1, int size1, const void *buf2, int size2, int sendn);
-
     int _socket;
-    int _recvIndex;
-    int _recvBufSize;
-    int _sendIndex;
-    int _sendBufSize;
-    char *_recvBuf;
-    char *_sendBuf;
+    BufferQueue _recvQ;
+    BufferQueue _sendQ;
+    ScopedPtr<Request> _req;
+    ScopedPtr<Response> _resp;
 };
 
 } /* namespace httpd */

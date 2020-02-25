@@ -31,7 +31,7 @@ private:
     void deflate();
     void deflateFast();
     void putLong(uint32_t ui) {
-        putShort(ui & 0xffff), putShort(ui >> 16);
+        putShort(ui & 0xffff); putShort(ui >> 16);
     }
     void putShort(uint16_t us);
     void putByte(uint8_t uc);
@@ -42,7 +42,7 @@ private:
     int fill(void *buf, unsigned len);
     void updateCrc(uint8_t *in, uint32_t len);
     int gzfill(void *buf, int len) {
-        return read(_infd, buf, len);
+        return (int)read(_infd, buf, len);
     }
     bool gzflush(const void *buf, int len, bool eof);
     

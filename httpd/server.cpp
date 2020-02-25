@@ -1,4 +1,3 @@
-#include "config.h"
 #include "httpd/server.h"
 #include "httpd/worker.h"
 #include "httpd/connection.h"
@@ -6,32 +5,19 @@
 
 namespace httpd {
 
-using thread::AutoMutex;
-using thread::Mutex;
-
-static Mutex __setLock;
-
-Server::Server(int workers, int workerClients, int timeout):
-_workers(NULL),
-_workerCnt(workers),
-_curSlot(0),
+Server::Server():
+_timeoutQ(CONN_TIMEOUT),
+_eventQ(MAX_WORKER * MAX_WORKER_CONN),
+_curIndex(0),
 _quit(false) {
-    Header::init();
-    ResponseStatus::init();
-    _slotQ.resize(timeout);
-    _workers = new Worker*[_workerCnt];
-    for (int i = 0; i < _workerCnt; ++i) {
-        _workers[i] = new Worker(*this, workerClients);
+    for (int i = 0; i < MAX_WORKER; ++i) {
+        _workers[i] = memory::SimpleAlloc<Worker>::New(*this);
     }
-    _LOG_("workers: %d, workerClients: %d, timeout: %d\n", _workerCnt, workerClients, timeout);
 }
 
 Server::~Server() {
-    if (_workers) {
-        for (int i = 0; i < _workerCnt; ++i) {
-            delete _workers[i];
-        }
-        delete[] _workers;
+    for (int i = 0; i < MAX_WORKER; ++i) {
+        memory::SimpleAlloc<Worker>::Delete(_workers[i]);
     }
 }
 
@@ -42,7 +28,7 @@ bool Server::start(const char *host, const char *service) {
     }
     _server.setNonblock();
     
-    for (int i = 0; i < _workerCnt; ++i) {
+    for (int i = 0; i < MAX_WORKER; ++i) {
         if (!_workers[i]->start()) {
             _LOG_("server start worker error:%d:%s\n", errno, strerror(errno));
             return false;
@@ -53,46 +39,37 @@ bool Server::start(const char *host, const char *service) {
     return true;
 }
 
-void Server::update(Connection *conn, Worker *worker) {
-    remove(conn, worker);
-    size_t newSlot = _curSlot - 1;
-    if (newSlot < 0) {
-        newSlot = _slotQ.size() - 1;
+void Server::update() {
+    int newIndex = _curIndex - 1;
+    if (newIndex < 0) {
+        newIndex = _timeoutQ.size() - 1;
     }
-    _connSlot[conn] = newSlot;
-    SlotSet &newSet = _slotQ.at(newSlot);
-    AutoMutex mutex(__setLock);
-    newSet.insert(std::make_pair(conn, worker));
-}
-
-void Server::remove(Connection *conn, Worker *worker) {
-    Item key = std::make_pair(conn, worker);
-    SlotMap::iterator it = _connSlot.find(conn);
-    if (it != _connSlot.end()) {
-        SlotSet &oldSet = _slotQ.at(it->second);
-        AutoMutex mutex(__setLock);
-        SlotSet::iterator it = oldSet.find(key);
-        if (it != oldSet.end()) {
-            oldSet.erase(it);
+    Item item;
+    while (_eventQ.dequeue(item)) {
+        if (_connIndex.find(item)) {
+            SimpleList<Item> &oldList = _timeoutQ.at(item._queueIndex);
+            oldList.erase(item);
+        } else {
+            item._queueIndex = newIndex;
+            _connIndex.push(item);
         }
+
+        SimpleList<Item> &newList = _timeoutQ.at(newIndex);
+        newList.push(item);
     }
 }
 
 void Server::run() {
     while (!_quit) {
-        SlotSet &curSet = _slotQ.at(_curSlot);
-        {
-            AutoMutex mutex(__setLock);
-            if (!curSet.empty()) {
-                for (set<Item>::iterator it = curSet.begin(); it != curSet.end(); ++it) {
-                    _LOG_("Connection timeout, fd: %d, connection: %p\n", (int)*it->first, it->first);
-                    it->second->close(it->first);
-                }
-                curSet.clear();
-            }
+        update();
+        SimpleList<Item> &curList = _timeoutQ.at(_curIndex);
+        Item data;
+        while (curList.pop(data)) {
+            _LOG_("Connection timeout, fd: %d, connection: %p, worker: %p\n", (int)data._conn, data._conn, data._worker);
+            data._conn->close();
         }
-        if (++_curSlot == _slotQ.size()) {
-            _curSlot = 0;
+        if (++_curIndex == _timeoutQ.size()) {
+            _curIndex = 0;
         }
         sleep(1);
     }
@@ -100,3 +77,6 @@ void Server::run() {
 
 } /* namespace httpd */
 
+int main(int argc, char *argv[]) {
+    return 0;
+}

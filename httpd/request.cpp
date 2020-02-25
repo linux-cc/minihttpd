@@ -1,4 +1,4 @@
-#include "config.h"
+#include "util/config.h"
 #include "httpd/request.h"
 #include "httpd/constants.h"
 #include <unistd.h>
@@ -9,67 +9,56 @@
 
 namespace httpd {
 
-static string urlDecode(const string &str);
-static string trim(const string &str);
-static string extractBetween(const string &str, const string &delim1, const string &delim2, size_t pos = 0);
-static string extractBetween(const string &str, char delim1, char delim2, size_t pos = 0);
+static String urlDecode(const String &str);
+static String trim(const String &str);
+static String extractBetween(const String &str, const String &delim1, const String &delim2, size_t pos = 0);
+static String extractBetween(const String &str, char delim1, char delim2, size_t pos = 0);
 
 Request::Request():
-_status(PARSE_HEADERS),
 _contentPos(0),
 _contentLength(0),
 _multipartPos(0),
 _multipartFd(-1) {
 }
 
-size_t Request::parse(const char *begin, const char *end) {
-    const char *endline = strstr(begin, END_LINE);
-    if (!endline) {
-        return 0;
-    }
-    _headers.assign(begin, end - begin + END_LINE_LENGTH);
-    _contentLength = atoi(Header::getName(Header::Content_Length).c_str());
-    if (is100Continue() || !_contentLength) {
-        _status = PARSE_DONE;
-    }
+bool Request::parseHeaders(const String &buf) {
+    _headers = buf;
+    _uri = extractBetween(_headers, ' ', ' ');
     
-    return _headers.length();
-}
-    
-string Request::getUri() const {
-    string::size_type p = _headers.find(CRLF);
-    if (p != string::npos) {
-        return extractBetween(_headers.substr(0, p), ' ', ' ');
+    size_t pos = _headers.find("Content-Length");
+    if (pos != String::npos) {
+        String value = extractBetween(_headers, ":", CRLF, pos);
+        _contentLength = atoi(value.data());
     }
     
-    return string();
-}
-
-string Request::getHeader(int field) const {
-    string name = Header::getName(field);
-    string value = extractBetween(_headers, name, CRLF);
-    string::size_type p = value.find(':');
-    if (p != string::npos) {
-        return trim(value.substr(p + 1));
+    pos = _headers.find("Expect");
+    if (pos != String::npos) {
+        String value = extractBetween(_headers, ":", CRLF, pos);
+        _is100Continue = value[0] == '1' && value[1] == '0' && value[2] == '0';
     }
     
-    return string();
+    pos = _headers.find("multipart/form-data");
+    _isMultipart = pos != String::npos;
+    if (_isMultipart) {
+        _content.clear();
+    } else if (_contentLength > _content.length()) {
+        _content.resize(_contentLength);
+    }
+    
+    return _is100Continue || !_contentLength;
 }
 
-bool Request::is100Continue() const {
-    string value = Header::getName(Header::Expect);
-    if (value.length() >= 3) {
-        return (value[0] == '1' && value[1] == '0' && value[2] == '0');
+String Request::getHeader(const char *field) const {
+    String value = extractBetween(_headers, field, CRLF);
+    size_t pos = value.find(':');
+    if (pos != String::npos) {
+        return trim(value.substr(pos + 1));
     }
     
-    return false;
-}
-    
-bool Request::isMultipart() const {
-    return !strncasecmp(Header::getName(Header::Content_Type).c_str(), "multipart/form-data", strlen("multipart/form-data"));
+    return String();
 }
 
-size_t Request::parseContent(const char *pos, const char *last) {
+size_t Request::parseMultipart() {
     size_t length = 0;
     if (isMultipart()) {
         string type = Header::getName(Header::Content_Type);
@@ -77,18 +66,12 @@ size_t Request::parseContent(const char *pos, const char *last) {
         string boundary = "--" + trim(type.substr(eq + 1));
         length = parseMultipart(pos, last, boundary);
     } else {
-        if (_contentLength + 1 > (int)_content.length()) {
-            _content.resize(_contentLength);
-        }
-        char *data = (char*)_content.data();
-        length = MIN(_contentLength - _contentPos, last - pos);
-        memcpy(data + _contentPos, pos, length);
+
     }
     _contentPos += length;
     if (_contentPos >= _contentLength) {
-        _status = PARSE_DONE;
         _content[_contentLength] = '\0';
-        _content = urlDecode(_content.c_str());
+        _content = urlDecode(_content);
     }
 
     return length;
@@ -188,12 +171,12 @@ size_t Request::setMultipartContent(const char *pos, size_t length) {
     return length;
 }
 
-string trim(const string &str) {
+String trim(const String &str) {
     const char *base = str.c_str();
     const char *p1 = base;
     const char *p2 = base + str.length() - 1;
-    while(isspace(*p1)) p1++;
-    while(isspace(*p2)) p2--;
+    while (isspace(*p1)) p1++;
+    while (isspace(*p2)) p2--;
 
     return str.substr(p1 - base, p2 - p1 + 1);
 }
@@ -209,8 +192,8 @@ char hexToChar(char hex) {
     return hex - '0';
 }
 
-string urlDecode(const string &str) {
-    string decode("");
+String urlDecode(const String &str) {
+    String decode("");
     size_t length = str.length();
     for (size_t i = 0; i < length; ++i) {
         if (str[i] == '+') {
@@ -228,24 +211,24 @@ string urlDecode(const string &str) {
     return decode;
 }
 
-string extractBetween(const string &str, const string &delim1, const string &delim2, size_t pos) {
-    string result;
-    string::size_type len = delim1.length();
-    string::size_type p1 = str.find(delim1, pos);
-    string::size_type p2 = str.find(delim2, p1 + len);
-    if (p1 != string::npos && p2 != string::npos) {
+String extractBetween(const String &str, const String &delim1, const String &delim2, size_t pos) {
+    String result;
+    size_t len = delim1.length();
+    size_t p1 = str.find(delim1, pos);
+    size_t p2 = str.find(delim2, p1 + len);
+    if (p1 != String::npos && p2 != String::npos) {
         result = str.substr(p1 + len, p2 - p1 - len);
     }
 
     return result;
 }
 
-string extractBetween(const string &str, char delim1, char delim2, size_t pos) {
-    string result;
-    string::size_type len = 1;
-    string::size_type p1 = str.find(delim1, pos);
-    string::size_type p2 = str.find(delim2, p1 + len);
-    if (p1 != string::npos && p2 != string::npos) {
+String extractBetween(const String &str, char delim1, char delim2, size_t pos) {
+    String result;
+    size_t len = 1;
+    size_t p1 = str.find(delim1, pos);
+    size_t p2 = str.find(delim2, p1 + len);
+    if (p1 != String::npos && p2 != String::npos) {
         result = str.substr(p1 + len, p2 - p1 - len);
     }
     

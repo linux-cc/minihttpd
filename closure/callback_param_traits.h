@@ -1,7 +1,7 @@
 #ifndef __CLOSURE_CALLBACK_PARAM_TRAITS_H__
 #define __CLOSURE_CALLBACK_PARAM_TRAITS_H__
 
-#include "util/util.h"
+#include "util/template_util.h"
 
 namespace closure {
 namespace internal {

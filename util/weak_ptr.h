@@ -2,7 +2,7 @@
 #define __UTIL_WEAK_PTR_H__
 
 #include "util/scoped_ref.h"
-#include "memory/allocater.h"
+#include "memory/simple_alloc.h"
 
 namespace util {
 
@@ -26,7 +26,7 @@ public:
         
         bool _isValid;
 
-        friend class memory::Allocater<Flag>;
+        friend class memory::SimpleAlloc<Flag>;
     };
     
     WeakRef() {}

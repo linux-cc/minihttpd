@@ -1,5 +1,5 @@
+#include "util/string.h"
 #include "httpd/constants.h"
-#include <map>
 
 #define __INIT__(code, replace, result)\
 do {\
@@ -10,11 +10,13 @@ strcode[p] = replace;\
 result[code] = strcode;\
 }while (0)
 
+
 namespace httpd {
 
-using std::map;
-static map<int, string> __fields;
-static map<int, string> __status;
+using util::String;
+
+static String __fields[Header::Header_Num];
+static String __status[ResponseStatus::Status_Num];
 
 void Header::init() {
     if (!__fields.empty()) {

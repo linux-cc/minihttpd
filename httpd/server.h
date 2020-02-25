@@ -1,54 +1,49 @@
 #ifndef __HTTPD_SERVER_H__
 #define __HTTPD_SERVER_H__
 
+#include "util/config.h"
+#include "util/simple_list.h"
+#include "util/simple_queue.h"
 #include "network/socket.h"
-#include <set>
-#include <map>
-#include <vector>
 
 namespace httpd {
 
 using network::TcpSocket;
-using std::set;
-using std::map;
-using std::vector;
+using namespace util;
 class Worker;
 class Connection;
 
 class Server {
 public:
-    Server(int workers = 4, int workerClients = 8, int timeout = 30);
+    Server();
     ~Server();
     bool start(const char *host, const char *service);
-    void update(Connection *conn, Worker *worker);
-    void remove(Connection *conn, Worker *worker);
     void run();
 
-    int accept() {
-        return _server.accept();
-    }
-    operator int () {
-        return _server;
-    }
-    void quit() {
-        _quit = true;
-    }
-    bool isQuit() {
-        return _quit;
-    }
-private:
-    TcpSocket _server;
-    typedef std::pair<Connection*, Worker*> Item;
-    typedef set<Item> SlotSet;
-    typedef map<Connection*, size_t> SlotMap;
-    typedef vector<SlotSet> SlotQueue;
+    int accept() { return _server.accept(); }
+    operator int () { return _server; }
+    void quit() { _quit = true; }
+    bool isQuit() { return _quit; }
     
-    SlotQueue _slotQ;
-    SlotMap  _connSlot;
-    Worker **_workers;
-    int _workerCnt;
-    size_t _curSlot;
+private:
+    void update();
+    
+    struct Item {
+        Item(Connection *conn = NULL): _conn(conn) {}
+        Connection *_conn;
+        int _queueIndex;
+        bool operator==(const Item &other) { return _conn == other._conn; }
+    };
+    
+    TcpSocket _server;
+    SimpleQueue<SimpleList<Item> > _timeoutQ;
+    BlockQueue<Item> _eventQ;
+    SimpleList<Item> _connIndex;
+    Worker *_workers[MAX_WORKER];
+    int _curIndex;
     bool _quit;
+    
+    friend class Worker;
 };
 
 } /* namespace httpd */

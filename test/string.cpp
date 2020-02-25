@@ -3,7 +3,7 @@
 #include <string.h>
 
 //#define P_STR(desc, str)    printf("%s: {%d|%d|%p|%s}\n", desc, str.refCount(), str.length(), str.data(), str.data())
-#define P_STR(fmt, str, ...)    printf(fmt ": {%d|%d|%p|%s}\n", ##__VA_ARGS__, str.refCount(), str.length(), str.data(), str.data())
+#define P_STR(fmt, str, ...)    printf(fmt ": {%d|%lu|%p|%s}\n", ##__VA_ARGS__, str.refCount(), str.length(), str.data(), str.data())
 
 int main(int argc, char *argv[]) {
     const char *data = "hello world";
@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
     P_STR("str4(data, 5)", str4);
     for (int i = 0; i < length; i++) {
         util::String str5(str1, i, util::String::npos);
-        P_STR("str5(str1, %d, %d)", str5, i, util::String::npos);
+        P_STR("str5(str1, %d, %ld)", str5, i, util::String::npos);
         util::String str6(str1, i, length - i - 1);
         P_STR("str6(str1, %d, %d)", str6, i, length - i - 1);
     }
@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
         P_STR("str8.erase(%d, %d)", str8, i, i);
         P_STR("str7", str7);
         str9.erase(i, str7.length() - i);
-        P_STR("str9.erase(%d, %d)", str9, i, str7.length() - i);
+        P_STR("str9.erase(%d, %lu)", str9, i, str7.length() - i);
         P_STR("str7", str7);
     }
     for (int i = 0; i < length; i++) {
@@ -52,13 +52,13 @@ int main(int argc, char *argv[]) {
         P_STR("str10.replace(%d, %d, %s)", str10, i, length - i - 1, str1.data());
         util::String str11 = str1;
         str11.replace(i, util::String::npos, str1);
-        P_STR("str11.replace(%d, %d, %s)", str11, i, util::String::npos, str1.data());
+        P_STR("str11.replace(%d, %ld, %s)", str11, i, util::String::npos, str1.data());
     }
     for (int i = 0; i < str7.length(); i++) {
-        printf("str7(%s).find(str1(%s), %d): %d\n", str7.data(), str1.data(), i, str7.find(str1, i));
-        printf("str7(%s).find(%s, %d, %d): %d\n", str7.data(), str1.data(), i, str7.length() - i, str7.find(str1.data(), i, str7.length() - i));
-        printf("str7(%s).find(hello, %d): %d\n", str7.data(), i, str7.find("hello", i));
-        printf("str7(%s).find(l, %d): %d\n", str7.data(), i, str7.find('l', i));
+        printf("str7(%s).find(str1(%s), %d): %ld\n", str7.data(), str1.data(), i, str7.find(str1, i));
+        printf("str7(%s).find(%s, %d, %ld): %ld\n", str7.data(), str1.data(), i, str7.length() - i, str7.find(str1.data(), i, str7.length() - i));
+        printf("str7(%s).find(hello, %d): %ld\n", str7.data(), i, str7.find("hello", i));
+        printf("str7(%s).find(l, %d): %ld\n", str7.data(), i, str7.find('l', i));
         printf("str7(%s).substr(%d, %d): %s\n", str7.data(), i, i + 1, str7.substr(i, i + 1).data());
     }
 

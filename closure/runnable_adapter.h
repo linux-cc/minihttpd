@@ -1,7 +1,7 @@
 #ifndef __CLOSURE_RUNNABLE_ADAPTER_H__
 #define __CLOSURE_RUNNABLE_ADAPTER_H__
 
-#include "util/util.h"
+#include "util/template_util.h"
 #include "closure/callback_param_traits.h"
 
 namespace closure {

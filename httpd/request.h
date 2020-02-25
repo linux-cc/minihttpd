@@ -1,68 +1,53 @@
 #ifndef __HTTPD_REQUEST_H__
 #define __HTTPD_REQUEST_H__
 
-#include <stdint.h>
-#include <strings.h>
-#include <string>
+#include "util/string.h"
 
 namespace httpd {
 
-using std::string;
-class Connection;
-
+using util::String;
 class Request {
 public:
     Request();
-    size_t parse(const char *begin, const char *end);
-    string getHeader(int field) const;
-    bool is100Continue() const;
-    bool isMultipart() const;
+    bool parseHeaders(const String &headers);
+    bool parseMultipart();
     
-    string getUri() const;
-    
-    const string &headers() const  {
-        return _headers;
-    }
-    bool isGet() const {
-        return !strncasecmp(_headers.c_str(), "GET", 3);
-    }
-    bool isPost() const {
-        return !strncasecmp(_headers.c_str(), "POST", 4);
-    }
-    bool isComplete() const {
-        return _status == PARSE_DONE;
-    }
-    size_t parseContent(const char *pos, const char *last);
+    String getHeader(const char *field) const;
+    bool isMultipart() const { return _isMultipart; }
+    bool is100Continue() const { return _is100Continue; }
+    const String &getUri() const { return _uri; }
+    const String &headers() const  { return _headers; }
+    bool isGet() const { return _headers[0] == 'G' && _headers[1] == 'E' && _headers[2] == 'T'; }
+    bool isPost() const { return _headers[0] == 'P' && _headers[1] == 'O' && _headers[2] == 'S' && _headers[3] == 'T'; }
+    char *contentPos() { return (char*)_content.data() + _contentPos; }
+    size_t contentLength() { return _contentLength - _contentPos; }
+    bool isParseContentDone(size_t pos) { return (_contentPos += pos) >= _contentLength; }
     
 private:
-    enum Status {
-        PARSE_HEADERS,
-        PARSE_CONTENT,
-        PARSE_DONE,
-    };
     struct MultipartHeader {
-        void parse(const string &field, const string &value);
+        void parse(const String &field, const String &value);
 
-        string name;
-        string value;
+        String name;
+        String value;
         bool hasType;
     };
-    size_t parseMultipart(const char *pos, const char *last, const string &boundary);
+    size_t parseMultipart(const char *pos, const char *last, const String &boundary);
     size_t parseFormHeader(const char *pos, const char *last);
     void setMultipartName();
     size_t setMultipartContent(const char *pos, size_t length);
     int parseFormBody(const char *pos, const char *last);
-    void addHeader(const string &field, const string &value);
+    void addHeader(const String &field, const String &value);
 
-    string _headers;
-    Status _status;
-    string _content;
+    String _headers;
+    String _uri;
+    String _content;
     MultipartHeader _curMultipartHeader;
     int _contentPos;
     int _contentLength;
     int _multipartPos;
     int _multipartFd;
-
+    uint8_t _is100Continue : 1;
+    uint8_t _isMultipart : 1;
 };
 
 } /* namespace httpd */

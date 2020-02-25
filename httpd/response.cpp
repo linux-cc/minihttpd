@@ -31,7 +31,7 @@ static string getGMTTime(time_t t) {
 }
 
 void Response::parseRequest(const Request &request) {
-    if (!request.isGet() && !request.isPost()) {
+    /*if (!request.isGet() && !request.isPost()) {
         setStatusLine(ResponseStatus::Not_Implemented, request.version());
     } else if (request.is100Continue()) {
         setStatusLine(ResponseStatus::Continue, request.version());
@@ -42,13 +42,13 @@ void Response::parseRequest(const Request &request) {
         } else {
             setStatusLine(parseFile(file), request.version());
         }
-    }
+    }*/
     setCommonHeaders(request);
     _status = SEND_HEADERS;
 }
 
 void Response::setCommonHeaders(const Request &request) {
-    string value = request.getHeader(Header::Connection);
+    /*string value = request.getHeader(Header::Connection);
     if (value) {
         _headers[Header::Connection] = value;
         _connClose = !strncasecmp(value->c_str(), "close", 5);
@@ -61,7 +61,7 @@ void Response::setCommonHeaders(const Request &request) {
             _headers.erase(Header::Content_Length);
             _acceptGz = 1;
         }
-    }
+    }*/
     _headers[Header::Server] = "myframe/httpd/1.1.01";
     _headers[Header::Date] = getGMTTime(0);
 }

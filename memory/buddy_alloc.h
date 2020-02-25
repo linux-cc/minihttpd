@@ -1,6 +1,8 @@
 #ifndef __MEMORY_BUDDY_ALLOC_H__
 #define __MEMORY_BUDDY_ALLOC_H__
 
+#include <stddef.h>
+
 namespace memory {
 
 class BuddyAlloc {
@@ -11,9 +13,9 @@ public:
     }
     ~BuddyAlloc();
     void init(int blocks, int blockSize, int pageSize);
-    void *alloc(int size);
+    void *alloc(size_t size);
     void free(const void *addr);
-    int getPageSize() const { return _pageSize; }
+    size_t getPageSize() const { return _pageSize; }
     char *dump();
     char *buffer() const { return _buffer; }
 
@@ -21,8 +23,8 @@ private:
     char *_maddr;
     char *_buffer;
     char *_tree;
-    int _size;
-    int _pageSize;
+    size_t _size;
+    size_t _pageSize;
     char _blockShiftBit;
     char _blocksPow;
 };
