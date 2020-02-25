@@ -139,16 +139,16 @@ void Worker::onRequest(EPollEvent &event) {
         }
         
         _poller.mod(conn->fd(), conn);
-        String buf;
-        if (!conn->recvHeaders(buf)) break;
-        
         Request *request = conn->getRequest();
-        bool done = request->parseHeaders(buf);
-        if (!done) {
+        if (!conn->recvUntil(request->headerBuffer(), CRLF_CRLF)) {
+            break;
+        }
+        request->parseHeaders();
+        if (request->hasContent()) {
             if (request->isMultipart()) {
                 
             } else {
-                size_t n = conn->recv(request->contentPos(), request->contentLength());
+                conn->recv(request->contentPos(), request->contentLength());
                 if (!request->isParseContentDone(n)) break;
             }
         }

@@ -18,7 +18,7 @@ public:
     bool recv();
     bool recvLine(String &buf) { return _recvQ.dequeueUntil(buf, CRLF); }
     bool recvUntil(String &buf, const char *pattern) { return _recvQ.dequeueUntil(buf, pattern); }
-    size_t recv(void *buf, size_t size) { return _recvQ.dequeue(buf, size); }
+    bool recv(void *buf, size_t size) { return _recvQ.dequeue(buf, size); }
     
     bool send();
     bool send(const String &buf) { return send(buf.data(), buf.length()); }

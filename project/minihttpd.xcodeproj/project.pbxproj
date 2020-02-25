@@ -3,1147 +3,546 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 50;
 	objects = {
 
-/* Begin PBXAggregateTarget section */
-		2FC79311C9EE45BF83553BF7 /* ALL_BUILD */ = {
-			isa = PBXAggregateTarget;
-			buildConfigurationList = 35CE29C9962F4E1B97BDFCF5 /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */;
-			buildPhases = (
-				7DEBAE4D72D946778F79A8C7 /* CMake Rules */,
-			);
-			dependencies = (
-				3B7D7194380E49358F1447D0 /* PBXTargetDependency */,
-				32AD6C0158A047E59414E25B /* PBXTargetDependency */,
-			);
-			name = ALL_BUILD;
-			productName = ALL_BUILD;
-		};
-		79727764441F41C99732C6BE /* ZERO_CHECK */ = {
-			isa = PBXAggregateTarget;
-			buildConfigurationList = DE71A2228D20445EBFC30797 /* Build configuration list for PBXAggregateTarget "ZERO_CHECK" */;
-			buildPhases = (
-				82BD9634CDCD4B6A88466726 /* CMake Rules */,
-			);
-			dependencies = (
-			);
-			name = ZERO_CHECK;
-			productName = ZERO_CHECK;
-		};
-		7A06CCC1C025408388A1CC08 /* install */ = {
-			isa = PBXAggregateTarget;
-			buildConfigurationList = E60BCBCAB6604698B38A7175 /* Build configuration list for PBXAggregateTarget "install" */;
-			buildPhases = (
-				DA7FE995AE7E42348ADCDD81 /* CMake PostBuild Rules */,
-			);
-			dependencies = (
-				E67EED21433449B09E076BE6 /* PBXTargetDependency */,
-			);
-			name = install;
-			productName = install;
-		};
-/* End PBXAggregateTarget section */
-
 /* Begin PBXBuildFile section */
-		0E1C4E65617B4E4A86C04E6B /* socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 36C45A754C5F4C7495FE6B5C /* socket.cpp */; };
-		21CF08993FFA49EC921976E8 /* buddy_alloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4C1B690F6DC4E95B1C12033 /* buddy_alloc.cpp */; };
-		2CAC45002BA54617BF472150 /* echo_udp_clt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BEDB7281B31542999CD4CC88 /* echo_udp_clt.cpp */; };
-		3738EF86AF844AE6A8338FE7 /* string.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D2DC5AE4FA4C4D9278D113 /* string.cpp */; };
-		3AB94B1EF76F4C1F8726FF2D /* string.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A701A444057C483D92330919 /* string.cpp */; };
-		4085DAA3132A491A9BCC8314 /* mysql.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1902E486BD094440AD1448C8 /* mysql.cpp */; };
-		57CAF690BC884EBDB4C45458 /* epoll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94342B07B3CF4DDAAEC9E096 /* epoll.cpp */; };
-		5843CBE62BE14992B57D8D95 /* buffer_queue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3D64D48164774D659BE5964C /* buffer_queue.cpp */; };
-		5CD2DD036AE7497FA4636B57 /* addrinfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 11250020D38241B7B71BC523 /* addrinfo.cpp */; };
-		5D8705D01A314F0E94AC3006 /* mysql.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FB58F4FAEAB54AE09FE2B763 /* mysql.cpp */; };
-		5DB4AC836B4B4F34B140499B /* echo_tcp_svr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 87EBFF0D8440439EB867A092 /* echo_tcp_svr.cpp */; };
-		70CB192BA68646A3A19E57EC /* slab_alloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C511B01CE8C449BF98D94A8E /* slab_alloc.cpp */; };
-		74AE92869CF3468BA1C4335A /* echo_tcp_clt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 859556EAC4BD40A0841ED6AE /* echo_tcp_clt.cpp */; };
-		7E84BFE7190B415BAF103FC0 /* echo_tcp_svr_epoll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D9949A16D2F54D32B5CF194D /* echo_tcp_svr_epoll.cpp */; };
-		95253D8165DD4303AA5ADF41 /* algorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DC0ACFC0785343E8A9425E69 /* algorithm.cpp */; };
-		98023CF6E35443C694EB8895 /* thread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 58935309B82C4CC58EF1E177 /* thread.cpp */; };
-		A3B1ACD139EC4AB0AA93675C /* simple_alloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3A8AE7EE1FD147ADA7490445 /* simple_alloc.cpp */; };
-		B77A0028FD1F4FE3BE8710B3 /* bind.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FF95A727E2114029AC211834 /* bind.cpp */; };
-		BD157BF8B54748629B55FB6C /* slab_alloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 122B35E8461543C6ACA758D8 /* slab_alloc.cpp */; };
-		CCBB64299B5F4DECA9D0D78D /* echo_udp_svr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4037AB62A43540EEAE101BA9 /* echo_udp_svr.cpp */; };
-		D606A5F3164848FFB0605037 /* fcgid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE5140DF2CF343D582D72C0F /* fcgid.cpp */; };
-		E6DA552EBB334221BCA843BD /* buddy_alloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25BEC0F7BF6842C8806B0E33 /* buddy_alloc.cpp */; };
+		E896166224055E6900EF33E5 /* slab_alloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896165724055E6900EF33E5 /* slab_alloc.cpp */; };
+		E896166324055E6900EF33E5 /* string.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896165824055E6900EF33E5 /* string.cpp */; };
+		E896166424055E6900EF33E5 /* echo_tcp_clt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896165924055E6900EF33E5 /* echo_tcp_clt.cpp */; };
+		E896166524055E6900EF33E5 /* mysql.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896165A24055E6900EF33E5 /* mysql.cpp */; };
+		E896166624055E6900EF33E5 /* echo_tcp_svr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896165B24055E6900EF33E5 /* echo_tcp_svr.cpp */; };
+		E896166724055E6900EF33E5 /* bind.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896165C24055E6900EF33E5 /* bind.cpp */; };
+		E896166824055E6900EF33E5 /* buddy_alloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896165D24055E6900EF33E5 /* buddy_alloc.cpp */; };
+		E896166924055E6900EF33E5 /* echo_udp_svr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896165E24055E6900EF33E5 /* echo_udp_svr.cpp */; };
+		E896166A24055E6900EF33E5 /* echo_tcp_svr_epoll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896165F24055E6900EF33E5 /* echo_tcp_svr_epoll.cpp */; };
+		E896166B24055E6900EF33E5 /* echo_udp_clt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896166024055E6900EF33E5 /* echo_udp_clt.cpp */; };
+		E896167824055E8E00EF33E5 /* thread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896167724055E8E00EF33E5 /* thread.cpp */; };
+		E896168724055E9A00EF33E5 /* algorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896167D24055E9A00EF33E5 /* algorithm.cpp */; };
+		E896168824055E9A00EF33E5 /* buffer_queue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896168424055E9A00EF33E5 /* buffer_queue.cpp */; };
+		E896168924055E9A00EF33E5 /* string.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896168624055E9A00EF33E5 /* string.cpp */; };
+		E896168C24055EA400EF33E5 /* mysql.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896168B24055EA400EF33E5 /* mysql.cpp */; };
+		E896169324055EB000EF33E5 /* simple_alloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896168E24055EB000EF33E5 /* simple_alloc.cpp */; };
+		E896169424055EB000EF33E5 /* buddy_alloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896168F24055EB000EF33E5 /* buddy_alloc.cpp */; };
+		E896169524055EB000EF33E5 /* slab_alloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896169224055EB000EF33E5 /* slab_alloc.cpp */; };
+		E896169C24055EBB00EF33E5 /* epoll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896169624055EBB00EF33E5 /* epoll.cpp */; };
+		E896169D24055EBB00EF33E5 /* socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896169924055EBB00EF33E5 /* socket.cpp */; };
+		E896169E24055EBB00EF33E5 /* addrinfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896169A24055EBB00EF33E5 /* addrinfo.cpp */; };
+		E89616AF24055EC800EF33E5 /* gtree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E896169F24055EC800EF33E5 /* gtree.cpp */; };
+		E89616B024055EC800EF33E5 /* gzip.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E89616A024055EC800EF33E5 /* gzip.cpp */; };
+		E89616B124055EC800EF33E5 /* response.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E89616A224055EC800EF33E5 /* response.cpp */; };
+		E89616B224055EC800EF33E5 /* server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E89616A324055EC800EF33E5 /* server.cpp */; };
+		E89616B324055EC800EF33E5 /* request.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E89616A624055EC800EF33E5 /* request.cpp */; };
+		E89616B424055EC800EF33E5 /* constants.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E89616A824055EC800EF33E5 /* constants.cpp */; };
+		E89616B524055EC800EF33E5 /* connection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E89616AA24055EC800EF33E5 /* connection.cpp */; };
+		E89616B624055EC800EF33E5 /* worker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E89616AC24055EC800EF33E5 /* worker.cpp */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		2AD7A97BD2164BDBA7AD6C28 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 6956E74353A442CAA5567834 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 50D5D8E75D3940DC9D9ED6F3;
-			remoteInfo = minihttpd;
+/* Begin PBXCopyFilesBuildPhase section */
+		E892245724055D92006A1142 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
 		};
-		4666091247234AAD83F4AE63 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 6956E74353A442CAA5567834 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 79727764441F41C99732C6BE;
-			remoteInfo = ZERO_CHECK;
-		};
-		A9C990102F2E4657B2ED9FC3 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 6956E74353A442CAA5567834 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 2FC79311C9EE45BF83553BF7;
-			remoteInfo = ALL_BUILD;
-		};
-		BD2042ABCC5541C5B2E14DD9 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 6956E74353A442CAA5567834 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 79727764441F41C99732C6BE;
-			remoteInfo = ZERO_CHECK;
-		};
-/* End PBXContainerItemProxy section */
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		0C4652ED71F14668A1F7877C /* scoped_ptr.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = scoped_ptr.h; path = ../util/scoped_ptr.h; sourceTree = SOURCE_ROOT; };
-		0CACCE281C7B4809B3615685 /* functor_traits.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = functor_traits.h; path = ../closure/functor_traits.h; sourceTree = SOURCE_ROOT; };
-		0E4F0B8DB1644551A097E200 /* simple_alloc.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = simple_alloc.h; path = ../memory/simple_alloc.h; sourceTree = SOURCE_ROOT; };
-		0F64D565CCB149A0810945A1 /* bind_helper.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = bind_helper.h; path = ../closure/bind_helper.h; sourceTree = SOURCE_ROOT; };
-		11250020D38241B7B71BC523 /* addrinfo.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = addrinfo.cpp; path = ../network/addrinfo.cpp; sourceTree = SOURCE_ROOT; };
-		122B35E8461543C6ACA758D8 /* slab_alloc.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = slab_alloc.cpp; path = ../memory/slab_alloc.cpp; sourceTree = SOURCE_ROOT; };
-		12ACF3F9A8C144F29F7FB018 /* template_util.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = template_util.h; path = ../util/template_util.h; sourceTree = SOURCE_ROOT; };
-		173900C892E24D919D26D26E /* scoped_ref.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = scoped_ref.h; path = ../util/scoped_ref.h; sourceTree = SOURCE_ROOT; };
-		1902E486BD094440AD1448C8 /* mysql.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = mysql.cpp; path = ../test/mysql.cpp; sourceTree = SOURCE_ROOT; };
-		1F5AD2701CE14A5D845646C9 /* weak_ptr.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = weak_ptr.h; path = ../util/weak_ptr.h; sourceTree = SOURCE_ROOT; };
-		20849A202AD14F0983F091FE /* algorithm.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = algorithm.h; path = ../util/algorithm.h; sourceTree = SOURCE_ROOT; };
-		25BEC0F7BF6842C8806B0E33 /* buddy_alloc.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = buddy_alloc.cpp; path = ../test/buddy_alloc.cpp; sourceTree = SOURCE_ROOT; };
-		2CD8926A38904286A72226B7 /* slab_alloc.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = slab_alloc.h; path = ../memory/slab_alloc.h; sourceTree = SOURCE_ROOT; };
-		35DCD86A9B794BD9AE03EA59 /* buddy_alloc.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = buddy_alloc.h; path = ../memory/buddy_alloc.h; sourceTree = SOURCE_ROOT; };
-		36C45A754C5F4C7495FE6B5C /* socket.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = socket.cpp; path = ../network/socket.cpp; sourceTree = SOURCE_ROOT; };
-		39D2DC5AE4FA4C4D9278D113 /* string.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = string.cpp; path = ../util/string.cpp; sourceTree = SOURCE_ROOT; };
-		3A8AE7EE1FD147ADA7490445 /* simple_alloc.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = simple_alloc.cpp; path = ../memory/simple_alloc.cpp; sourceTree = SOURCE_ROOT; };
-		3D64D48164774D659BE5964C /* buffer_queue.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = buffer_queue.cpp; path = ../util/buffer_queue.cpp; sourceTree = SOURCE_ROOT; };
-		4037AB62A43540EEAE101BA9 /* echo_udp_svr.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = echo_udp_svr.cpp; path = ../test/echo_udp_svr.cpp; sourceTree = SOURCE_ROOT; };
-		4A3A6C41D11847EFBD8D7D8D /* callback.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = callback.h; path = ../closure/callback.h; sourceTree = SOURCE_ROOT; };
-		4D1A54DD5E774AFAB48718CF /* CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
-		58935309B82C4CC58EF1E177 /* thread.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = thread.cpp; path = ../thread/thread.cpp; sourceTree = SOURCE_ROOT; };
-		5917F78E9D5849DDB4D272EE /* mysql.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = mysql.h; path = ../mysql/mysql.h; sourceTree = SOURCE_ROOT; };
-		5FC1CF76B0DA47AFBC7A386A /* runnable.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = runnable.h; path = ../thread/runnable.h; sourceTree = SOURCE_ROOT; };
-		67876854FA9B4CFA91881F33 /* socket.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = socket.h; path = ../network/socket.h; sourceTree = SOURCE_ROOT; };
-		689BABF10A264433AF400018 /* simple_list.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = simple_list.h; path = ../util/simple_list.h; sourceTree = SOURCE_ROOT; };
-		7AE22E37F97B4EC7BC964EC3 /* addrinfo.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = addrinfo.h; path = ../network/addrinfo.h; sourceTree = SOURCE_ROOT; };
-		801853267A364F2B9DF01DF0 /* buffer_queue.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = buffer_queue.h; path = ../util/buffer_queue.h; sourceTree = SOURCE_ROOT; };
-		853014F596F34D49AF04CD54 /* CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
-		859556EAC4BD40A0841ED6AE /* echo_tcp_clt.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = echo_tcp_clt.cpp; path = ../test/echo_tcp_clt.cpp; sourceTree = SOURCE_ROOT; };
-		87EBFF0D8440439EB867A092 /* echo_tcp_svr.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = echo_tcp_svr.cpp; path = ../test/echo_tcp_svr.cpp; sourceTree = SOURCE_ROOT; };
-		889603C48A314093819999F8 /* string.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = string.h; path = ../util/string.h; sourceTree = SOURCE_ROOT; };
-		8E551348194A4F51BA11A11C /* thread.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = thread.h; path = ../thread/thread.h; sourceTree = SOURCE_ROOT; };
-		93815F36B2D84C58A48E5279 /* invoker_helper.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = invoker_helper.h; path = ../closure/invoker_helper.h; sourceTree = SOURCE_ROOT; };
-		94342B07B3CF4DDAAEC9E096 /* epoll.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = epoll.cpp; path = ../network/epoll.cpp; sourceTree = SOURCE_ROOT; };
-		95828EE958F140BAA71ABA67 /* runnable_adapter.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = runnable_adapter.h; path = ../closure/runnable_adapter.h; sourceTree = SOURCE_ROOT; };
-		A18F0DAFAE214A7FA4517B14 /* simple_queue.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = simple_queue.h; path = ../util/simple_queue.h; sourceTree = SOURCE_ROOT; };
-		A701A444057C483D92330919 /* string.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = string.cpp; path = ../test/string.cpp; sourceTree = SOURCE_ROOT; };
-		AA41FB7BA54841C2B2E607A6 /* config.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = config.h; path = ../util/config.h; sourceTree = SOURCE_ROOT; };
-		BADB2F3F144849968CB6C429 /* callback_param_traits.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = callback_param_traits.h; path = ../closure/callback_param_traits.h; sourceTree = SOURCE_ROOT; };
-		BEDB7281B31542999CD4CC88 /* echo_udp_clt.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = echo_udp_clt.cpp; path = ../test/echo_udp_clt.cpp; sourceTree = SOURCE_ROOT; };
-		BEF0752BD6FD4142BE9987DC /* bind.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = bind.h; path = ../closure/bind.h; sourceTree = SOURCE_ROOT; };
-		C511B01CE8C449BF98D94A8E /* slab_alloc.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = slab_alloc.cpp; path = ../test/slab_alloc.cpp; sourceTree = SOURCE_ROOT; };
-		C7CBDE2328C0497ABAACE5E5 /* epoll.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = epoll.h; path = ../network/epoll.h; sourceTree = SOURCE_ROOT; };
-		D58AE19705E54E3495AB7BFF /* invoker.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = invoker.h; path = ../closure/invoker.h; sourceTree = SOURCE_ROOT; };
-		D9949A16D2F54D32B5CF194D /* echo_tcp_svr_epoll.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = echo_tcp_svr_epoll.cpp; path = ../test/echo_tcp_svr_epoll.cpp; sourceTree = SOURCE_ROOT; };
-		DC0ACFC0785343E8A9425E69 /* algorithm.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = algorithm.cpp; path = ../util/algorithm.cpp; sourceTree = SOURCE_ROOT; };
-		DE5140DF2CF343D582D72C0F /* fcgid.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = fcgid.cpp; path = ../fcgid/fcgid.cpp; sourceTree = SOURCE_ROOT; };
-		E4C1B690F6DC4E95B1C12033 /* buddy_alloc.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = buddy_alloc.cpp; path = ../memory/buddy_alloc.cpp; sourceTree = SOURCE_ROOT; };
-		E87602D4C45D4BE1ABE24E34 /* bind_state.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = bind_state.h; path = ../closure/bind_state.h; sourceTree = SOURCE_ROOT; };
-		F0952EA6ECEB42CABDA2A6E1 /* fcgid.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = fcgid.h; path = ../fcgid/fcgid.h; sourceTree = SOURCE_ROOT; };
-		F2DCD3F8668845399095E649 /* atomic.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = atomic.h; path = ../util/atomic.h; sourceTree = SOURCE_ROOT; };
-		FB10EC6A82D94FCBA5661BC2 /* minihttpd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; path = minihttpd; sourceTree = BUILT_PRODUCTS_DIR; };
-		FB58F4FAEAB54AE09FE2B763 /* mysql.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = mysql.cpp; path = ../mysql/mysql.cpp; sourceTree = SOURCE_ROOT; };
-		FF95A727E2114029AC211834 /* bind.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = bind.cpp; path = ../test/bind.cpp; sourceTree = SOURCE_ROOT; };
+		E892245924055D92006A1142 /* minihttpd */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = minihttpd; sourceTree = BUILT_PRODUCTS_DIR; };
+		E896165724055E6900EF33E5 /* slab_alloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = slab_alloc.cpp; path = ../test/slab_alloc.cpp; sourceTree = "<group>"; };
+		E896165824055E6900EF33E5 /* string.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = string.cpp; path = ../test/string.cpp; sourceTree = "<group>"; };
+		E896165924055E6900EF33E5 /* echo_tcp_clt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = echo_tcp_clt.cpp; path = ../test/echo_tcp_clt.cpp; sourceTree = "<group>"; };
+		E896165A24055E6900EF33E5 /* mysql.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mysql.cpp; path = ../test/mysql.cpp; sourceTree = "<group>"; };
+		E896165B24055E6900EF33E5 /* echo_tcp_svr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = echo_tcp_svr.cpp; path = ../test/echo_tcp_svr.cpp; sourceTree = "<group>"; };
+		E896165C24055E6900EF33E5 /* bind.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = bind.cpp; path = ../test/bind.cpp; sourceTree = "<group>"; };
+		E896165D24055E6900EF33E5 /* buddy_alloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = buddy_alloc.cpp; path = ../test/buddy_alloc.cpp; sourceTree = "<group>"; };
+		E896165E24055E6900EF33E5 /* echo_udp_svr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = echo_udp_svr.cpp; path = ../test/echo_udp_svr.cpp; sourceTree = "<group>"; };
+		E896165F24055E6900EF33E5 /* echo_tcp_svr_epoll.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = echo_tcp_svr_epoll.cpp; path = ../test/echo_tcp_svr_epoll.cpp; sourceTree = "<group>"; };
+		E896166024055E6900EF33E5 /* echo_udp_clt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = echo_udp_clt.cpp; path = ../test/echo_udp_clt.cpp; sourceTree = "<group>"; };
+		E896166C24055E8100EF33E5 /* bind_state.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bind_state.h; path = ../closure/bind_state.h; sourceTree = "<group>"; };
+		E896166D24055E8100EF33E5 /* functor_traits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = functor_traits.h; path = ../closure/functor_traits.h; sourceTree = "<group>"; };
+		E896166E24055E8100EF33E5 /* runnable_adapter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = runnable_adapter.h; path = ../closure/runnable_adapter.h; sourceTree = "<group>"; };
+		E896166F24055E8100EF33E5 /* bind.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bind.h; path = ../closure/bind.h; sourceTree = "<group>"; };
+		E896167024055E8100EF33E5 /* bind_helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bind_helper.h; path = ../closure/bind_helper.h; sourceTree = "<group>"; };
+		E896167124055E8100EF33E5 /* invoker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = invoker.h; path = ../closure/invoker.h; sourceTree = "<group>"; };
+		E896167224055E8100EF33E5 /* invoker_helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = invoker_helper.h; path = ../closure/invoker_helper.h; sourceTree = "<group>"; };
+		E896167324055E8100EF33E5 /* callback_param_traits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = callback_param_traits.h; path = ../closure/callback_param_traits.h; sourceTree = "<group>"; };
+		E896167424055E8100EF33E5 /* callback.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = callback.h; path = ../closure/callback.h; sourceTree = "<group>"; };
+		E896167524055E8E00EF33E5 /* runnable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = runnable.h; path = ../thread/runnable.h; sourceTree = "<group>"; };
+		E896167624055E8E00EF33E5 /* thread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = thread.h; path = ../thread/thread.h; sourceTree = "<group>"; };
+		E896167724055E8E00EF33E5 /* thread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = thread.cpp; path = ../thread/thread.cpp; sourceTree = "<group>"; };
+		E896167924055E9A00EF33E5 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ../util/config.h; sourceTree = "<group>"; };
+		E896167A24055E9A00EF33E5 /* simple_queue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = simple_queue.h; path = ../util/simple_queue.h; sourceTree = "<group>"; };
+		E896167B24055E9A00EF33E5 /* atomic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = atomic.h; path = ../util/atomic.h; sourceTree = "<group>"; };
+		E896167C24055E9A00EF33E5 /* template_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = template_util.h; path = ../util/template_util.h; sourceTree = "<group>"; };
+		E896167D24055E9A00EF33E5 /* algorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = algorithm.cpp; path = ../util/algorithm.cpp; sourceTree = "<group>"; };
+		E896167E24055E9A00EF33E5 /* weak_ptr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = weak_ptr.h; path = ../util/weak_ptr.h; sourceTree = "<group>"; };
+		E896167F24055E9A00EF33E5 /* scoped_ref.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = scoped_ref.h; path = ../util/scoped_ref.h; sourceTree = "<group>"; };
+		E896168024055E9A00EF33E5 /* algorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = algorithm.h; path = ../util/algorithm.h; sourceTree = "<group>"; };
+		E896168124055E9A00EF33E5 /* buffer_queue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = buffer_queue.h; path = ../util/buffer_queue.h; sourceTree = "<group>"; };
+		E896168224055E9A00EF33E5 /* simple_list.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = simple_list.h; path = ../util/simple_list.h; sourceTree = "<group>"; };
+		E896168324055E9A00EF33E5 /* string.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = string.h; path = ../util/string.h; sourceTree = "<group>"; };
+		E896168424055E9A00EF33E5 /* buffer_queue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = buffer_queue.cpp; path = ../util/buffer_queue.cpp; sourceTree = "<group>"; };
+		E896168524055E9A00EF33E5 /* scoped_ptr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = scoped_ptr.h; path = ../util/scoped_ptr.h; sourceTree = "<group>"; };
+		E896168624055E9A00EF33E5 /* string.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = string.cpp; path = ../util/string.cpp; sourceTree = "<group>"; };
+		E896168A24055EA400EF33E5 /* mysql.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mysql.h; path = ../mysql/mysql.h; sourceTree = "<group>"; };
+		E896168B24055EA400EF33E5 /* mysql.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mysql.cpp; path = ../mysql/mysql.cpp; sourceTree = "<group>"; };
+		E896168D24055EB000EF33E5 /* simple_alloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = simple_alloc.h; path = ../memory/simple_alloc.h; sourceTree = "<group>"; };
+		E896168E24055EB000EF33E5 /* simple_alloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = simple_alloc.cpp; path = ../memory/simple_alloc.cpp; sourceTree = "<group>"; };
+		E896168F24055EB000EF33E5 /* buddy_alloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = buddy_alloc.cpp; path = ../memory/buddy_alloc.cpp; sourceTree = "<group>"; };
+		E896169024055EB000EF33E5 /* slab_alloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = slab_alloc.h; path = ../memory/slab_alloc.h; sourceTree = "<group>"; };
+		E896169124055EB000EF33E5 /* buddy_alloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = buddy_alloc.h; path = ../memory/buddy_alloc.h; sourceTree = "<group>"; };
+		E896169224055EB000EF33E5 /* slab_alloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = slab_alloc.cpp; path = ../memory/slab_alloc.cpp; sourceTree = "<group>"; };
+		E896169624055EBB00EF33E5 /* epoll.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = epoll.cpp; path = ../network/epoll.cpp; sourceTree = "<group>"; };
+		E896169724055EBB00EF33E5 /* socket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = socket.h; path = ../network/socket.h; sourceTree = "<group>"; };
+		E896169824055EBB00EF33E5 /* epoll.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = epoll.h; path = ../network/epoll.h; sourceTree = "<group>"; };
+		E896169924055EBB00EF33E5 /* socket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = socket.cpp; path = ../network/socket.cpp; sourceTree = "<group>"; };
+		E896169A24055EBB00EF33E5 /* addrinfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = addrinfo.cpp; path = ../network/addrinfo.cpp; sourceTree = "<group>"; };
+		E896169B24055EBB00EF33E5 /* addrinfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = addrinfo.h; path = ../network/addrinfo.h; sourceTree = "<group>"; };
+		E896169F24055EC800EF33E5 /* gtree.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gtree.cpp; path = ../httpd/gtree.cpp; sourceTree = "<group>"; };
+		E89616A024055EC800EF33E5 /* gzip.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gzip.cpp; path = ../httpd/gzip.cpp; sourceTree = "<group>"; };
+		E89616A124055EC800EF33E5 /* server.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = server.h; path = ../httpd/server.h; sourceTree = "<group>"; };
+		E89616A224055EC800EF33E5 /* response.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = response.cpp; path = ../httpd/response.cpp; sourceTree = "<group>"; };
+		E89616A324055EC800EF33E5 /* server.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = server.cpp; path = ../httpd/server.cpp; sourceTree = "<group>"; };
+		E89616A424055EC800EF33E5 /* response.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = response.h; path = ../httpd/response.h; sourceTree = "<group>"; };
+		E89616A524055EC800EF33E5 /* gtree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gtree.h; path = ../httpd/gtree.h; sourceTree = "<group>"; };
+		E89616A624055EC800EF33E5 /* request.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = request.cpp; path = ../httpd/request.cpp; sourceTree = "<group>"; };
+		E89616A724055EC800EF33E5 /* request.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = request.h; path = ../httpd/request.h; sourceTree = "<group>"; };
+		E89616A824055EC800EF33E5 /* constants.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = constants.cpp; path = ../httpd/constants.cpp; sourceTree = "<group>"; };
+		E89616A924055EC800EF33E5 /* constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = constants.h; path = ../httpd/constants.h; sourceTree = "<group>"; };
+		E89616AA24055EC800EF33E5 /* connection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = connection.cpp; path = ../httpd/connection.cpp; sourceTree = "<group>"; };
+		E89616AB24055EC800EF33E5 /* connection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = connection.h; path = ../httpd/connection.h; sourceTree = "<group>"; };
+		E89616AC24055EC800EF33E5 /* worker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = worker.cpp; path = ../httpd/worker.cpp; sourceTree = "<group>"; };
+		E89616AD24055EC800EF33E5 /* worker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = worker.h; path = ../httpd/worker.h; sourceTree = "<group>"; };
+		E89616AE24055EC800EF33E5 /* gzip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gzip.h; path = ../httpd/gzip.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFrameworksBuildPhase section */
+		E892245624055D92006A1142 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
 /* Begin PBXGroup section */
-		00EC3A4CFB784DB09664BD25 /* CMake Rules */ = {
+		E892245024055D92006A1142 = {
 			isa = PBXGroup;
 			children = (
-			);
-			name = "CMake Rules";
-			sourceTree = "<group>";
-		};
-		0C7FDFB323BA422CAD676686 /* closure */ = {
-			isa = PBXGroup;
-			children = (
-				BEF0752BD6FD4142BE9987DC /* bind.h */,
-				0F64D565CCB149A0810945A1 /* bind_helper.h */,
-				E87602D4C45D4BE1ABE24E34 /* bind_state.h */,
-				4A3A6C41D11847EFBD8D7D8D /* callback.h */,
-				BADB2F3F144849968CB6C429 /* callback_param_traits.h */,
-				0CACCE281C7B4809B3615685 /* functor_traits.h */,
-				D58AE19705E54E3495AB7BFF /* invoker.h */,
-				93815F36B2D84C58A48E5279 /* invoker_helper.h */,
-				95828EE958F140BAA71ABA67 /* runnable_adapter.h */,
-			);
-			name = closure;
-			sourceTree = "<group>";
-		};
-		0E0B4659DA6F40AABD7363A4 /* network */ = {
-			isa = PBXGroup;
-			children = (
-				7AE22E37F97B4EC7BC964EC3 /* addrinfo.h */,
-				C7CBDE2328C0497ABAACE5E5 /* epoll.h */,
-				67876854FA9B4CFA91881F33 /* socket.h */,
-			);
-			name = network;
-			sourceTree = "<group>";
-		};
-		113A25F22D714F9285E57D98 /* thread */ = {
-			isa = PBXGroup;
-			children = (
-				58935309B82C4CC58EF1E177 /* thread.cpp */,
-			);
-			name = thread;
-			sourceTree = "<group>";
-		};
-		21167704445C446781391A53 /* mysql */ = {
-			isa = PBXGroup;
-			children = (
-				5917F78E9D5849DDB4D272EE /* mysql.h */,
-			);
-			name = mysql;
-			sourceTree = "<group>";
-		};
-		2C09AC7C63304E0D8FB91D7F /* fcgid */ = {
-			isa = PBXGroup;
-			children = (
-				F0952EA6ECEB42CABDA2A6E1 /* fcgid.h */,
-			);
-			name = fcgid;
-			sourceTree = "<group>";
-		};
-		336D736262874431A2504449 /* fcgid */ = {
-			isa = PBXGroup;
-			children = (
-				DE5140DF2CF343D582D72C0F /* fcgid.cpp */,
-			);
-			name = fcgid;
-			sourceTree = "<group>";
-		};
-		34284E685233436F975A92DA /* Header Files */ = {
-			isa = PBXGroup;
-			children = (
-				6C1D8684CFC5450DB7935A31 /* util */,
-				FE2BF9BAD2A4449A973F06B4 /* thread */,
-				0E0B4659DA6F40AABD7363A4 /* network */,
-				0C7FDFB323BA422CAD676686 /* closure */,
-				62D346491EF04B35A23297B6 /* memory */,
-				21167704445C446781391A53 /* mysql */,
-				2C09AC7C63304E0D8FB91D7F /* fcgid */,
-			);
-			name = "Header Files";
-			sourceTree = "<group>";
-		};
-		45914FA560F34862AE2BA0A4 = {
-			isa = PBXGroup;
-			children = (
-				EACA43C0D4D3480EAF5E9757 /* minihttpd */,
-				4DB8DB4A406A47A59BA6172E /* ALL_BUILD */,
-				973EF20E390C4C2CBBB3F9BB /* Products */,
+				E896164E24055DD500EF33E5 /* source */,
+				E892245A24055D92006A1142 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		4DB8DB4A406A47A59BA6172E /* ALL_BUILD */ = {
+		E892245A24055D92006A1142 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				00EC3A4CFB784DB09664BD25 /* CMake Rules */,
-				4D1A54DD5E774AFAB48718CF /* CMakeLists.txt */,
-			);
-			name = ALL_BUILD;
-			sourceTree = "<group>";
-		};
-		5DABADD37FE5491FA80D16FD /* mysql */ = {
-			isa = PBXGroup;
-			children = (
-				FB58F4FAEAB54AE09FE2B763 /* mysql.cpp */,
-			);
-			name = mysql;
-			sourceTree = "<group>";
-		};
-		62D346491EF04B35A23297B6 /* memory */ = {
-			isa = PBXGroup;
-			children = (
-				35DCD86A9B794BD9AE03EA59 /* buddy_alloc.h */,
-				0E4F0B8DB1644551A097E200 /* simple_alloc.h */,
-				2CD8926A38904286A72226B7 /* slab_alloc.h */,
-			);
-			name = memory;
-			sourceTree = "<group>";
-		};
-		64D58A76AE464A32BD0D9535 /* memory */ = {
-			isa = PBXGroup;
-			children = (
-				E4C1B690F6DC4E95B1C12033 /* buddy_alloc.cpp */,
-				3A8AE7EE1FD147ADA7490445 /* simple_alloc.cpp */,
-				122B35E8461543C6ACA758D8 /* slab_alloc.cpp */,
-			);
-			name = memory;
-			sourceTree = "<group>";
-		};
-		6C1D8684CFC5450DB7935A31 /* util */ = {
-			isa = PBXGroup;
-			children = (
-				20849A202AD14F0983F091FE /* algorithm.h */,
-				F2DCD3F8668845399095E649 /* atomic.h */,
-				801853267A364F2B9DF01DF0 /* buffer_queue.h */,
-				AA41FB7BA54841C2B2E607A6 /* config.h */,
-				0C4652ED71F14668A1F7877C /* scoped_ptr.h */,
-				173900C892E24D919D26D26E /* scoped_ref.h */,
-				689BABF10A264433AF400018 /* simple_list.h */,
-				A18F0DAFAE214A7FA4517B14 /* simple_queue.h */,
-				889603C48A314093819999F8 /* string.h */,
-				12ACF3F9A8C144F29F7FB018 /* template_util.h */,
-				1F5AD2701CE14A5D845646C9 /* weak_ptr.h */,
-			);
-			name = util;
-			sourceTree = "<group>";
-		};
-		83AB706486304DE693CA7867 /* util */ = {
-			isa = PBXGroup;
-			children = (
-				DC0ACFC0785343E8A9425E69 /* algorithm.cpp */,
-				3D64D48164774D659BE5964C /* buffer_queue.cpp */,
-				39D2DC5AE4FA4C4D9278D113 /* string.cpp */,
-			);
-			name = util;
-			sourceTree = "<group>";
-		};
-		973EF20E390C4C2CBBB3F9BB /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				FB10EC6A82D94FCBA5661BC2 /* minihttpd */,
+				E892245924055D92006A1142 /* minihttpd */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		BCCB66575B5B4B99BA7A52B1 /* network */ = {
+		E896164E24055DD500EF33E5 /* source */ = {
 			isa = PBXGroup;
 			children = (
-				11250020D38241B7B71BC523 /* addrinfo.cpp */,
-				94342B07B3CF4DDAAEC9E096 /* epoll.cpp */,
-				36C45A754C5F4C7495FE6B5C /* socket.cpp */,
+				E896165624055E4800EF33E5 /* test */,
+				E896165524055E1800EF33E5 /* closure */,
+				E896165424055E0E00EF33E5 /* thread */,
+				E896165324055E0500EF33E5 /* util */,
+				E896165224055DFF00EF33E5 /* mysql */,
+				E896165124055DF700EF33E5 /* memory */,
+				E896165024055DEA00EF33E5 /* network */,
+				E896164F24055DE200EF33E5 /* httpd */,
+			);
+			name = source;
+			sourceTree = "<group>";
+		};
+		E896164F24055DE200EF33E5 /* httpd */ = {
+			isa = PBXGroup;
+			children = (
+				E89616AA24055EC800EF33E5 /* connection.cpp */,
+				E89616AB24055EC800EF33E5 /* connection.h */,
+				E89616A824055EC800EF33E5 /* constants.cpp */,
+				E89616A924055EC800EF33E5 /* constants.h */,
+				E896169F24055EC800EF33E5 /* gtree.cpp */,
+				E89616A524055EC800EF33E5 /* gtree.h */,
+				E89616A024055EC800EF33E5 /* gzip.cpp */,
+				E89616AE24055EC800EF33E5 /* gzip.h */,
+				E89616A624055EC800EF33E5 /* request.cpp */,
+				E89616A724055EC800EF33E5 /* request.h */,
+				E89616A224055EC800EF33E5 /* response.cpp */,
+				E89616A424055EC800EF33E5 /* response.h */,
+				E89616A324055EC800EF33E5 /* server.cpp */,
+				E89616A124055EC800EF33E5 /* server.h */,
+				E89616AC24055EC800EF33E5 /* worker.cpp */,
+				E89616AD24055EC800EF33E5 /* worker.h */,
+			);
+			name = httpd;
+			sourceTree = "<group>";
+		};
+		E896165024055DEA00EF33E5 /* network */ = {
+			isa = PBXGroup;
+			children = (
+				E896169A24055EBB00EF33E5 /* addrinfo.cpp */,
+				E896169B24055EBB00EF33E5 /* addrinfo.h */,
+				E896169624055EBB00EF33E5 /* epoll.cpp */,
+				E896169824055EBB00EF33E5 /* epoll.h */,
+				E896169924055EBB00EF33E5 /* socket.cpp */,
+				E896169724055EBB00EF33E5 /* socket.h */,
 			);
 			name = network;
 			sourceTree = "<group>";
 		};
-		DABB8E8AF60D448BA33E6B20 /* Source Files */ = {
+		E896165124055DF700EF33E5 /* memory */ = {
 			isa = PBXGroup;
 			children = (
-				BCCB66575B5B4B99BA7A52B1 /* network */,
-				64D58A76AE464A32BD0D9535 /* memory */,
-				EEAB42ECABC34DA1B8B5DB19 /* test */,
-				83AB706486304DE693CA7867 /* util */,
-				5DABADD37FE5491FA80D16FD /* mysql */,
-				336D736262874431A2504449 /* fcgid */,
-				113A25F22D714F9285E57D98 /* thread */,
+				E896168F24055EB000EF33E5 /* buddy_alloc.cpp */,
+				E896169124055EB000EF33E5 /* buddy_alloc.h */,
+				E896168E24055EB000EF33E5 /* simple_alloc.cpp */,
+				E896168D24055EB000EF33E5 /* simple_alloc.h */,
+				E896169224055EB000EF33E5 /* slab_alloc.cpp */,
+				E896169024055EB000EF33E5 /* slab_alloc.h */,
 			);
-			name = "Source Files";
+			name = memory;
 			sourceTree = "<group>";
 		};
-		EACA43C0D4D3480EAF5E9757 /* minihttpd */ = {
+		E896165224055DFF00EF33E5 /* mysql */ = {
 			isa = PBXGroup;
 			children = (
-				34284E685233436F975A92DA /* Header Files */,
-				DABB8E8AF60D448BA33E6B20 /* Source Files */,
-				853014F596F34D49AF04CD54 /* CMakeLists.txt */,
+				E896168B24055EA400EF33E5 /* mysql.cpp */,
+				E896168A24055EA400EF33E5 /* mysql.h */,
 			);
-			name = minihttpd;
+			name = mysql;
 			sourceTree = "<group>";
 		};
-		EEAB42ECABC34DA1B8B5DB19 /* test */ = {
+		E896165324055E0500EF33E5 /* util */ = {
 			isa = PBXGroup;
 			children = (
-				FF95A727E2114029AC211834 /* bind.cpp */,
-				25BEC0F7BF6842C8806B0E33 /* buddy_alloc.cpp */,
-				859556EAC4BD40A0841ED6AE /* echo_tcp_clt.cpp */,
-				87EBFF0D8440439EB867A092 /* echo_tcp_svr.cpp */,
-				D9949A16D2F54D32B5CF194D /* echo_tcp_svr_epoll.cpp */,
-				BEDB7281B31542999CD4CC88 /* echo_udp_clt.cpp */,
-				4037AB62A43540EEAE101BA9 /* echo_udp_svr.cpp */,
-				1902E486BD094440AD1448C8 /* mysql.cpp */,
-				C511B01CE8C449BF98D94A8E /* slab_alloc.cpp */,
-				A701A444057C483D92330919 /* string.cpp */,
+				E896167D24055E9A00EF33E5 /* algorithm.cpp */,
+				E896168024055E9A00EF33E5 /* algorithm.h */,
+				E896167B24055E9A00EF33E5 /* atomic.h */,
+				E896168424055E9A00EF33E5 /* buffer_queue.cpp */,
+				E896168124055E9A00EF33E5 /* buffer_queue.h */,
+				E896167924055E9A00EF33E5 /* config.h */,
+				E896168524055E9A00EF33E5 /* scoped_ptr.h */,
+				E896167F24055E9A00EF33E5 /* scoped_ref.h */,
+				E896168224055E9A00EF33E5 /* simple_list.h */,
+				E896167A24055E9A00EF33E5 /* simple_queue.h */,
+				E896168624055E9A00EF33E5 /* string.cpp */,
+				E896168324055E9A00EF33E5 /* string.h */,
+				E896167C24055E9A00EF33E5 /* template_util.h */,
+				E896167E24055E9A00EF33E5 /* weak_ptr.h */,
 			);
-			name = test;
+			name = util;
 			sourceTree = "<group>";
 		};
-		FE2BF9BAD2A4449A973F06B4 /* thread */ = {
+		E896165424055E0E00EF33E5 /* thread */ = {
 			isa = PBXGroup;
 			children = (
-				5FC1CF76B0DA47AFBC7A386A /* runnable.h */,
-				8E551348194A4F51BA11A11C /* thread.h */,
+				E896167524055E8E00EF33E5 /* runnable.h */,
+				E896167724055E8E00EF33E5 /* thread.cpp */,
+				E896167624055E8E00EF33E5 /* thread.h */,
 			);
 			name = thread;
+			sourceTree = "<group>";
+		};
+		E896165524055E1800EF33E5 /* closure */ = {
+			isa = PBXGroup;
+			children = (
+				E896167024055E8100EF33E5 /* bind_helper.h */,
+				E896166C24055E8100EF33E5 /* bind_state.h */,
+				E896166F24055E8100EF33E5 /* bind.h */,
+				E896167324055E8100EF33E5 /* callback_param_traits.h */,
+				E896167424055E8100EF33E5 /* callback.h */,
+				E896166D24055E8100EF33E5 /* functor_traits.h */,
+				E896167224055E8100EF33E5 /* invoker_helper.h */,
+				E896167124055E8100EF33E5 /* invoker.h */,
+				E896166E24055E8100EF33E5 /* runnable_adapter.h */,
+			);
+			name = closure;
+			sourceTree = "<group>";
+		};
+		E896165624055E4800EF33E5 /* test */ = {
+			isa = PBXGroup;
+			children = (
+				E896165C24055E6900EF33E5 /* bind.cpp */,
+				E896165D24055E6900EF33E5 /* buddy_alloc.cpp */,
+				E896165924055E6900EF33E5 /* echo_tcp_clt.cpp */,
+				E896165F24055E6900EF33E5 /* echo_tcp_svr_epoll.cpp */,
+				E896165B24055E6900EF33E5 /* echo_tcp_svr.cpp */,
+				E896166024055E6900EF33E5 /* echo_udp_clt.cpp */,
+				E896165E24055E6900EF33E5 /* echo_udp_svr.cpp */,
+				E896165A24055E6900EF33E5 /* mysql.cpp */,
+				E896165724055E6900EF33E5 /* slab_alloc.cpp */,
+				E896165824055E6900EF33E5 /* string.cpp */,
+			);
+			name = test;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		50D5D8E75D3940DC9D9ED6F3 /* minihttpd */ = {
+		E892245824055D92006A1142 /* minihttpd */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 0550A40F77D249DAA63BAFD6 /* Build configuration list for PBXNativeTarget "minihttpd" */;
+			buildConfigurationList = E892246024055D92006A1142 /* Build configuration list for PBXNativeTarget "minihttpd" */;
 			buildPhases = (
-				08F07AB0AB164778BF7B8562 /* Sources */,
+				E892245524055D92006A1142 /* Sources */,
+				E892245624055D92006A1142 /* Frameworks */,
+				E892245724055D92006A1142 /* CopyFiles */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				19F46A5CAED8407EBA013D7B /* PBXTargetDependency */,
 			);
 			name = minihttpd;
 			productName = minihttpd;
-			productReference = FB10EC6A82D94FCBA5661BC2 /* minihttpd */;
+			productReference = E892245924055D92006A1142 /* minihttpd */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		6956E74353A442CAA5567834 /* Project object */ = {
+		E892245124055D92006A1142 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1110;
+				ORGANIZATIONNAME = linshaohua;
+				TargetAttributes = {
+					E892245824055D92006A1142 = {
+						CreatedOnToolsVersion = 11.1;
+					};
+				};
 			};
-			buildConfigurationList = 9DFE2AF118A54954B4CADD75 /* Build configuration list for PBXProject "minihttpd" */;
-			compatibilityVersion = "Xcode 3.2";
+			buildConfigurationList = E892245424055D92006A1142 /* Build configuration list for PBXProject "minihttpd" */;
+			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = 45914FA560F34862AE2BA0A4;
+			mainGroup = E892245024055D92006A1142;
+			productRefGroup = E892245A24055D92006A1142 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				2FC79311C9EE45BF83553BF7 /* ALL_BUILD */,
-				79727764441F41C99732C6BE /* ZERO_CHECK */,
-				7A06CCC1C025408388A1CC08 /* install */,
-				50D5D8E75D3940DC9D9ED6F3 /* minihttpd */,
+				E892245824055D92006A1142 /* minihttpd */,
 			);
 		};
 /* End PBXProject section */
 
-/* Begin PBXShellScriptBuildPhase section */
-		7DEBAE4D72D946778F79A8C7 /* CMake Rules */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			name = "CMake Rules";
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "make -C /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug -f /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug/CMakeScripts/ALL_BUILD_cmakeRulesBuildPhase.make$CONFIGURATION all";
-			showEnvVarsInLog = 0;
-		};
-		82BD9634CDCD4B6A88466726 /* CMake Rules */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			name = "CMake Rules";
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "make -C /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug -f /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug/CMakeScripts/ZERO_CHECK_cmakeRulesBuildPhase.make$CONFIGURATION all";
-			showEnvVarsInLog = 0;
-		};
-		DA7FE995AE7E42348ADCDD81 /* CMake PostBuild Rules */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			name = "CMake PostBuild Rules";
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "make -C /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug -f /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug/CMakeScripts/install_postBuildPhase.make$CONFIGURATION all";
-			showEnvVarsInLog = 0;
-		};
-/* End PBXShellScriptBuildPhase section */
-
 /* Begin PBXSourcesBuildPhase section */
-		08F07AB0AB164778BF7B8562 /* Sources */ = {
+		E892245524055D92006A1142 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D606A5F3164848FFB0605037 /* fcgid.cpp in Sources */,
-				21CF08993FFA49EC921976E8 /* buddy_alloc.cpp in Sources */,
-				A3B1ACD139EC4AB0AA93675C /* simple_alloc.cpp in Sources */,
-				BD157BF8B54748629B55FB6C /* slab_alloc.cpp in Sources */,
-				5D8705D01A314F0E94AC3006 /* mysql.cpp in Sources */,
-				5CD2DD036AE7497FA4636B57 /* addrinfo.cpp in Sources */,
-				57CAF690BC884EBDB4C45458 /* epoll.cpp in Sources */,
-				0E1C4E65617B4E4A86C04E6B /* socket.cpp in Sources */,
-				B77A0028FD1F4FE3BE8710B3 /* bind.cpp in Sources */,
-				E6DA552EBB334221BCA843BD /* buddy_alloc.cpp in Sources */,
-				74AE92869CF3468BA1C4335A /* echo_tcp_clt.cpp in Sources */,
-				5DB4AC836B4B4F34B140499B /* echo_tcp_svr.cpp in Sources */,
-				7E84BFE7190B415BAF103FC0 /* echo_tcp_svr_epoll.cpp in Sources */,
-				2CAC45002BA54617BF472150 /* echo_udp_clt.cpp in Sources */,
-				CCBB64299B5F4DECA9D0D78D /* echo_udp_svr.cpp in Sources */,
-				4085DAA3132A491A9BCC8314 /* mysql.cpp in Sources */,
-				70CB192BA68646A3A19E57EC /* slab_alloc.cpp in Sources */,
-				3AB94B1EF76F4C1F8726FF2D /* string.cpp in Sources */,
-				98023CF6E35443C694EB8895 /* thread.cpp in Sources */,
-				95253D8165DD4303AA5ADF41 /* algorithm.cpp in Sources */,
-				5843CBE62BE14992B57D8D95 /* buffer_queue.cpp in Sources */,
-				3738EF86AF844AE6A8338FE7 /* string.cpp in Sources */,
+				E896167824055E8E00EF33E5 /* thread.cpp in Sources */,
+				E896166524055E6900EF33E5 /* mysql.cpp in Sources */,
+				E896166A24055E6900EF33E5 /* echo_tcp_svr_epoll.cpp in Sources */,
+				E89616B024055EC800EF33E5 /* gzip.cpp in Sources */,
+				E896166324055E6900EF33E5 /* string.cpp in Sources */,
+				E896169C24055EBB00EF33E5 /* epoll.cpp in Sources */,
+				E896166924055E6900EF33E5 /* echo_udp_svr.cpp in Sources */,
+				E896169524055EB000EF33E5 /* slab_alloc.cpp in Sources */,
+				E896169324055EB000EF33E5 /* simple_alloc.cpp in Sources */,
+				E89616B624055EC800EF33E5 /* worker.cpp in Sources */,
+				E896169424055EB000EF33E5 /* buddy_alloc.cpp in Sources */,
+				E896168C24055EA400EF33E5 /* mysql.cpp in Sources */,
+				E896168724055E9A00EF33E5 /* algorithm.cpp in Sources */,
+				E89616B124055EC800EF33E5 /* response.cpp in Sources */,
+				E896166B24055E6900EF33E5 /* echo_udp_clt.cpp in Sources */,
+				E89616B424055EC800EF33E5 /* constants.cpp in Sources */,
+				E896166824055E6900EF33E5 /* buddy_alloc.cpp in Sources */,
+				E89616B324055EC800EF33E5 /* request.cpp in Sources */,
+				E896168824055E9A00EF33E5 /* buffer_queue.cpp in Sources */,
+				E896166724055E6900EF33E5 /* bind.cpp in Sources */,
+				E89616B524055EC800EF33E5 /* connection.cpp in Sources */,
+				E896166624055E6900EF33E5 /* echo_tcp_svr.cpp in Sources */,
+				E896169D24055EBB00EF33E5 /* socket.cpp in Sources */,
+				E89616AF24055EC800EF33E5 /* gtree.cpp in Sources */,
+				E896166424055E6900EF33E5 /* echo_tcp_clt.cpp in Sources */,
+				E896168924055E9A00EF33E5 /* string.cpp in Sources */,
+				E896169E24055EBB00EF33E5 /* addrinfo.cpp in Sources */,
+				E89616B224055EC800EF33E5 /* server.cpp in Sources */,
+				E896166224055E6900EF33E5 /* slab_alloc.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
-/* Begin PBXTargetDependency section */
-		19F46A5CAED8407EBA013D7B /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 79727764441F41C99732C6BE /* ZERO_CHECK */;
-			targetProxy = BD2042ABCC5541C5B2E14DD9 /* PBXContainerItemProxy */;
-		};
-		32AD6C0158A047E59414E25B /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 50D5D8E75D3940DC9D9ED6F3 /* minihttpd */;
-			targetProxy = 2AD7A97BD2164BDBA7AD6C28 /* PBXContainerItemProxy */;
-		};
-		3B7D7194380E49358F1447D0 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 79727764441F41C99732C6BE /* ZERO_CHECK */;
-			targetProxy = 4666091247234AAD83F4AE63 /* PBXContainerItemProxy */;
-		};
-		E67EED21433449B09E076BE6 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 2FC79311C9EE45BF83553BF7 /* ALL_BUILD */;
-			targetProxy = A9C990102F2E4657B2ED9FC3 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
 /* Begin XCBuildConfiguration section */
-		10A5F2B82E9D46FF82B906BD /* Debug */ = {
+		E892245E24055D92006A1142 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = x86_64;
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				ONLY_ACTIVE_ARCH = NO;
-				OTHER_LDFLAGS = " ";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = install;
-				SECTORDER_FLAGS = "";
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug;
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
 					"$(inherited)",
 				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
 			};
 			name = Debug;
 		};
-		261B4C3BB9DA425286E52BB4 /* Release */ = {
+		E892245F24055D92006A1142 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = " ";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ZERO_CHECK;
-				SECTORDER_FLAGS = "";
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug;
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-					"$(inherited)",
-				);
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
 			};
 			name = Release;
 		};
-		29D3E9590D9B472DB5D64F7C /* MinSizeRel */ = {
+		E892246124055D92006A1142 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = " ";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ZERO_CHECK;
-				SECTORDER_FLAGS = "";
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug;
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-					"$(inherited)",
-				);
-			};
-			name = MinSizeRel;
-		};
-		360DAC9CF2B34C1C9189157C /* RelWithDebInfo */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = x86_64;
-				COMBINE_HIDPI_IMAGES = YES;
-				CONFIGURATION_BUILD_DIR = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug/bin/RelWithDebInfo;
-				EXECUTABLE_PREFIX = "";
-				EXECUTABLE_SUFFIX = "";
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 2;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
-					"'ABTOR=1'",
-					_ABTOR_BUILD_TARGET_EXISTS,
-					_ABTOR_BUILD_TARGET_MAC,
-					ABTOR_MAC,
-					ABTOR_DEBUG,
-					"'DEBUG=1'",
-					PLATFORM_MAC,
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				CODE_SIGN_STYLE = Automatic;
 				HEADER_SEARCH_PATHS = (
 					/Users/linshaohua/workspace/code/minihttpd,
 					/Users/linshaohua/Applications/mysql/include,
-					/usr/local/include,
 				);
-				INSTALL_PATH = "";
-				LD_RUNPATH_SEARCH_PATHS = /Users/linshaohua/Applications/mysql/lib;
 				LIBRARY_SEARCH_PATHS = /Users/linshaohua/Applications/mysql/lib;
-				ONLY_ACTIVE_ARCH = NO;
-				OTHER_CPLUSPLUSFLAGS = "              -DNDEBUG  ";
 				OTHER_LDFLAGS = (
-					"-Wl,-search_paths_first",
-					"-Wl,-headerpad_max_install_names",
 					"-lmysqlclient",
 					"-lssl",
 					"-lcrypto",
-					"-lpthread",
 				);
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = minihttpd;
-				SECTORDER_FLAGS = "";
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug;
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-					"$(inherited)",
-				);
-			};
-			name = RelWithDebInfo;
-		};
-		45E8A7FF70EF453E9B683FEC /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = " ";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ALL_BUILD;
-				SECTORDER_FLAGS = "";
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug;
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-					"$(inherited)",
-				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
 		};
-		597A640DA8A941AB8F0AD5DB /* RelWithDebInfo */ = {
+		E892246224055D92006A1142 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = " ";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ALL_BUILD;
-				SECTORDER_FLAGS = "";
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug;
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-					"$(inherited)",
-				);
-			};
-			name = RelWithDebInfo;
-		};
-		629AAF4514B44CE9A14E7512 /* RelWithDebInfo */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = x86_64;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk;
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug/build;
-			};
-			name = RelWithDebInfo;
-		};
-		6A7C94EED9FD4BD09366B10B /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = x86_64;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk;
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug/build;
-			};
-			name = Debug;
-		};
-		745BDBB6433F48778178BAD3 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = x86_64;
-				COMBINE_HIDPI_IMAGES = YES;
-				CONFIGURATION_BUILD_DIR = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug/bin/Debug;
-				EXECUTABLE_PREFIX = "";
-				EXECUTABLE_SUFFIX = "";
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
-					"'ABTOR=1'",
-					_ABTOR_BUILD_TARGET_EXISTS,
-					_ABTOR_BUILD_TARGET_MAC,
-					ABTOR_MAC,
-					ABTOR_DEBUG,
-					"'DEBUG=1'",
-					PLATFORM_MAC,
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				CODE_SIGN_STYLE = Automatic;
 				HEADER_SEARCH_PATHS = (
 					/Users/linshaohua/workspace/code/minihttpd,
 					/Users/linshaohua/Applications/mysql/include,
-					/usr/local/include,
 				);
-				INSTALL_PATH = "";
-				LD_RUNPATH_SEARCH_PATHS = /Users/linshaohua/Applications/mysql/lib;
 				LIBRARY_SEARCH_PATHS = /Users/linshaohua/Applications/mysql/lib;
-				ONLY_ACTIVE_ARCH = NO;
-				OTHER_CPLUSPLUSFLAGS = "           ";
 				OTHER_LDFLAGS = (
-					"-Wl,-search_paths_first",
-					"-Wl,-headerpad_max_install_names",
 					"-lmysqlclient",
 					"-lssl",
 					"-lcrypto",
-					"-lpthread",
 				);
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = minihttpd;
-				SECTORDER_FLAGS = "";
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug;
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-					"$(inherited)",
-				);
-			};
-			name = Debug;
-		};
-		792E695B0F354FEB8A897D84 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = " ";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ALL_BUILD;
-				SECTORDER_FLAGS = "";
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug;
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-					"$(inherited)",
-				);
-			};
-			name = Release;
-		};
-		A108404C587A4F3EB78CD929 /* MinSizeRel */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = x86_64;
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				ONLY_ACTIVE_ARCH = NO;
-				OTHER_LDFLAGS = " ";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = install;
-				SECTORDER_FLAGS = "";
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug;
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-					"$(inherited)",
-				);
-			};
-			name = MinSizeRel;
-		};
-		A8479CC4A0AD4F1F8171F59B /* MinSizeRel */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = x86_64;
-				COMBINE_HIDPI_IMAGES = YES;
-				CONFIGURATION_BUILD_DIR = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug/bin/MinSizeRel;
-				EXECUTABLE_PREFIX = "";
-				EXECUTABLE_SUFFIX = "";
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = s;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
-					"'ABTOR=1'",
-					_ABTOR_BUILD_TARGET_EXISTS,
-					_ABTOR_BUILD_TARGET_MAC,
-					ABTOR_MAC,
-					ABTOR_DEBUG,
-					"'DEBUG=1'",
-					PLATFORM_MAC,
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				HEADER_SEARCH_PATHS = (
-					/Users/linshaohua/workspace/code/minihttpd,
-					/Users/linshaohua/Applications/mysql/include,
-					/usr/local/include,
-				);
-				INSTALL_PATH = "";
-				LD_RUNPATH_SEARCH_PATHS = /Users/linshaohua/Applications/mysql/lib;
-				LIBRARY_SEARCH_PATHS = /Users/linshaohua/Applications/mysql/lib;
-				ONLY_ACTIVE_ARCH = NO;
-				OTHER_CPLUSPLUSFLAGS = "           -DNDEBUG  ";
-				OTHER_LDFLAGS = (
-					"-Wl,-search_paths_first",
-					"-Wl,-headerpad_max_install_names",
-					"-lmysqlclient",
-					"-lssl",
-					"-lcrypto",
-					"-lpthread",
-				);
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = minihttpd;
-				SECTORDER_FLAGS = "";
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug;
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-					"$(inherited)",
-				);
-			};
-			name = MinSizeRel;
-		};
-		C3383816E375477082289BE1 /* RelWithDebInfo */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = " ";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ZERO_CHECK;
-				SECTORDER_FLAGS = "";
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug;
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-					"$(inherited)",
-				);
-			};
-			name = RelWithDebInfo;
-		};
-		CE05DE1BE5054792A155F178 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = " ";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ZERO_CHECK;
-				SECTORDER_FLAGS = "";
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug;
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-					"$(inherited)",
-				);
-			};
-			name = Debug;
-		};
-		DA30B7EE02D24F8B86AD2BD7 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = x86_64;
-				COMBINE_HIDPI_IMAGES = YES;
-				CONFIGURATION_BUILD_DIR = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug/bin/Release;
-				EXECUTABLE_PREFIX = "";
-				EXECUTABLE_SUFFIX = "";
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 3;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
-					"'ABTOR=1'",
-					_ABTOR_BUILD_TARGET_EXISTS,
-					_ABTOR_BUILD_TARGET_MAC,
-					ABTOR_MAC,
-					ABTOR_DEBUG,
-					"'DEBUG=1'",
-					PLATFORM_MAC,
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				HEADER_SEARCH_PATHS = (
-					/Users/linshaohua/workspace/code/minihttpd,
-					/Users/linshaohua/Applications/mysql/include,
-					/usr/local/include,
-				);
-				INSTALL_PATH = "";
-				LD_RUNPATH_SEARCH_PATHS = /Users/linshaohua/Applications/mysql/lib;
-				LIBRARY_SEARCH_PATHS = /Users/linshaohua/Applications/mysql/lib;
-				ONLY_ACTIVE_ARCH = NO;
-				OTHER_CPLUSPLUSFLAGS = "           -DNDEBUG  ";
-				OTHER_LDFLAGS = (
-					"-Wl,-search_paths_first",
-					"-Wl,-headerpad_max_install_names",
-					"-lmysqlclient",
-					"-lssl",
-					"-lcrypto",
-					"-lpthread",
-				);
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = minihttpd;
-				SECTORDER_FLAGS = "";
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug;
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-					"$(inherited)",
-				);
-			};
-			name = Release;
-		};
-		DA966AC2BA2B44FD96636B40 /* MinSizeRel */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				OTHER_LDFLAGS = " ";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = ALL_BUILD;
-				SECTORDER_FLAGS = "";
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug;
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-					"$(inherited)",
-				);
-			};
-			name = MinSizeRel;
-		};
-		E72EF3A0529B40298D3A2D8E /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = x86_64;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk;
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug/build;
-			};
-			name = Release;
-		};
-		F2246B51D91749CEAD102CBE /* MinSizeRel */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = x86_64;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk;
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug/build;
-			};
-			name = MinSizeRel;
-		};
-		F3C28690ABBD497DA3473D93 /* RelWithDebInfo */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = x86_64;
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				ONLY_ACTIVE_ARCH = NO;
-				OTHER_LDFLAGS = " ";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = install;
-				SECTORDER_FLAGS = "";
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug;
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-					"$(inherited)",
-				);
-			};
-			name = RelWithDebInfo;
-		};
-		F671DF70AAE54FE0834BC909 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ARCHS = x86_64;
-				COMBINE_HIDPI_IMAGES = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				INSTALL_PATH = "";
-				ONLY_ACTIVE_ARCH = NO;
-				OTHER_LDFLAGS = " ";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = install;
-				SECTORDER_FLAGS = "";
-				SYMROOT = /Users/linshaohua/workspace/code/minihttpd/project/mac/x64/debug;
-				USE_HEADERMAP = NO;
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-					"$(inherited)",
-				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		0550A40F77D249DAA63BAFD6 /* Build configuration list for PBXNativeTarget "minihttpd" */ = {
+		E892245424055D92006A1142 /* Build configuration list for PBXProject "minihttpd" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				745BDBB6433F48778178BAD3 /* Debug */,
-				DA30B7EE02D24F8B86AD2BD7 /* Release */,
-				A8479CC4A0AD4F1F8171F59B /* MinSizeRel */,
-				360DAC9CF2B34C1C9189157C /* RelWithDebInfo */,
+				E892245E24055D92006A1142 /* Debug */,
+				E892245F24055D92006A1142 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
+			defaultConfigurationName = Release;
 		};
-		35CE29C9962F4E1B97BDFCF5 /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */ = {
+		E892246024055D92006A1142 /* Build configuration list for PBXNativeTarget "minihttpd" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				45E8A7FF70EF453E9B683FEC /* Debug */,
-				792E695B0F354FEB8A897D84 /* Release */,
-				DA966AC2BA2B44FD96636B40 /* MinSizeRel */,
-				597A640DA8A941AB8F0AD5DB /* RelWithDebInfo */,
+				E892246124055D92006A1142 /* Debug */,
+				E892246224055D92006A1142 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
-		9DFE2AF118A54954B4CADD75 /* Build configuration list for PBXProject "minihttpd" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				6A7C94EED9FD4BD09366B10B /* Debug */,
-				E72EF3A0529B40298D3A2D8E /* Release */,
-				F2246B51D91749CEAD102CBE /* MinSizeRel */,
-				629AAF4514B44CE9A14E7512 /* RelWithDebInfo */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
-		DE71A2228D20445EBFC30797 /* Build configuration list for PBXAggregateTarget "ZERO_CHECK" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				CE05DE1BE5054792A155F178 /* Debug */,
-				261B4C3BB9DA425286E52BB4 /* Release */,
-				29D3E9590D9B472DB5D64F7C /* MinSizeRel */,
-				C3383816E375477082289BE1 /* RelWithDebInfo */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
-		E60BCBCAB6604698B38A7175 /* Build configuration list for PBXAggregateTarget "install" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				10A5F2B82E9D46FF82B906BD /* Debug */,
-				F671DF70AAE54FE0834BC909 /* Release */,
-				A108404C587A4F3EB78CD929 /* MinSizeRel */,
-				F3C28690ABBD497DA3473D93 /* RelWithDebInfo */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 6956E74353A442CAA5567834 /* Project object */;
+	rootObject = E892245124055D92006A1142 /* Project object */;
 }

@@ -21,8 +21,7 @@ _multipartPos(0),
 _multipartFd(-1) {
 }
 
-bool Request::parseHeaders(const String &buf) {
-    _headers = buf;
+void Request::parseHeaders() {
     _uri = extractBetween(_headers, ' ', ' ');
     
     size_t pos = _headers.find("Content-Length");
@@ -44,8 +43,6 @@ bool Request::parseHeaders(const String &buf) {
     } else if (_contentLength > _content.length()) {
         _content.resize(_contentLength);
     }
-    
-    return _is100Continue || !_contentLength;
 }
 
 String Request::getHeader(const char *field) const {

@@ -9,7 +9,7 @@ using util::String;
 class Request {
 public:
     Request();
-    bool parseHeaders(const String &headers);
+    void parseHeaders();
     bool parseMultipart();
     
     String getHeader(const char *field) const;
@@ -22,6 +22,8 @@ public:
     char *contentPos() { return (char*)_content.data() + _contentPos; }
     size_t contentLength() { return _contentLength - _contentPos; }
     bool isParseContentDone(size_t pos) { return (_contentPos += pos) >= _contentLength; }
+    String &headerBuffer() { return _headers; }
+    bool hasContent() const { return !_is100Continue && _contentLength; }
     
 private:
     struct MultipartHeader {

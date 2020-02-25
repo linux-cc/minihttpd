@@ -61,7 +61,7 @@ bool BufferQueue::dequeueUntil(String &buf, const char *pattern) {
     String tmp;
     while (s <= tlen - plen) {
         j = 0;
-        int i = (_readPos + s) % _capacity;
+        size_t i = (_readPos + s) % _capacity;
         while (_buffer[(i + j) % _capacity] == pattern[j]) {
             ++j;
             if (j >= plen) {
