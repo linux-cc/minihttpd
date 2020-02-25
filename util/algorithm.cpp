@@ -54,7 +54,7 @@ size_t sundaySearch(const char *text, const char *pattern, size_t searchLen) {
         _move[i] = plen + 1;
     }
     for (int i = 0; i < plen; ++i) {
-        _move[pattern[i]] = plen - i;
+        _move[int(pattern[i])] = plen - i;
     }
     
     int s = 0, j;
@@ -66,7 +66,7 @@ size_t sundaySearch(const char *text, const char *pattern, size_t searchLen) {
                 return s;
             }
         }
-        s += _move[text[s + plen]];
+        s += _move[int(text[s + plen])];
     }
     
     return -1;

@@ -1,5 +1,6 @@
 #include "network/socket.h"
 #include "network/epoll.h"
+#include <errno.h>
 #include <vector>
 
 using std::vector;

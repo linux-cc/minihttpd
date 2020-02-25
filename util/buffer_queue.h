@@ -16,7 +16,7 @@ public:
     bool enqueue(const void *buf, size_t size);
     
     bool dequeue(void *buf, size_t size);
-    void dequeueAll(String &buf);
+    bool dequeueAll(String &buf);
     bool dequeueUntil(String &buf, const char *pattern);
     
     int getWriteIov(struct iovec iov[2]);

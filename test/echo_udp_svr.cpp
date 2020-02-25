@@ -1,4 +1,5 @@
 #include "network/socket.h"
+#include <errno.h>
 #include <stdio.h>
 
 using namespace network;

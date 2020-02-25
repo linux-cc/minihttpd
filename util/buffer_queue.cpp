@@ -52,9 +52,9 @@ bool BufferQueue::dequeue(void *buf, size_t size) {
     return true;
 }
 
-void BufferQueue::dequeueAll(String &buf) {
+bool BufferQueue::dequeueAll(String &buf) {
     buf.resize(length());
-    dequeue((char*)buf.data(), length());
+    return dequeue((char*)buf.data(), length());
 }
 
 bool BufferQueue::dequeueUntil(String &buf, const char *pattern) {
@@ -64,7 +64,7 @@ bool BufferQueue::dequeueUntil(String &buf, const char *pattern) {
         _move[i] = plen + 1;
     }
     for (int i = 0; i < plen; ++i) {
-        _move[pattern[i]] = plen - i;
+        _move[int(pattern[i])] = plen - i;
     }
     size_t tlen = length();
     int s = 0, j;
@@ -80,7 +80,7 @@ bool BufferQueue::dequeueUntil(String &buf, const char *pattern) {
                 return true;
             }
         }
-        int mlen = _move[_buffer[i + plen]];
+        int mlen = _move[int(_buffer[i + plen])];
         tmp.append(&_buffer[s], mlen);
         s += mlen;
     }

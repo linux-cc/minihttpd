@@ -1,7 +1,7 @@
 #ifndef __UTIL_SCOPED_PTR_H__
 #define __UTIL_SCOPED_PTR_H__
 
-#include "util/util.h"
+#include "util/template_util.h"
 #include "memory/simple_alloc.h"
 
 namespace util {
@@ -45,7 +45,7 @@ public:
     explicit ScopedPtr(T *p = NULL): _data(p) {}
     ScopedPtr(T *p, const Deleter &d): _data(p, d) {}
     template <typename U, typename V>
-    ScopedPtr(ScopedPtr<U, V> other): _data(other->release(), other->getDeleter()) {
+    ScopedPtr(ScopedPtr<U, V> other): _data(other.release(), other.getDeleter()) {
         COMPILE_ASSERT(!IsArray<U>::value, U_cannot_be_an_array);
     }
     ScopedPtr(const RValue& rvalue) : _data(rvalue.object->_data) {}
@@ -58,8 +58,8 @@ public:
     template <typename U, typename V>
     ScopedPtr &operator=(ScopedPtr<U, V> other) {
         COMPILE_ASSERT(!IsArray<U>::value, U_cannot_be_an_array);
-        reset(other->release());
-        getDeleter() = other->getDeleter();
+        reset(other.release());
+        getDeleter() = other.getDeleter();
         return *this;
     }
     
