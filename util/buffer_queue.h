@@ -10,8 +10,8 @@ namespace util {
 class String;
 class BufferQueue {
 public:
-    BufferQueue(): _readPos(0), _writePos(0) { _buffer = memory::SimpleAlloc<char[]>::New(BUFFER_SIZE); }
-    ~BufferQueue() { memory::SimpleAlloc<char[]>::Delete(_buffer, BUFFER_SIZE); }
+    BufferQueue(int capacity = BUFFER_SIZE): _readPos(0), _writePos(0), _capacity(capacity) { _buffer = memory::SimpleAlloc<char[]>::New(_capacity); }
+    ~BufferQueue() { memory::SimpleAlloc<char[]>::Delete(_buffer, _capacity); }
     
     bool enqueue(const void *buf, size_t size);
     
@@ -26,13 +26,14 @@ public:
     void setReadPos(size_t n);
     
     bool empty() const { return _readPos == _writePos; }
-    bool full() const { return (_writePos + 1) % BUFFER_SIZE == _readPos; }
-    size_t length() const { return _writePos > _readPos ? _writePos - _readPos : BUFFER_SIZE - (_readPos - _writePos); }
+    bool full() const { return (_writePos + 1) % _capacity == _readPos; }
+    size_t length() const { return _writePos >= _readPos ? _writePos - _readPos : _capacity - (_readPos - _writePos); }
     
 private:
     char *_buffer;//空出一字节空间判断空和满
     size_t _readPos;
     size_t _writePos;
+    size_t _capacity;
 };
 
 }

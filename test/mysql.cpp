@@ -3,7 +3,7 @@
 
 using namespace mysql;
 
-int main(int argc, char *argv[]) {
+int testMysql(int argc, char *argv[]) {
     Mysql mysql;
     mysql.connectTimeout(3);
     if (!mysql.connect("linshh", "linshh", "80.209.232.2", 3306)) {

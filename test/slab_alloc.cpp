@@ -6,7 +6,7 @@
 using namespace memory;
 using namespace std;
 
-int main(int argc, char *argv[]) {
+int testSlabAlloc(int argc, char *argv[]) {
     vector<std::pair<void*, int> > v;
     BuddyAlloc buddy(8, 4096);
     SlabAlloc slab(buddy);

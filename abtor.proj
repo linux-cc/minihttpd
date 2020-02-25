@@ -1,0 +1,38 @@
+﻿abtor_settings(
+    abtor_minimum_required='2.4.0',
+    project_name='minihttpd',
+)
+
+##
+lib_publish_version = '1.1.25'
+
+mysql_dir = '/Users/linshaohua/Applications/mysql/'
+
+all_headers = abtor_glob(abtor_path('./src/alc/source/amap_plog_engine/include'),'*.h',True)
+all_sources = abtor_glob(abtor_path('./closure'), '*.cpp')
+all_sources += abtor_glob(abtor_path('./fcgid'), '*.cpp')
+all_sources += abtor_glob(abtor_path('./memory'), '*.cpp')
+all_sources += abtor_glob(abtor_path('./mysql'), '*.cpp')
+all_sources += abtor_glob(abtor_path('./network'), '*.cpp')
+all_sources += abtor_glob(abtor_path('./thread'), '*.cpp')
+all_sources += abtor_glob(abtor_path('./util'), '*.cpp')
+all_sources += abtor_glob(abtor_path('./test'), '*.cpp')
+
+all_headers = abtor_glob(abtor_path('./closure'), '*.h')
+all_headers += abtor_glob(abtor_path('./fcgid'), '*.h')
+all_headers += abtor_glob(abtor_path('./memory'), '*.h')
+all_headers += abtor_glob(abtor_path('./mysql'), '*.h')
+all_headers += abtor_glob(abtor_path('./network'), '*.h')
+all_headers += abtor_glob(abtor_path('./thread'), '*.h')
+all_headers += abtor_glob(abtor_path('./util'), '*.h')
+
+abtor_ccxx_binary(
+    name = 'minihttpd',
+    include_dirs = [ './', mysql_dir + 'include' ],
+    srcs = all_sources,
+    headers = all_headers,
+    mac_deps = [ 'pthread' ],
+    lib_dirs = [ mysql_dir + 'lib' ],
+    link_libs = [ 'mysqlclient', 'ssl', 'crypto' ],
+)
+

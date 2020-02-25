@@ -1,4 +1,3 @@
-#include "util/config.h"
 #include "util/buffer_queue.h"
 #include "util/string.h"
 #include <sys/uio.h>
@@ -6,30 +5,21 @@
 namespace util {
 
 bool BufferQueue::enqueue(const void *buf, size_t size) {
-    if (_writePos >= _readPos) {
-        size_t size1 = BUFFER_SIZE - _writePos;
-        size_t size2 = _readPos;
-        
-        if (size + 1 > size1 + size2) {
-            return false;
-        }
-        if (size <= size1) {
-            memcpy(_buffer + _writePos, buf, size);
-            _writePos += size;
-        } else {
-            memcpy(_buffer + _writePos, buf, size1);
-            memcpy(_buffer, (char*)buf + size1, size - size1);
-            _writePos = size - size1;
-        }
-    } else {
-        size_t size1 = _readPos - _writePos;
-        if (size + 1 > size1) {
-            return false;
-        }
-        memcpy(_buffer + _writePos, buf, size);
-        _writePos += size;
+    if (size + 1 > _capacity - length()) {
+        return false;
     }
     
+    size_t size1 = _capacity - _writePos;
+    if (_writePos < _readPos || size <= size1) {
+        memcpy(_buffer + _writePos, buf, size);
+        _writePos += size;
+    } else {
+        size_t size2 = size - size1;
+        memcpy(_buffer + _writePos, buf, size1);
+        memcpy(_buffer, (char*)buf + size1, size2);
+        _writePos = size2;
+    }
+
     return true;
 }
 
@@ -38,12 +28,12 @@ bool BufferQueue::dequeue(void *buf, size_t size) {
         return false;
     }
     
-    size_t size1 = BUFFER_SIZE - _readPos;
+    size_t size1 = _capacity - _readPos;
     if (_readPos < _writePos || size <= size1) {
         memcpy(buf, _buffer + _readPos, size);
         _readPos += size;
     } else {
-        size_t size2 = MIN(_writePos, size - size1);
+        size_t size2 = size - size1;
         memcpy(buf, _buffer + _readPos, size1);
         memcpy((char*)buf + size1, _buffer, size2);
         _readPos = size2;
@@ -71,8 +61,8 @@ bool BufferQueue::dequeueUntil(String &buf, const char *pattern) {
     String tmp;
     while (s <= tlen - plen) {
         j = 0;
-        size_t i = (_readPos + s) % BUFFER_SIZE;
-        while (_buffer[i + j] == pattern[j]) {
+        int i = (_readPos + s) % _capacity;
+        while (_buffer[(i + j) % _capacity] == pattern[j]) {
             ++j;
             if (j >= plen) {
                 buf = tmp.append(pattern);
@@ -81,7 +71,7 @@ bool BufferQueue::dequeueUntil(String &buf, const char *pattern) {
             }
         }
         int mlen = _move[int(_buffer[i + plen])];
-        tmp.append(&_buffer[s], mlen);
+        tmp.append(&_buffer[i], mlen);
         s += mlen;
     }
     
@@ -95,13 +85,13 @@ int BufferQueue::getWriteIov(struct iovec iov[2]) {
     
     if (_writePos <= _readPos) {
         iov[0].iov_base = _buffer + _writePos;
-        iov[0].iov_len = (_writePos ? _readPos - _writePos : BUFFER_SIZE) - 1;
+        iov[0].iov_len = (_writePos ? _readPos - _writePos : _capacity) - 1;
         return 1;
     }
     
     int n = _readPos ? 2 : 1;
     iov[0].iov_base = _buffer + _writePos;
-    iov[0].iov_len = BUFFER_SIZE - _writePos - (n == 1 ? 1 : 0);
+    iov[0].iov_len = _capacity - _writePos - (n == 1 ? 1 : 0);
     iov[1].iov_base = _buffer;
     iov[1].iov_len = _readPos - (n == 2 ? 1 : 0);
     
@@ -112,7 +102,7 @@ void BufferQueue::setWritePos(size_t n) {
     if (_writePos <= _readPos) {
         _writePos += n;
     } else {
-        size_t size1 = BUFFER_SIZE - _writePos;
+        size_t size1 = _capacity - _writePos;
         if (n < size1) {
             _writePos += n;
         } else {
@@ -133,7 +123,7 @@ int BufferQueue::getReadIov(struct iovec iov[2]) {
     }
     
     iov[0].iov_base = _buffer + _readPos;
-    iov[0].iov_len = BUFFER_SIZE - _readPos;
+    iov[0].iov_len = _capacity - _readPos;
     iov[1].iov_base = _buffer;
     iov[1].iov_len = _writePos;
     
@@ -144,7 +134,7 @@ void BufferQueue::setReadPos(size_t n) {
     if (_readPos < _writePos) {
         _readPos += n;
     } else {
-        size_t size1 = BUFFER_SIZE - _readPos;
+        size_t size1 = _capacity - _readPos;
         if (n < size1) {
             _readPos += n;
         } else {

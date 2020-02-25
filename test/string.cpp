@@ -1,11 +1,12 @@
-#include <stdio.h>
 #include "util/string.h"
+#include "util/buffer_queue.h"
+#include <stdio.h>
 #include <string.h>
 
 //#define P_STR(desc, str)    printf("%s: {%d|%d|%p|%s}\n", desc, str.refCount(), str.length(), str.data(), str.data())
 #define P_STR(fmt, str, ...)    printf(fmt ": {%d|%lu|%p|%s}\n", ##__VA_ARGS__, str.refCount(), str.length(), str.data(), str.data())
 
-int main(int argc, char *argv[]) {
+void testString() {
     const char *data = "hello world";
     int length = (int)strlen(data);
     util::String str1 = data;
@@ -61,6 +62,32 @@ int main(int argc, char *argv[]) {
         printf("str7(%s).find(l, %d): %ld\n", str7.data(), i, str7.find('l', i));
         printf("str7(%s).substr(%d, %d): %s\n", str7.data(), i, i + 1, str7.substr(i, i + 1).data());
     }
+}
 
+int main(int argc, char *argv[]) {
+    util::BufferQueue bq(128);
+    char buf[32];
+    for (int i = 0; i < 10; ++i) {
+        int n = sprintf(buf, "hello,world[%02d],", i);
+        bool ret = bq.enqueue(buf, n);
+        printf("enqueue ret: %d\n", ret);
+    }
+    int length = 0;
+    for (int i = 0; i < 5; i++) {
+        length += (i + 1) * 5;
+        bool ret = bq.dequeue(buf, (i + 1) * 5);
+        printf("dequeue ret: %d\n", ret);
+    }
+    for (int i = 10; i < 13; ++i) {
+        int n = sprintf(buf, "hello,world[%02d],", i);
+        bool ret = bq.enqueue(buf, n);
+        printf("enqueue ret: %d\n", ret);
+    }
+    util::String sbuf;
+    bool ret = bq.dequeueUntil(sbuf, "world[10],hello");
+    if (ret) {
+        printf("dequeueUntil: %s\n", sbuf.data());
+    }
+    
     return 0;
 }

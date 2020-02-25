@@ -6,7 +6,7 @@
 using namespace memory;
 using std::vector;
 
-int main(int argc, char *argv[]) {
+int testBuddyAlloc(int argc, char *argv[]) {
     vector<void*> v;
     BuddyAlloc *b = new BuddyAlloc(32, 1);
     char *buf = b->dump();

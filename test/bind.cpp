@@ -128,7 +128,7 @@ void testWeakPtr() {
     }
 }
 
-int main() {
+int testBind() {
     test1();
     test2();
     testRefptr();

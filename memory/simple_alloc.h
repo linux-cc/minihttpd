@@ -19,8 +19,8 @@ public:
     static void setLocalKey(pthread_key_t *localKey) { _localKey = localKey; }
     static void setGlobalKey(pthread_key_t *globalKey) { _globalKey = globalKey; }
     
-    static pthread_key_t &getLocalKey() { return *_localKey; }
-    static pthread_key_t &getGlobalKey() { return *_globalKey; }
+    static pthread_key_t *getLocalKey() { return _localKey; }
+    static pthread_key_t *getGlobalKey() { return _globalKey; }
     
 private:
     BuddyAlloc _buddy;
