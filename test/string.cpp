@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
         printf("enqueue ret: %d\n", ret);
     }
     util::String sbuf;
-    bool ret = bq.dequeueUntil(sbuf, "world[10],hello");
+    bool ret = bq.dequeueUntil(sbuf, "world[10],hello", false);
     if (ret) {
         printf("dequeueUntil: %s\n", sbuf.data());
     }

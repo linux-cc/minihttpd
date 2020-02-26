@@ -12,7 +12,7 @@ bool Connection::recv() {
     if (iovcnt) {
         n = TcpSocket(_socket).recv(iov, iovcnt);
         if (n > 0) {
-            _recvQ.setWriteIov(n);
+            _recvQ.setWritePos(n);
         }
     }
     
@@ -26,7 +26,7 @@ bool Connection::send() {
     if (iovcnt) {
         n = TcpSocket(_socket).send(iov, iovcnt);
         if (n > 0) {
-            _sendQ.setReadIov(n);
+            _sendQ.setReadPos(n);
         }
     }
     

@@ -1,7 +1,6 @@
 #include "httpd/server.h"
 #include "httpd/worker.h"
 #include "httpd/connection.h"
-#include "httpd/constants.h"
 
 namespace httpd {
 
@@ -76,7 +75,3 @@ void Server::run() {
 }
 
 } /* namespace httpd */
-
-int main(int argc, char *argv[]) {
-    return 0;
-}

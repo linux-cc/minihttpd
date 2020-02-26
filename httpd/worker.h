@@ -19,7 +19,6 @@ public:
     Worker(Server &server): _server(server), _actives(0), _acceptLock(false) {}
     bool onInit();
     void run();
-    void onCancel();
     void close(Connection *conn);
     
 private:

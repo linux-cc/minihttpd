@@ -16,6 +16,7 @@ all_sources += abtor_glob(abtor_path('./mysql'), '*.cpp')
 all_sources += abtor_glob(abtor_path('./network'), '*.cpp')
 all_sources += abtor_glob(abtor_path('./thread'), '*.cpp')
 all_sources += abtor_glob(abtor_path('./util'), '*.cpp')
+all_sources += abtor_glob(abtor_path('./httpd'), '*.cpp')
 all_sources += abtor_glob(abtor_path('./test'), '*.cpp')
 
 all_headers = abtor_glob(abtor_path('./closure'), '*.h')
@@ -25,6 +26,7 @@ all_headers += abtor_glob(abtor_path('./mysql'), '*.h')
 all_headers += abtor_glob(abtor_path('./network'), '*.h')
 all_headers += abtor_glob(abtor_path('./thread'), '*.h')
 all_headers += abtor_glob(abtor_path('./util'), '*.h')
+all_headers += abtor_glob(abtor_path('./httpd'), '*.h')
 
 abtor_ccxx_binary(
     name = 'minihttpd',

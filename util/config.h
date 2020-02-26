@@ -1,7 +1,7 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-#ifdef _DEBUG_
+#ifdef __DEBUG__
 #include <pthread.h>
 #include <stdio.h>
 #define _LOG_TID_(fmt, ...)     printf("[%s:%d][%ld]" fmt "\n", , __FILE__, __LINE__, (intptr_t)pthread_self(), ##__VA_ARGS__)

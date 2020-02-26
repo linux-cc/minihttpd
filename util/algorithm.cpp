@@ -72,4 +72,34 @@ size_t sundaySearch(const char *text, const char *pattern, size_t plen) {
     return -1;
 }
 
+static char hexToChar(char hex) {
+    if (hex >= 'A' && hex <= 'F') {
+        return hex - 'A';
+    }
+    if (hex >= 'a' && hex <= 'f') {
+        return hex - 'a';
+    }
+
+    return hex - '0';
+}
+
+String urlDecode(const String &str) {
+    String decode("");
+    size_t length = str.length();
+    for (size_t i = 0; i < length; ++i) {
+        if (str[i] == '+') {
+            decode += ' ';
+        } else if (str[i] == '%')
+        {
+            uint8_t high = hexToChar(str[++i]);
+            uint8_t low = hexToChar(str[++i]);
+            decode += (high << 4) | low;
+        } else {
+            decode += str[i];
+        }
+    }
+
+    return decode;
+}
+
 }

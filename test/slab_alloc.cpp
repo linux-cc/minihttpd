@@ -5,8 +5,8 @@
 
 using namespace memory;
 using namespace std;
-
-int testSlabAlloc(int argc, char *argv[]) {
+#ifdef __TEST__
+int main(int argc, char *argv[]) {
     vector<std::pair<void*, int> > v;
     BuddyAlloc buddy(8, 4096);
     SlabAlloc slab(buddy);
@@ -38,4 +38,4 @@ int testSlabAlloc(int argc, char *argv[]) {
     }
     return 0;
 }
-
+#endif

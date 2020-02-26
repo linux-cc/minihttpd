@@ -128,7 +128,8 @@ void testWeakPtr() {
     }
 }
 
-int testBind() {
+#ifdef __TEST__
+int main(int argc, char *argv[]) {
     test1();
     test2();
     testRefptr();
@@ -138,3 +139,4 @@ int testBind() {
 
     return 0;
 }
+#endif

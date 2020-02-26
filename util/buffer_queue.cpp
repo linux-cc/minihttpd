@@ -55,7 +55,7 @@ bool BufferQueue::dequeueAll(String &buf) {
     return dequeue((char*)buf.data(), length());
 }
 
-bool BufferQueue::dequeueUntil(String &buf, const char *pattern) {
+bool BufferQueue::dequeueUntil(String &buf, const char *pattern, bool flush) {
     static uint16_t _move[128];
     size_t plen = strlen(pattern);
     for (int i = 0; i < 128; ++i) {
@@ -81,7 +81,11 @@ bool BufferQueue::dequeueUntil(String &buf, const char *pattern) {
         buf.append(&_buffer[i], mlen);
         s += mlen;
     }
-    setReadPos(tlen);
+    if (flush) {
+        setReadPos(tlen);
+    } else {
+        buf.clear();
+    }
     
     return false;
 }

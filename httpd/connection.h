@@ -16,8 +16,8 @@ class Connection {
 public:
     Connection(int socket = -1): _socket(socket) {}
     bool recv();
-    bool recvLine(String &buf) { return _recvQ.dequeueUntil(buf, ONE_CRLF); }
-    bool recvUntil(String &buf, const char *pattern) { return _recvQ.dequeueUntil(buf, pattern); }
+    bool recvLine(String &buf) { return _recvQ.dequeueUntil(buf, ONE_CRLF, false); }
+    bool recvUntil(String &buf, const char *pattern, bool flush) { return _recvQ.dequeueUntil(buf, pattern, flush); }
     size_t recv(void *buf, size_t size) { return _recvQ.dequeue(buf, size); }
     
     bool send();

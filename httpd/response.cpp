@@ -1,4 +1,4 @@
-#include "config.h"
+#include "util/config.h"
 #include "httpd/response.h"
 #include "httpd/request.h"
 #include "httpd/connection.h"
@@ -15,13 +15,13 @@
 
 namespace httpd {
 
-static string itoa(int i) {
+static String itoa(int i) {
     char temp[16] = { 0 };
     sprintf(temp, "%d", i);
     return temp;
 }
 
-static string getGMTTime(time_t t) {
+static String getGMTTime(time_t t) {
     char buf[32] = { 0 };
     time_t _t = t ? t : time(NULL);
     struct tm *tm = gmtime(&_t);
@@ -36,7 +36,7 @@ void Response::parseRequest(const Request &request) {
     } else if (request.is100Continue()) {
         setStatusLine(ResponseStatus::Continue, request.version());
     } else {
-        string file = WEB_ROOT + parseUri(request.uri());
+        String file = WEB_ROOT + parseUri(request.uri());
         if (file.empty()) {
             setStatusLine(ResponseStatus::Bad_Request, request.version());
         } else {
@@ -48,39 +48,33 @@ void Response::parseRequest(const Request &request) {
 }
 
 void Response::setCommonHeaders(const Request &request) {
-    /*string value = request.getHeader(Header::Connection);
+    /*String value = request.getHeader(Header::Connection);
     if (value) {
         _headers[Header::Connection] = value;
         _connClose = !strncasecmp(value->c_str(), "close", 5);
     }    
     if (_code == ResponseStatus::OK) {
         value = request.getHeader(Header::Accept_Encoding);
-        if (value && value->find("gzip") != string::npos) {
+        if (value && value->find("gzip") != String::npos) {
             _headers[Header::Transfer_Encoding] = "chunked";
             _headers[Header::Content_Encoding] = "gzip";
             _headers.erase(Header::Content_Length);
             _acceptGz = 1;
         }
     }*/
-    _headers[Header::Server] = "myframe/httpd/1.1.01";
-    _headers[Header::Date] = getGMTTime(0);
+    //_headers[Header::Server] = "minihttpd/1.1.01";
+    //_headers[Header::Date] = getGMTTime(0);
 }
 
-string Response::headers() const {
-    string str = _version + ' ' + itoa(_code) + ' ' + _reason + CRLF;
-    for (HeaderIt it = _headers.begin(); it != _headers.end(); ++it) {
-        str += Header::getName(it->first) + ": " + it->second + CRLF;
-    }
-    str += CRLF;
-
-    return str;
+String Response::headers() const {
+    return String();
 }
 
 bool Response::sendHeaders(Connection *conn) {
-    string data = headers();
+    String data = headers();
     int len = data.length();
 
-    if (!conn->send(data.c_str(), len)) {
+    if (!conn->send(data.data(), len)) {
         return false;
     }
     _status = _fd > 0 ? SEND_CONTENT : SEND_DONE;
@@ -100,7 +94,7 @@ bool Response::sendContentOriginal(Connection *conn) {
         return errno != EAGAIN ? false : true;
     }
 #else
-    if (sendfile(_fd, *conn, _filePos, &n, NULL, 0)) {
+    if (sendfile(_fd, conn->fd(), _filePos, &n, NULL, 0)) {
         return errno != EAGAIN ? false : true;
     }
 #endif
@@ -124,76 +118,76 @@ bool Response::sendContentChunked(Connection *conn) {
     return true;
 }
 
-void Response::setStatusLine(int status, const string &version) {
+void Response::setStatusLine(int status, const String &version) {
     _version = version;
     _code = status;
-    _reason = ResponseStatus::getReason(status);
+    _reason = "";//ResponseStatus::getReason(status);
 }
 
-string Response::parseUri(const string &uri) {
+String Response::parseUri(const String &uri) {
     if (uri[0] == '/') {
         return uri == "/" ? ROOT_PAGE : uri;
     }
-    string::size_type p = uri.find("//");
-    if (p != string::npos) {
+    size_t p = uri.find("//");
+    if (p != String::npos) {
         p = uri.find('/', p + 2);
-        if (p != string::npos) {
+        if (p != String::npos) {
             return uri.substr(p);
         }
     } else {
         p = uri.find('/');
-        if (p != string::npos) {
+        if (p != String::npos) {
             return uri.substr(p);
         }
     }
     return "";
 }
 
-int Response::parseFile(const string &file) {
+int Response::parseFile(const String &file) {
     struct stat st;
-    if (stat(file.c_str(), &st)) {
-        return ResponseStatus::Not_Found;
+    if (stat(file.data(), &st)) {
+        return 1;//ResponseStatus::Not_Found;
     }
-    _cgiBin = !strncasecmp(file.c_str(), CGI_BIN, strlen(CGI_BIN));
+    _cgiBin = !strncasecmp(file.data(), CGI_BIN, strlen(CGI_BIN));
     int permit = S_IRUSR | S_IRGRP | S_IROTH | (_cgiBin ? S_IXUSR : 0);
     if (!(st.st_mode & permit)) {
-        return ResponseStatus::Forbidden;
+        return 1;//ResponseStatus::Forbidden;
     }
-    _fd = open(file.c_str(), O_RDONLY | O_NONBLOCK);
+    _fd = open(file.data(), O_RDONLY | O_NONBLOCK);
     if (_fd < 0) {
-        return ResponseStatus::Internal_Server_Error;
+        return 1;//ResponseStatus::Internal_Server_Error;
     }
     setContentInfo(file, st);
 
-    return ResponseStatus::OK;
+    return 0;//ResponseStatus::OK;
 }
 
-void Response::setContentInfo(const string &file, const struct stat &st) {
+void Response::setContentInfo(const String &file, const struct stat &st) {
     setContentType(file);
     _fileLength = st.st_size;
-    _headers[Header::Content_Length] = itoa(st.st_size);
-    _headers[Header::Last_Modified] = getGMTTime(STAT_MTIME(st));
+    //_headers[Header::Content_Length] = itoa(st.st_size);
+    //_headers[Header::Last_Modified] = getGMTTime(STAT_MTIME(st));
 }
 
-void Response::setContentType(const string &file) {
-    string::size_type p = file.rfind('.');
-    string subfix = "html";
-    if (p != string::npos) {
+void Response::setContentType(const String &file) {
+    size_t p = file.find('.');
+    String subfix = "html";
+    if (p != String::npos) {
         subfix = file.substr(p + 1);
     }
-    string &value = _headers[Header::Content_Type];
-    if (!strncasecmp(subfix.c_str(), "htm", 3)) {
+    String value;// = _headers[Header::Content_Type];
+    if (!strncasecmp(subfix.data(), "htm", 3)) {
         value = "text/html";
-    } else if (!strncasecmp(subfix.c_str(), "js", 2)) {
+    } else if (!strncasecmp(subfix.data(), "js", 2)) {
         value = "application/javascript";
-    } else if (!strncasecmp(subfix.c_str(), "jpg", 3) || !strncasecmp(subfix.c_str(), "jpeg", 4)) {
+    } else if (!strncasecmp(subfix.data(), "jpg", 3) || !strncasecmp(subfix.data(), "jpeg", 4)) {
         value = "image/jpeg";
-    } else if (!strncasecmp(subfix.c_str(), "png", 3)) {
+    } else if (!strncasecmp(subfix.data(), "png", 3)) {
         value = "image/png";
-    } else if (!strncasecmp(subfix.c_str(), "gif", 3)) {
+    } else if (!strncasecmp(subfix.data(), "gif", 3)) {
         value = "image/gif";
     } else {
-        value = "text/" + subfix;
+        //value = "text/" + subfix;
     }
     value += "; charset=UTF-8";
 }
@@ -218,13 +212,13 @@ int Response::gzfill(void *buf, int len) {
 }
 
 bool Response::gzflush(const void *buf, int len, bool eof) {
-    static char tailer[] = { CR, LF, '0', CR, LF, CR, LF, };
+    static char tailer[] = { CHAR_CR, CHAR_LF, '0', CHAR_CR, CHAR_LF, CHAR_CR, CHAR_LF, };
     char header[16] = { 0 };
-    int hlen = sprintf(header, "%x%s", len, CRLF);
+    int hlen = sprintf(header, "%x%s", len, ONE_CRLF);
 
-    if (!_conn->send(header, hlen, buf, len, tailer, eof ? 7 : 2)) {
-        return false;
-    }
+    //if (!_conn->send(header, hlen, buf, len, tailer, eof ? 7 : 2)) {
+     //   return false;
+    //}
 
     return true;
 }

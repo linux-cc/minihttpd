@@ -2,8 +2,8 @@
 #include <stdio.h>
 
 using namespace mysql;
-
-int testMysql(int argc, char *argv[]) {
+#ifdef __TEST__
+int main(int argc, char *argv[]) {
     Mysql mysql;
     mysql.connectTimeout(3);
     if (!mysql.connect("linshh", "linshh", "80.209.232.2", 3306)) {
@@ -22,3 +22,4 @@ int testMysql(int argc, char *argv[]) {
     printf("%s\n", mysql.dump().c_str());
     return 0;
 }
+#endif

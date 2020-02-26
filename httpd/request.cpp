@@ -2,15 +2,10 @@
 #include "httpd/request.h"
 #include "httpd/connection.h"
 #include <sys/uio.h>
-#include <unistd.h>
 #include <fcntl.h>
-#include <errno.h>
-#include <string.h>
-#include <stdlib.h>
 
 namespace httpd {
 
-static String urlDecode(const String &str);
 static String trim(const String &str);
 static String extractBetween(const String &str, const String &delim1, const String &delim2, size_t pos = 0);
 static String extractBetween(const String &str, char delim1, char delim2, size_t pos = 0);
@@ -18,12 +13,16 @@ static String extractBetween(const String &str, char delim1, char delim2, size_t
 Request::Request():
 _contentPos(0),
 _contentLength(0),
-_formFd(-1)
+_formFd(-1),
+_is100Continue(0),
+_isMultipart(0),
+_isParseBody(0),
+_reserve(0)
 {
 }
 
 bool Request::parseHeaders(Connection *conn) {
-    if (!conn->recvUntil(_headers, TWO_CRLF)) {
+    if (!conn->recvUntil(_headers, TWO_CRLF, false)) {
         return false;
     }
     _uri = extractBetween(_headers, ' ', ' ');
@@ -42,6 +41,7 @@ bool Request::parseHeaders(Connection *conn) {
     pos = _headers.find("multipart/form-data");
     _isMultipart = pos != String::npos;
     if (_isMultipart) {
+        _boundary = extractBetween(_headers, "boundary=", ONE_CRLF, pos);
         _content.clear();
     } else if (_contentLength > _content.length()) {
         _content.resize(_contentLength);
@@ -61,39 +61,39 @@ String Request::getHeader(const char *field) const {
 }
 
 void Request::parseContent(Connection *conn) {
-    String buf, name;
-    String boundary = extractBetween(_headers, "boundary=", ONE_CRLF).append(ONE_CRLF);
-    while (_contentPos < _contentLength && conn->recvLine(buf)) {
+    if (!_isMultipart) {
+        char *data = (char*)_content.data() + _contentPos;
+        size_t length = _contentLength - _contentPos;
+        size_t n = conn->recv(data, length);
+        _contentPos += n;
+        return;
+    }
+    String buf;
+    if (!_isParseBody) {
+        bool ok = conn->recvUntil(buf, TWO_CRLF, false);
+        if (!ok) return;
         _contentPos += buf.length();
         if (buf.find("Content-Disposition") != String::npos) {
             size_t pos = buf.find("name");
-            name = extractBetween(buf, "\"", "\"", pos);
+            String name = extractBetween(buf, "\"", "\"", pos);
             if ((pos = buf.find("filename")) != String::npos) {
                 name = extractBetween(buf, "\"", "\"", pos);
                 _formFd = open(String("upload/").append(name).data(), O_CREAT|O_WRONLY|O_TRUNC, 0666);
             }
-        }
-        if (buf == ONE_CRLF) {
-            buf.clear();
-            bool ok = conn->recvUntil(buf, boundary.data());
-            _contentPos += buf.length();
-            if (ok) {
-                if (_formFd > 0) {
-                    if (!_buffer.enqueue(buf.data(), buf.length())) {
-                        struct iovec iov[2];
-                        int niov = _buffer.getReadIov(iov);
-                        ssize_t n = writev(_formFd, iov, niov);
-                        _buffer.setReadPos(n);
-                        _buffer.enqueue(buf.data(), buf.length());
-                    }
-                } else {
-                    size_t len = buf.length() - boundary.length() - 2;
-                    _content.append(name).append("=").append(buf.substr(0, len)).append("&");
-                }
-            }
+            _content.append("&").append(name).append("=");
         }
     }
-    if (_contentPos >= _contentLength) {
+    buf.clear();
+    bool ok = conn->recvUntil(buf, ONE_CRLF, true);
+    _isParseBody = !ok;
+    _contentPos += buf.length();
+    size_t length = buf.length() - (ok ? 2 : 0);
+    if (_formFd > 0) {
+        write(_formFd, buf.data(), length);
+    } else {
+        _content.append(buf.substr(0, length));
+    }
+    if ((ok || _contentPos >= _contentLength) && _formFd > 0) {
         close(_formFd);
         _formFd = -1;
     }
@@ -107,36 +107,6 @@ String trim(const String &str) {
     while (isspace(*p2)) p2--;
 
     return str.substr(p1 - base, p2 - p1 + 1);
-}
-
-char hexToChar(char hex) {
-    if (hex >= 'A' && hex <= 'F') {
-        return hex - 'A';
-    }
-    if (hex >= 'a' && hex <= 'f') {
-        return hex - 'a';
-    }
-
-    return hex - '0';
-}
-
-String urlDecode(const String &str) {
-    String decode("");
-    size_t length = str.length();
-    for (size_t i = 0; i < length; ++i) {
-        if (str[i] == '+') {
-            decode += ' ';
-        } else if (str[i] == '%')
-        {
-            uint8_t high = hexToChar(str[++i]);
-            uint8_t low = hexToChar(str[++i]);
-            decode += (high << 4) | low;
-        } else {
-            decode += str[i];
-        }
-    }
-
-    return decode;
 }
 
 String extractBetween(const String &str, const String &delim1, const String &delim2, size_t pos) {

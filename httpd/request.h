@@ -2,12 +2,10 @@
 #define __HTTPD_REQUEST_H__
 
 #include "util/string.h"
-#include "util/buffer_queue.h"
 
 namespace httpd {
 
 using util::String;
-using util::BufferQueue;
 class Connection;
 class Request {
 public:
@@ -33,13 +31,14 @@ private:
     String _headers;
     String _uri;
     String _content;
-    BufferQueue _buffer;
+    String _boundary;
     int _contentPos;
     int _contentLength;
     int _formFd;
     uint8_t _is100Continue : 1;
     uint8_t _isMultipart : 1;
-    uint8_t _reserve : 6;
+    uint8_t _isParseBody : 1;
+    uint8_t _reserve : 5;
 };
 
 } /* namespace httpd */

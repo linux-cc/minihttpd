@@ -6,8 +6,8 @@ using std::vector;
 using namespace network;
 
 static bool __quit = false;
-
-int testTcpClient(int argc, char *argv[]) {
+#ifdef __TEST__
+int main(int argc, char *argv[]) {
     if (argc != 3) {
         printf("usage %s port ipversion[0|1|2|3]\n", argv[0]);
         return -1;
@@ -44,4 +44,4 @@ int testTcpClient(int argc, char *argv[]) {
 
     return 0;
 }
-
+#endif

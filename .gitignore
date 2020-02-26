@@ -2,4 +2,8 @@ bin/
 lib/
 obj/
 upload/
-htdocs
+htdocs/
+project/
+build/
+local_export/
+publish/

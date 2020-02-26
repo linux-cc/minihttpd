@@ -1,4 +1,4 @@
-#include "config.h"
+#include "util/config.h"
 #include "httpd/gtree.h"
 #include "httpd/gzip.h"
 

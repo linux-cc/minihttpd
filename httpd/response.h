@@ -1,15 +1,14 @@
 #ifndef __HTTPD_RESPONSE_H__
 #define __HTTPD_RESPONSE_H__
 
-#include "httpd/constants.h"
+#include "util/string.h"
 #include "httpd/gzip.h"
 #include <sys/stat.h>
-#include <string>
 #include <map>
 
 namespace httpd {
 
-using std::string;
+using util::String;
 using std::map;
 class Request;
 class Connection;
@@ -27,7 +26,7 @@ public:
     }
     void parseRequest(const Request &request);
     void setCommonHeaders(const Request &request);
-    string headers() const;
+    String headers() const;
     bool sendHeaders(Connection *conn);
     bool sendContent(Connection *conn) {
         return _acceptGz ? sendContentChunked(conn) : sendContentOriginal(conn);
@@ -36,7 +35,7 @@ public:
         return _connClose;
     }
     bool is100Continue() const {
-        return _code == ResponseStatus::Continue;
+        return _code == 100;//ResponseStatus::Continue;
     }
     Status status() const {
         return _status;
@@ -50,20 +49,20 @@ public:
     void reset();
 
 private:
-    void setStatusLine(int status, const string &version);
-    string parseUri(const string &uri);
-    int parseFile(const string &file);
-    void setContentInfo(const string &file, const struct stat &st);
-    void setContentType(const string &file);
+    void setStatusLine(int status, const String &version);
+    String parseUri(const String &uri);
+    int parseFile(const String &file);
+    void setContentInfo(const String &file, const struct stat &st);
+    void setContentType(const String &file);
     bool sendContentOriginal(Connection *conn);
     bool sendContentChunked(Connection *conn);
     int gzfill(void *buf, int len);
     bool gzflush(const void *buf, int len, bool eof);
 
     Connection *_conn;
-    string _version;
+    String _version;
     int _code;
-    string _reason;
+    String _reason;
     int _fd;
     Status _status;
     off_t _filePos;
@@ -72,8 +71,8 @@ private:
     uint8_t _connClose: 1;
     uint8_t _acceptGz: 1;
     uint8_t _reserve: 5;
-    typedef map<int, string>::const_iterator HeaderIt;
-    map<int, string> _headers;
+    typedef map<int, String>::const_iterator HeaderIt;
+    map<int, String> _headers;
 };
 
 } /* namespace httpd */
