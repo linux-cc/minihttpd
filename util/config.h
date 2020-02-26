@@ -17,11 +17,11 @@
 #define STAT_MTIME(st)      (st).st_mtimespec.tv_sec
 #endif
 
-#define CR                  '\r'
-#define LF                  '\n'
-#define CRLF                "\r\n"
-#define CRLF_CRLF           "\r\n\r\n"
-#define CRLF_CRLF_SIZE      4
+#define CHAR_CR             '\r'
+#define CHAR_LF             '\n'
+#define ONE_CRLF            "\r\n"
+#define TWO_CRLF            "\r\n\r\n"
+#define TWO_CRLF_SIZE       4
 #define MAX(a, b)           ((a) > (b) ? (a) : (b))
 #define MIN(a, b)           ((a) > (b) ? (b) : (a))
 #define MMAP_PROT           (PROT_READ|PROT_WRITE)

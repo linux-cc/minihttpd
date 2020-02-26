@@ -77,7 +77,7 @@ size_t String::find(const char *str, size_t pos) const {
 size_t String::find(const char *str, size_t pos, size_t n) const {
     size_t index = npos;
     size_t strn = strlen(str);
-    if (!empty() && str && *str && pos < n && n < strn) {
+    if (!empty() && str && *str && pos < length() && n < strn) {
         const char *src = data();
         index = sundaySearch(src + pos, str, n);
     }

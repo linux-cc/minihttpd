@@ -1,6 +1,7 @@
 #include "util/config.h"
 #include "httpd/request.h"
-#include "httpd/constants.h"
+#include "httpd/connection.h"
+#include <sys/uio.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -17,22 +18,24 @@ static String extractBetween(const String &str, char delim1, char delim2, size_t
 Request::Request():
 _contentPos(0),
 _contentLength(0),
-_multipartPos(0),
-_multipartFd(-1) {
+_formFd(-1)
+{
 }
 
-void Request::parseHeaders() {
+bool Request::parseHeaders(Connection *conn) {
+    if (!conn->recvUntil(_headers, TWO_CRLF)) {
+        return false;
+    }
     _uri = extractBetween(_headers, ' ', ' ');
-    
     size_t pos = _headers.find("Content-Length");
     if (pos != String::npos) {
-        String value = extractBetween(_headers, ":", CRLF, pos);
+        String value = extractBetween(_headers, ":", ONE_CRLF, pos);
         _contentLength = atoi(value.data());
     }
     
     pos = _headers.find("Expect");
     if (pos != String::npos) {
-        String value = extractBetween(_headers, ":", CRLF, pos);
+        String value = extractBetween(_headers, ":", ONE_CRLF, pos);
         _is100Continue = value[0] == '1' && value[1] == '0' && value[2] == '0';
     }
     
@@ -43,10 +46,12 @@ void Request::parseHeaders() {
     } else if (_contentLength > _content.length()) {
         _content.resize(_contentLength);
     }
+    
+    return true;
 }
 
 String Request::getHeader(const char *field) const {
-    String value = extractBetween(_headers, field, CRLF);
+    String value = extractBetween(_headers, field, ONE_CRLF);
     size_t pos = value.find(':');
     if (pos != String::npos) {
         return trim(value.substr(pos + 1));
@@ -55,121 +60,47 @@ String Request::getHeader(const char *field) const {
     return String();
 }
 
-size_t Request::parseMultipart() {
-    size_t length = 0;
-    if (isMultipart()) {
-        string type = Header::getName(Header::Content_Type);
-        string::size_type eq = type.find('=');
-        string boundary = "--" + trim(type.substr(eq + 1));
-        length = parseMultipart(pos, last, boundary);
-    } else {
-
+void Request::parseContent(Connection *conn) {
+    String buf, name;
+    String boundary = extractBetween(_headers, "boundary=", ONE_CRLF).append(ONE_CRLF);
+    while (_contentPos < _contentLength && conn->recvLine(buf)) {
+        _contentPos += buf.length();
+        if (buf.find("Content-Disposition") != String::npos) {
+            size_t pos = buf.find("name");
+            name = extractBetween(buf, "\"", "\"", pos);
+            if ((pos = buf.find("filename")) != String::npos) {
+                name = extractBetween(buf, "\"", "\"", pos);
+                _formFd = open(String("upload/").append(name).data(), O_CREAT|O_WRONLY|O_TRUNC, 0666);
+            }
+        }
+        if (buf == ONE_CRLF) {
+            buf.clear();
+            bool ok = conn->recvUntil(buf, boundary.data());
+            _contentPos += buf.length();
+            if (ok) {
+                if (_formFd > 0) {
+                    if (!_buffer.enqueue(buf.data(), buf.length())) {
+                        struct iovec iov[2];
+                        int niov = _buffer.getReadIov(iov);
+                        ssize_t n = writev(_formFd, iov, niov);
+                        _buffer.setReadPos(n);
+                        _buffer.enqueue(buf.data(), buf.length());
+                    }
+                } else {
+                    size_t len = buf.length() - boundary.length() - 2;
+                    _content.append(name).append("=").append(buf.substr(0, len)).append("&");
+                }
+            }
+        }
     }
-    _contentPos += length;
     if (_contentPos >= _contentLength) {
-        _content[_contentLength] = '\0';
-        _content = urlDecode(_content);
+        close(_formFd);
+        _formFd = -1;
     }
-
-    return length;
-}
-
-size_t Request::parseMultipart(const char *pos, const char *last, const string &boundary) {
-    size_t length = 0;
-    const char *p1 = pos;
-    string::size_type bsize = boundary.size();
-    for (; p1 < last - bsize; ++p1) {
-        if (!strncmp(boundary.c_str(), p1, bsize)) {
-            if (_status == PARSE_HEADERS) {
-                if (p1 + bsize + 2 < last && p1[bsize] == '-' && p1[bsize + 1] == '-') {
-                    return length + bsize + 4;
-                }
-                size_t hlen = parseFormHeader(p1 + bsize + 2, last);
-                if (!hlen) {
-                    break;
-                }
-                p1 += hlen + bsize + 2;
-                length += hlen + bsize + 2;
-                pos = p1;
-            } else if (_status == PARSE_CONTENT) {
-                length += 2 + setMultipartContent(pos, p1 - pos - 2);
-                --p1;
-            }
-        }
-    }
-    if (_status == PARSE_CONTENT && last - pos > 0) {
-        length += setMultipartContent(pos, last - pos);
-    }
-
-    return length;
-}
-
-size_t Request::parseFormHeader(const char *pos, const char *last) {
-    const char *p0 = NULL, *p1 = pos;
-    size_t length = 0;
-    for (; p1 < last - 1; ++p1) {
-        if (*p1 == ':') {
-            p0 = p1;
-        } else if (p1[0] == CR && p1[1] == LF) {
-            length += p1 - pos + 2;
-            string field(pos, p0 - pos);
-            string value(p0 + 1, p1 - p0);
-            _curMultipartHeader.parse(field, value);
-            if (p1 + 3 < last && p1[2] == CR && p1[3] == LF) {
-                _status = PARSE_CONTENT;
-                length += 2;
-                setMultipartName();
-                if (_curMultipartHeader.hasType) {
-                    string filename = "upload/" + _curMultipartHeader.name;
-                    _multipartFd = open(filename.c_str(), O_CREAT|O_WRONLY|O_TRUNC, 0666);
-                }
-                break;
-            }
-            ++p1;
-            pos = p1 + 1;
-        }
-    }
-
-    return length;
-}
-
-void Request::MultipartHeader::parse(const string &field, const string &value) {
-    hasType = false;
-    if (field == Header::getName(Header::Content_Disposition)) {
-        string::size_type p = value.find("filename");
-        name = extractBetween(value, "\"", "\"", p != string::npos ? p : 0);
-    } else if (field == Header::getName(Header::Content_Type)) {
-        hasType = true;
-    }
-}
-
-void Request::setMultipartName() {
-    if (!_curMultipartHeader.hasType) {
-        if (_multipartPos) {
-            _content[_multipartPos++] = '&';
-        }
-        string &name = _curMultipartHeader.name;
-        memcpy((char*)_content.data() + _multipartPos, name.c_str(), name.size());
-        _multipartPos += name.size();
-        _content[_multipartPos++] = '=';
-    }
-}
-
-size_t Request::setMultipartContent(const char *pos, size_t length) {
-    if (_curMultipartHeader.hasType) {
-        if (_multipartFd > 0) {
-            write(_multipartFd, pos, length);
-        }
-    } else {
-        memcpy((char*)_content.data() + _multipartPos, pos, length);
-        _multipartPos += length;
-    }
-
-    return length;
 }
 
 String trim(const String &str) {
-    const char *base = str.c_str();
+    const char *base = str.data();
     const char *p1 = base;
     const char *p2 = base + str.length() - 1;
     while (isspace(*p1)) p1++;

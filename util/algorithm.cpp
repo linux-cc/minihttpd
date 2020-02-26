@@ -18,16 +18,16 @@ static void getNext(uint16_t *next, const char *pattern, size_t plen) {
 }
 
 size_t kmpSearch(const char *text, const char *pattern) {
-    size_t searchLen = strlen(text);
-    return kmpSearch(text, pattern, searchLen);
+    size_t plen = strlen(pattern);
+    return kmpSearch(text, pattern, plen);
 }
 
-size_t kmpSearch(const char *text, const char *pattern, size_t searchLen) {
+size_t kmpSearch(const char *text, const char *pattern, size_t plen) {
     static uint16_t _next[256];
-    size_t plen = strlen(pattern);
+    size_t tlen = strlen(text);
     getNext(_next, pattern, plen);
     size_t i = 0, k = 0;
-    for (; i < searchLen; ++i) {
+    for (; i < tlen; ++i) {
         while (k && pattern[k] != text[i]) {
             k = _next[k - 1];
         }
@@ -43,13 +43,13 @@ size_t kmpSearch(const char *text, const char *pattern, size_t searchLen) {
 }
 
 size_t sundaySearch(const char *text, const char *pattern) {
-    size_t searchLen = strlen(text);
-    return sundaySearch(text, pattern, searchLen);
+    size_t plen = strlen(text);
+    return sundaySearch(text, pattern, plen);
 }
 
-size_t sundaySearch(const char *text, const char *pattern, size_t searchLen) {
+size_t sundaySearch(const char *text, const char *pattern, size_t plen) {
     static uint16_t _move[128];
-    size_t plen = strlen(pattern);
+    size_t tlen = strlen(text);
     for (int i = 0; i < 128; ++i) {
         _move[i] = plen + 1;
     }
@@ -58,7 +58,7 @@ size_t sundaySearch(const char *text, const char *pattern, size_t searchLen) {
     }
     
     int s = 0, j;
-    while (s <= searchLen - plen) {
+    while (s <= tlen - plen) {
         j = 0;
         while (text[s+j] == pattern[j]) {
             ++j;

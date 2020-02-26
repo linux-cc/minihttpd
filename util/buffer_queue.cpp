@@ -23,23 +23,31 @@ bool BufferQueue::enqueue(const void *buf, size_t size) {
     return true;
 }
 
-bool BufferQueue::dequeue(void *buf, size_t size) {
-    if (length() < size) {
-        return false;
+size_t BufferQueue::dequeue(void *buf, size_t size) {
+    if (empty()) {
+        return 0;
+    }
+    
+    if (_readPos < _writePos) {
+        size_t n = MIN(_writePos - _readPos, size);
+        memcpy(buf, _buffer + _readPos, n);
+        _readPos += n;
+        return n;
     }
     
     size_t size1 = _capacity - _readPos;
-    if (_readPos < _writePos || size <= size1) {
+    if (size <= size1) {
         memcpy(buf, _buffer + _readPos, size);
         _readPos += size;
-    } else {
-        size_t size2 = size - size1;
-        memcpy(buf, _buffer + _readPos, size1);
-        memcpy((char*)buf + size1, _buffer, size2);
-        _readPos = size2;
+        return size;
     }
     
-    return true;
+    size_t size2 = MIN(size - size1, _writePos);
+    memcpy(buf, _buffer + _readPos, size1);
+    memcpy((char*)buf + size1, _buffer, size2);
+    _readPos = size2;
+    
+    return size1 + size2;
 }
 
 bool BufferQueue::dequeueAll(String &buf) {
@@ -58,22 +66,22 @@ bool BufferQueue::dequeueUntil(String &buf, const char *pattern) {
     }
     size_t tlen = length();
     int s = 0, j;
-    String tmp;
     while (s <= tlen - plen) {
         j = 0;
         size_t i = (_readPos + s) % _capacity;
         while (_buffer[(i + j) % _capacity] == pattern[j]) {
             ++j;
             if (j >= plen) {
-                buf = tmp.append(pattern);
+                buf.append(pattern);
                 setReadPos(s + plen);
                 return true;
             }
         }
         int mlen = _move[int(_buffer[i + plen])];
-        tmp.append(&_buffer[i], mlen);
+        buf.append(&_buffer[i], mlen);
         s += mlen;
     }
+    setReadPos(tlen);
     
     return false;
 }

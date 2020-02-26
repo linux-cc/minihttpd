@@ -6,9 +6,9 @@
 namespace util {
 
 size_t kmpSearch(const char *text, const char *pattern);
-size_t kmpSearch(const char *text, const char *pattern, size_t searchLen);
+size_t kmpSearch(const char *text, const char *pattern, size_t plen);
 size_t sundaySearch(const char *text, const char *pattern);
-size_t sundaySearch(const char *text, const char *pattern, size_t searchLen);
+size_t sundaySearch(const char *text, const char *pattern, size_t plen);
 
 }
 

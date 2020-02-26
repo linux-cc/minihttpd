@@ -140,20 +140,17 @@ void Worker::onRequest(EPollEvent &event) {
         
         _poller.mod(conn->fd(), conn);
         Request *request = conn->getRequest();
-        if (!conn->recvUntil(request->headerBuffer(), CRLF_CRLF)) {
+        if (!request->parseHeaders(conn)) {
             break;
         }
-        request->parseHeaders();
+        
         if (request->hasContent()) {
-            if (request->isMultipart()) {
-                
-            } else {
-                conn->recv(request->contentPos(), request->contentLength());
-                if (!request->isParseContentDone(n)) break;
-            }
+            request->parseContent(conn);
         }
-        _poller.mod(conn->fd(), conn, true);
-        conn->setRequest(NULL);
+        if (request->isCompleted()) {
+            _poller.mod(conn->fd(), conn, true);
+            conn->setRequest(NULL);
+        }
     } while (0);
     _server._eventQ.enqueue(Server::Item(conn));
 }
