@@ -1,6 +1,7 @@
 #include "httpd/server.h"
 #include "httpd/worker.h"
 #include "httpd/connection.h"
+#include <errno.h>
 
 namespace httpd {
 
@@ -64,10 +65,10 @@ void Server::run() {
         SimpleList<Item> &curList = _timeoutQ.at(_curIndex);
         Item data;
         while (curList.pop(data)) {
-            _LOG_("Connection timeout, fd: %d, connection: %p, worker: %p\n", (int)data._conn, data._conn, data._worker);
+            _LOG_("Connection timeout, fd: %d, connection: %p\n", data._conn->fd(), data._conn);
             data._conn->close();
         }
-        if (++_curIndex == _timeoutQ.size()) {
+        if (++_curIndex == _timeoutQ.capacity()) {
             _curIndex = 0;
         }
         sleep(1);

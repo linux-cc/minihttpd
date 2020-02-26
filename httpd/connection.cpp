@@ -35,7 +35,7 @@ bool Connection::send() {
 
 Request *Connection::getRequest() {
     if (!_req) {
-        _req = makeScopedPtr(memory::SimpleAlloc<Request>::New());
+        _req.reset(memory::SimpleAlloc<Request>::New());
     }
     return _req.get();
 }

@@ -1,5 +1,6 @@
 #include "util/string.h"
 #include "util/buffer_queue.h"
+#include "httpd/server.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -64,7 +65,7 @@ void testString() {
     }
 }
 
-int main(int argc, char *argv[]) {
+void testBufferQueue() {
     util::BufferQueue bq(128);
     char buf[32];
     for (int i = 0; i < 10; ++i) {
@@ -88,6 +89,12 @@ int main(int argc, char *argv[]) {
     if (ret) {
         printf("dequeueUntil: %s\n", sbuf.data());
     }
+}
+
+int main(int argc, char *argv[]) {
+    httpd::Server svr;
+    svr.start("localhost", "9090");
+    svr.run();
     
     return 0;
 }

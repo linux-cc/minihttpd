@@ -163,7 +163,7 @@ void Worker::onResponse(EPollEvent &event) {
     case Response::PARSE_REQUEST:
         response.parseRequest(request);
         //request.reset(response.is100Continue());
-        _LOG_("fd: %d, Response headers:\n%s\n", (int)*conn, response.headers().c_str());
+        _LOG_("fd: %d, Response headers:\n%s\n", conn->fd(), response.headers().data());
     case Response::SEND_HEADERS: {
         if (!response.sendHeaders(conn)) {
             _LOG_("Response send headers error: %d:%s\n", errno, strerror(errno));
@@ -206,7 +206,7 @@ void Worker::onResponse(EPollEvent &event) {
 
 void Worker::close(Connection *conn) {
     _poller.del(conn->fd());
-    _LOG_("close connection: %p, fd: %d\n", conn, (int)*conn);
+    _LOG_("close connection: %p, fd: %d\n", conn, conn->fd());
     conn->close();
     _connsList.erase(conn);
     memory::SimpleAlloc<Connection>::Delete(conn);

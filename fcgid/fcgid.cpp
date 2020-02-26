@@ -1,6 +1,7 @@
 #include "fcgid/fcgid.h"
 #include "httpd/connection.h"
 #include <unistd.h>
+#include <errno.h>
 
 namespace fcgid {
 
