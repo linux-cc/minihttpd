@@ -8,8 +8,10 @@
 
 namespace httpd {
 
+using util::SimpleQueue;
+using util::BlockQueue;
+using util::SimpleList;
 using network::TcpSocket;
-using namespace util;
 class Worker;
 class Connection;
 
@@ -29,7 +31,7 @@ private:
     void update();
     
     struct Item {
-        Item(Connection *conn = NULL): _conn(conn) {}
+        Item(Connection *conn = NULL): _conn(conn), _queueIndex(-1) {}
         Connection *_conn;
         int _queueIndex;
         bool operator==(const Item &other) { return _conn == other._conn; }

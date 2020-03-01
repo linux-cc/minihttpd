@@ -141,7 +141,7 @@ int EPoller::ctl(int fd, int action, int events, void *data) {
     ev.init(fd, events, data);
     int ret = epoll_ctl(_fd, action, fd, ev);
     if (ret) {
-        _LOG_("EPoller ctl ret: %d, error: %d:%s\n", ret, errno, strerror(errno));
+        _LOG_("EPoller ctl ret: %d, error: %d:%s", ret, errno, strerror(errno));
     }
     return ret;
 }

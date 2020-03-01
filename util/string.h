@@ -2,6 +2,7 @@
 #define __UTIL_STRING_H__
 
 #include "util/scoped_ref.h"
+#include "util/algorithm.h"
 #include "memory/simple_alloc.h"
 #include <string.h>
 
@@ -24,20 +25,16 @@ public:
         size_t _index;
     };
     
-    String(const char *str = NULL) { *this = str; }
-    String(const char *str, size_t length) { if (str && length > 0) _ptr = memory::SimpleAlloc<Value>::New(str, length); }
+    String(const char *str = "") { *this = str; }
+    String(const char *str, size_t length) { _ptr = memory::SimpleAlloc<Value>::New(str, length); }
     String(const String &str, size_t pos, size_t length = npos);
-    String &operator=(const char *str) { if (str && *str) _ptr = memory::SimpleAlloc<Value>::New(str, strlen(str)); return *this; }
+    String &operator=(const char *str) { _ptr = memory::SimpleAlloc<Value>::New(str, strlen(str)); return *this; }
     
     void resize(size_t length) { _ptr->resize(length); }
-    
     bool empty() const { return !_ptr || _ptr->_length == 0; }
-    
-    const char *data() const { return empty() ? NULL : _ptr->_data; }
-    
-    size_t length() const { return empty() ? 0 : _ptr->_length; }
-    
-    size_t capacity() const { return empty() ? 0 : _ptr->_capacity; }
+    const char *data() const { return _ptr->_data; }
+    size_t length() const { return _ptr->_length; }
+    size_t capacity() const { return _ptr->_capacity; }
     
     CharProxy operator[](size_t index) const { return CharProxy(*(String*)this, index); }
     CharProxy operator[](size_t index) { return CharProxy(*this, index); }
@@ -46,7 +43,7 @@ public:
     String &operator+=(const char *str) { return append(str); }
     String &operator+=(char c) { return append(c); }
     
-    String &append(const String &str) { return str.empty() ? *this : append(str.data(), str.length()); }
+    String &append(const String &str) { return append(str.data(), str.length()); }
     String &append(const char *str) { return append(str, strlen(str)); return *this; }
     String &append(const char *str, size_t length);
     String &append(char c) { char data[2] = { c, 0 }; return append(data, 1); }
@@ -56,13 +53,13 @@ public:
     
     String &replace(size_t pos, size_t length, const String &str) { return replace(pos, length, str, 0, npos); }
     String &replace(size_t pos, size_t length, const String &str, size_t subpos, size_t sublen);
-    String &replace(size_t pos, size_t length, const char *str) { if (str && *str) replace(pos, length, str, strlen(str)); return *this; }
+    String &replace(size_t pos, size_t length, const char *str) { return replace(pos, length, str, strlen(str)); }
     String &replace(size_t pos, size_t length, const char *str, size_t strlen);
     
     size_t find(const String &str, size_t pos = 0) const { return find(str.data(), pos); }
-    size_t find(const char *str, size_t pos = 0) const;
-    size_t find(const char *str, size_t pos, size_t n) const;
-    size_t find(char c, size_t pos = 0) const;
+    size_t find(const char *str, size_t pos = 0) const { size_t p = sundaySearch(data() + pos, str); return p != npos ? p + pos : npos; }
+    size_t find(const char *str, size_t pos, size_t n) const { size_t p = sundaySearch(data() + pos, str, n); return p != npos ? p + pos : npos; }
+    size_t find(char c, size_t pos = 0) const { const char *p = strchr(data() + pos, c); return p ? p - data() : npos; }
     
     String substr(size_t pos = 0, size_t length = npos) const { return String(*this, pos, length); }
     bool operator==(const String &str) const { return find(str) == 0 && length() == str.length(); }

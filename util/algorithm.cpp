@@ -1,6 +1,8 @@
 #include "util/algorithm.h"
+#include "util/string.h"
 #include <string.h>
-#include <stdint.h>
+#include <stdio.h>
+#include <stdarg.h>
 
 namespace util {
 
@@ -43,7 +45,7 @@ size_t kmpSearch(const char *text, const char *pattern, size_t plen) {
 }
 
 size_t sundaySearch(const char *text, const char *pattern) {
-    size_t plen = strlen(text);
+    size_t plen = strlen(pattern);
     return sundaySearch(text, pattern, plen);
 }
 
@@ -100,6 +102,20 @@ String urlDecode(const String &str) {
     }
 
     return decode;
+}
+
+void writeLog(const char *func, int line, const char *fmt, ...) {
+    char buffer[128];
+    va_list vp;
+    va_start(vp, fmt);
+    size_t p1 = sundaySearch(func, "::");
+    size_t p2 = sundaySearch(func + p1, "(");
+    memcpy(buffer, func + p1 + 2, p2 - 2);
+    buffer[p2 - 2] = 0;
+        printf("[%s:%d]", buffer, line);
+    vprintf(fmt, vp);
+    printf("\n");
+    va_end(vp);
 }
 
 }

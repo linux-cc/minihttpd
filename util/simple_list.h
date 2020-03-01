@@ -9,7 +9,7 @@ template <typename T>
 class SimpleList {
 public:
     SimpleList(): _size(0) {
-        _head = _tail = memory::SimpleAlloc<Node>::New();
+        _head = memory::SimpleAlloc<Node>::New();
         _head->_prev = _head->_next = _head;
     }
     
@@ -19,18 +19,17 @@ public:
     }
     
     bool empty() const { return _head->_next == _head; }
-    
     size_t size() const { return _size; }
     
     bool push(const T &data) {
         Node *n = memory::SimpleAlloc<Node>::New(data);
         if (!n) return false;
         
-        Node *next = _tail->_next;
-        _tail->_next = n;
-        n->_prev = _tail;
-        next->_prev = n;
-        n->_next = next;
+        Node *tail = _head->_prev;
+        tail->_next = n;
+        n->_prev = tail;
+        _head->_prev = n;
+        n->_next = _head;
         ++_size;
         
         return true;
@@ -98,7 +97,6 @@ private:
     };
     
     Node *_head;
-    Node *_tail;
     size_t _size;
 };
 

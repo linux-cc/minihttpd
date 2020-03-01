@@ -1,5 +1,6 @@
 #include "util/config.h"
 #include "util/atomic.h"
+#include "util/scoped_ptr.h"
 #include "httpd/worker.h"
 #include "httpd/server.h"
 #include "httpd/request.h"
@@ -11,6 +12,8 @@
 
 namespace httpd {
 
+using util::ScopedPtr;
+using memory::SimpleAlloc;
 using network::EPollResult;
 using network::Sockaddr;
 using network::Peername;
@@ -19,7 +22,7 @@ static int __accept_lock = 0;
 
 bool Worker::onInit() {
     if (!_poller.create(MAX_WORKER_CONN)) {
-        _LOG_("poller create false\n");
+        _LOG_("poller create false");
         return false;
     }
 
@@ -37,7 +40,7 @@ bool Worker::tryLockAccept() {
             _acceptLock = true;
             int error = _poller.add(_server);
             if (error) {
-                _LOG_("poll add server error: %d:%s\n", errno, strerror(errno));
+                _LOG_("poll add server error: %d:%s", errno, strerror(errno));
             }
         }
         return true;
@@ -46,7 +49,7 @@ bool Worker::tryLockAccept() {
             _acceptLock = false;
             int error = _poller.del(_server);
             if (error) {
-                _LOG_("poll del server error: %d:%s\n", errno, strerror(errno));
+                _LOG_("poll del server error: %d:%s", errno, strerror(errno));
             }
         }
         return false;
@@ -90,30 +93,30 @@ void Worker::onAccept() {
         TcpSocket client(_server.accept());
         if (client < 0) {
             if (errno != EWOULDBLOCK && errno != EAGAIN) {
-                _LOG_("accept error: %d:%s\n", errno, strerror(errno));
+                _LOG_("accept error: %d:%s", errno, strerror(errno));
             }
             int error = _poller.mod(_server);
             if (error) {
-                _LOG_("poll mod server error: %d:%s\n", errno, strerror(errno));
+                _LOG_("poll mod server error: %d:%s", errno, strerror(errno));
             }
             break;
         }
 
         if (_connsList.size() >= MAX_WORKER_CONN) {
-            _LOG_("Connection is empty\n");
+            _LOG_("Connection is empty");
             client.close();
             break;
         }
         client.setNoDelay();
         client.setNonblock();
-        Connection *conn = memory::SimpleAlloc<Connection>::New(client);
+        Connection *conn = SimpleAlloc<Connection>::New(client);
         _connsList.push(conn);
         _server._eventQ.enqueue(Server::Item(conn));
         int error = _poller.add(client, conn);
         if (error) {
-            _LOG_("poll add client error: %d:%s\n", errno, strerror(errno));
+            _LOG_("poll add client error: %d:%s", errno, strerror(errno));
         }
-        _LOG_("server accept: [%s|%d], fd: %d, Connection: %p\n", client.getPeerName().name(), client.getPeerName().port(), (int)client, conn);
+        _LOG_("server accept: [%s|%d], fd: %d, Connection: %p", client.getPeerName().name(), client.getPeerName().port(), (int)client, conn);
     }
 }
 
@@ -125,88 +128,84 @@ void Worker::onHandleEvent() {
         } else if (event->isPollOut()) {
             onResponse(*event);
         } else {
-            _LOG_("handle unknown event, fd: %d, connection: %p\n", event->fd(), event->data());
+            _LOG_("handle unknown event, fd: %d, connection: %p", event->fd(), event->data());
         }
     }
 }
 
 void Worker::onRequest(EPollEvent &event) {
     Connection *conn = (Connection*)event.data();
-    do {
-        if (!conn->recv()) {
-            close(conn);
-            break;
+    
+    if (!conn->recv()) {
+        close(conn);
+        _server._eventQ.enqueue(Server::Item(conn));
+        return;
+    }
+    bool write = false;
+    while (true) {
+        Request *last = conn->getRequest();
+        ScopedPtr<Request> req(last ? last : SimpleAlloc<Request>::New(conn));
+        if (req->inParseHeaders()) {
+            if (!req->parseHeaders()) {
+                break;
+            }
+            _LOG_("fd: %d, Request headers:\n%s", conn->fd(), req->headers().data());
+            if (req->is100Continue()) {
+                conn->addRequest(SimpleAlloc<Request>::New(*req));
+                conn->setRequest(req.release());
+                write = true;
+                break;
+            }
         }
-        
-        _poller.mod(conn->fd(), conn);
-        Request *request = conn->getRequest();
-        if (!request->parseHeaders(conn)) {
-            break;
+        if (req->inParseContent()) {
+            req->parseContent();
+            if (req->isCompleted()) {
+                conn->addRequest(req.release());
+                write = true;
+            } else {
+                conn->setRequest(req.release());
+                break;
+            }
         }
-        
-        if (request->hasContent()) {
-            request->parseContent(conn);
-        }
-        if (request->isCompleted()) {
-            _poller.mod(conn->fd(), conn, true);
-            conn->setRequest(NULL);
-        }
-    } while (0);
+    }
+    _poller.mod(conn->fd(), conn, write);
     _server._eventQ.enqueue(Server::Item(conn));
 }
 
 void Worker::onResponse(EPollEvent &event) {
     Connection *conn = (Connection*)event.data();
-    Request request;// = conn->request();
-    Response response;// = conn->response();
-    switch(response.status()) {
-    case Response::PARSE_REQUEST:
-        response.parseRequest(request);
-        //request.reset(response.is100Continue());
-        _LOG_("fd: %d, Response headers:\n%s\n", conn->fd(), response.headers().data());
-    case Response::SEND_HEADERS: {
-        if (!response.sendHeaders(conn)) {
-            _LOG_("Response send headers error: %d:%s\n", errno, strerror(errno));
-            close(conn);
-            return;
+    
+    while (true) {
+        ScopedPtr<Response> last(conn->getResponse());
+        Response _new(conn);
+        Response *resp = last.get() ? last.get() : &_new;
+        
+        if (!last) {
+            Request *req = conn->popRequest();
+            if (!req) break;
+            resp->parseRequest(req);
+            SimpleAlloc<Request>::Delete(req);
         }
-        if (response.inSendHeaders()) {
+        if (!resp->sendResponse()) {
+            _LOG_("sendResponse error: %d:%s", errno, strerror(errno));
+            close(conn);
             break;
         }
-    }
-    case Response::SEND_CONTENT:
-        if (!response.sendContent(conn)) {
-            _LOG_("Response send content error: %d:%s\n", errno, strerror(errno));
-            close(conn);
-            return;
-        }
-        if (response.inSendContent()) {
-            break;
-        }
-    case Response::SEND_DONE:
-        if (!conn->send()) {
-            _LOG_("Response send buffer error: %d:%s\n", errno, strerror(errno));
-            close(conn);
-            return;
-        }
-        if (conn->sendCompleted()) {
-            if (response.connectionClose()) {
+        if (resp->sendCompleted()) {
+            if (resp->connectionClose()) {
                 close(conn);
+                break;
             }
-            response.reset();
-            _poller.mod(conn->fd(), conn);
-            return;
+        } else {
+            conn->setResponse(resp == last ? last.release() : SimpleAlloc<Response>::New(*resp));
         }
     }
-    int error = _poller.mod(conn->fd(), conn, true);
-    if (error) {
-        _LOG_("onResponse poll mode: %d:%s\n", errno, strerror(errno));
-    }
+    _poller.mod(conn->fd(), conn);
 }
 
 void Worker::close(Connection *conn) {
     _poller.del(conn->fd());
-    _LOG_("close connection: %p, fd: %d\n", conn, conn->fd());
+    _LOG_("close connection: %p, fd: %d", conn, conn->fd());
     conn->close();
     _connsList.erase(conn);
     memory::SimpleAlloc<Connection>::Delete(conn);

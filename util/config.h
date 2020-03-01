@@ -3,9 +3,8 @@
 
 #ifdef __DEBUG__
 #include <pthread.h>
-#include <stdio.h>
-#define _LOG_TID_(fmt, ...)     printf("[%s:%d][%ld]" fmt "\n", , __FILE__, __LINE__, (intptr_t)pthread_self(), ##__VA_ARGS__)
-#define _LOG_(fmt, ...)         printf("[%s:%d]" fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#include "util/algorithm.h"
+#define _LOG_(fmt, ...)         util::writeLog(__PRETTY_FUNCTION__, __LINE__, fmt, ##__VA_ARGS__)
 #else
 #define _LOG_(...)    
 #endif
@@ -19,6 +18,11 @@
 
 #define CHAR_CR             '\r'
 #define CHAR_LF             '\n'
+#define CHAR_SP             ' '
+#define CHAR_COLON          ':'
+#define CHAR_QUOTE          '"'
+#define STR_COLON           ":"
+#define STR_SP              " "
 #define ONE_CRLF            "\r\n"
 #define TWO_CRLF            "\r\n\r\n"
 #define TWO_CRLF_SIZE       4

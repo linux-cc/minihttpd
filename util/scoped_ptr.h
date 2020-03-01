@@ -64,6 +64,10 @@ public:
     }
     
     void reset(T *p = NULL) {
+        if (p == _data.ptr) {
+            return;
+        }
+        
         T *old = _data.ptr;
         if (old != NULL) {
             static_cast<Deleter&>(_data)(old);

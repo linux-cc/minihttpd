@@ -23,18 +23,18 @@ Server::~Server() {
 
 bool Server::start(const char *host, const char *service) {
     if (!_server.create(host, service)) {
-        _LOG_("server create error:%d:%s\n", errno, strerror(errno));
+        _LOG_("server create error:%d:%s", errno, strerror(errno));
         return false;
     }
     _server.setNonblock();
     
     for (int i = 0; i < MAX_WORKER; ++i) {
         if (!_workers[i]->start()) {
-            _LOG_("server start worker error:%d:%s\n", errno, strerror(errno));
+            _LOG_("server start worker error:%d:%s", errno, strerror(errno));
             return false;
         }
     }
-    _LOG_("server listen on %s:%s\n", host, service);
+    _LOG_("server listen on %s:%s", host, service);
 
     return true;
 }
@@ -45,8 +45,8 @@ void Server::update() {
         newIndex = _timeoutQ.size() - 1;
     }
     Item item;
-    while (_eventQ.dequeue(item)) {
-        if (_connIndex.find(item)) {
+    while (_eventQ.dequeue(item) && item._conn) {
+        if (_connIndex.find(item) && item._queueIndex != -1) {
             SimpleList<Item> &oldList = _timeoutQ.at(item._queueIndex);
             oldList.erase(item);
         } else {
@@ -61,16 +61,16 @@ void Server::update() {
 
 void Server::run() {
     while (!_quit) {
-        update();
+        /*update();
         SimpleList<Item> &curList = _timeoutQ.at(_curIndex);
         Item data;
-        while (curList.pop(data)) {
-            _LOG_("Connection timeout, fd: %d, connection: %p\n", data._conn->fd(), data._conn);
+        while (curList.pop(data) && data._conn) {
+            _LOG_("Connection timeout, fd: %d, connection: %p", data._conn->fd(), data._conn);
             data._conn->close();
         }
         if (++_curIndex == _timeoutQ.capacity()) {
             _curIndex = 0;
-        }
+        }*/
         sleep(1);
     }
 }

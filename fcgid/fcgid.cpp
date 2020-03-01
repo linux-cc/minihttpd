@@ -15,14 +15,14 @@ _local(isLocal) {
 
 bool Manager::start(const char *host, const char *service) {
     if (!_socket.create(host, service)) {
-        _LOG_("socket create error:%d:%s\n", errno, strerror(errno));
+        _LOG_("socket create error:%d:%s", errno, strerror(errno));
         return false;
     }
 
     while (_children--) {
         pid_t pid = fork();
         if (pid < 0) {
-            _LOG_("fork error:%d:%s\n", errno, strerror(errno));
+            _LOG_("fork error:%d:%s", errno, strerror(errno));
             return false;
         } else if (pid == 0) {
             process();

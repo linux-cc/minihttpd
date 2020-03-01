@@ -7,13 +7,13 @@
 
 namespace httpd {
 
-using namespace util;
+using util::SimpleList;
 using thread::Thread;
 using network::EPoller;
 using network::EPollEvent;
 class Server;
 class Connection;
-
+class Response;
 class Worker: public Thread {
 public:
     Worker(Server &server): _server(server), _actives(0), _acceptLock(false) {}
@@ -30,6 +30,7 @@ private:
     void onHandleEvent();
     void onRequest(EPollEvent &event);
     void onResponse(EPollEvent &event);
+    void onResponse(Response *resp, Connection *conn);
 
     Server &_server;
     EPoller _poller; 

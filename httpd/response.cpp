@@ -7,13 +7,35 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <string.h>
+#include <sys/stat.h>
+#include <stdio.h>
 
 #define WEB_ROOT    "./htdocs/html"
 #define CGI_BIN     "/cgi-bin"
 #define ROOT_PAGE   "/index.html"
 
 namespace httpd {
+
+struct Status {
+    int _code;
+    const char *_reason;
+};
+
+enum EStatus {
+    Continue,
+    OK,
+    Bad_Request,
+    Not_Found,
+    Method_Not_Allowed,
+};
+
+static const Status __status[] = {
+    { 100, "Continue" },
+    { 200, "OK" },
+    { 400, "Bad Request" },
+    { 404, "Not Found" },
+    { 405, "Method Not Allowed" },
+};
 
 static String itoa(int i) {
     char temp[16] = { 0 };
@@ -30,98 +52,39 @@ static String getGMTTime(time_t t) {
     return buf;
 }
 
-void Response::parseRequest(const Request &request) {
-    /*if (!request.isGet() && !request.isPost()) {
-        setStatusLine(ResponseStatus::Not_Implemented, request.version());
-    } else if (request.is100Continue()) {
-        setStatusLine(ResponseStatus::Continue, request.version());
-    } else {
-        String file = WEB_ROOT + parseUri(request.uri());
-        if (file.empty()) {
-            setStatusLine(ResponseStatus::Bad_Request, request.version());
+static void eraseBetween(String &str, const char *delim1, const char *delim2) {
+    size_t p1 = str.find(delim1);
+    if (p1 != String::npos) {
+        size_t p2 = str.find(delim2, strlen(delim1));
+        if (p2 != String::npos) {
+            str.erase(p1, p2 + strlen(delim2) - p1);
+        }
+    }
+}
+
+void Response::parseRequest(const Request *req) {
+    if (_headers.empty()) {
+        if (!req->isGet() && !req->isPost()) {
+            setStatusLine(Method_Not_Allowed, req->getHttpVersion());
+        } else if (req->is100Continue()) {
+            setStatusLine(Continue, req->getHttpVersion());
         } else {
-            setStatusLine(parseFile(file), request.version());
+            String file = String(WEB_ROOT).append(parseUri(req->getUri()));
+            if (file.empty()) {
+                setStatusLine(Bad_Request, req->getHttpVersion());
+            } else {
+                setStatusLine(parseFile(file), req->getHttpVersion());
+            }
         }
-    }*/
-    setCommonHeaders(request);
-    _status = SEND_HEADERS;
-}
-
-void Response::setCommonHeaders(const Request &request) {
-    /*String value = request.getHeader(Header::Connection);
-    if (value) {
-        _headers[Header::Connection] = value;
-        _connClose = !strncasecmp(value->c_str(), "close", 5);
-    }    
-    if (_code == ResponseStatus::OK) {
-        value = request.getHeader(Header::Accept_Encoding);
-        if (value && value->find("gzip") != String::npos) {
-            _headers[Header::Transfer_Encoding] = "chunked";
-            _headers[Header::Content_Encoding] = "gzip";
-            _headers.erase(Header::Content_Length);
-            _acceptGz = 1;
-        }
-    }*/
-    //_headers[Header::Server] = "minihttpd/1.1.01";
-    //_headers[Header::Date] = getGMTTime(0);
-}
-
-String Response::headers() const {
-    return String();
-}
-
-bool Response::sendHeaders(Connection *conn) {
-    String data = headers();
-    int len = data.length();
-
-    if (!conn->send(data.data(), len)) {
-        return false;
+        setCommonHeaders(req);
     }
-    _status = _fd > 0 ? SEND_CONTENT : SEND_DONE;
-
-    return true;
-}
-
-bool Response::sendContentOriginal(Connection *conn) {
-    if (_fd < 0 || _fileLength == 0) {
-        _status = SEND_DONE;
-        return true;
-    }
-    off_t n = _fileLength - _filePos;
-#ifdef __linux__
-    n = sendfile(*conn, _fd, &_filePos, n);
-    if (n < 0) {
-        return errno != EAGAIN ? false : true;
-    }
-#else
-    if (sendfile(_fd, conn->fd(), _filePos, &n, NULL, 0)) {
-        return errno != EAGAIN ? false : true;
-    }
-#endif
-    _filePos += n + 1;
-    if (_filePos >= _fileLength) {
-       _status = SEND_DONE;
-    }
-    return true;
-}
-
-bool Response::sendContentChunked(Connection *conn) {
-    _conn = conn;
-    GZip gzip(this);
-
-    if (!gzip.init()) {
-        return false;
-    }
-    gzip.zip();
-    _status = SEND_DONE;
-
-    return true;
 }
 
 void Response::setStatusLine(int status, const String &version) {
-    _version = version;
-    _code = status;
-    _reason = "";//ResponseStatus::getReason(status);
+    _code = __status[status]._code;
+    _headers.append(version).append(CHAR_SP);
+    _headers.append(itoa(_code)).append(CHAR_SP);
+    _headers.append(__status[status]._reason).append(ONE_CRLF);
 }
 
 String Response::parseUri(const String &uri) {
@@ -157,16 +120,13 @@ int Response::parseFile(const String &file) {
     if (_fd < 0) {
         return 1;//ResponseStatus::Internal_Server_Error;
     }
-    setContentInfo(file, st);
-
-    return 0;//ResponseStatus::OK;
-}
-
-void Response::setContentInfo(const String &file, const struct stat &st) {
-    setContentType(file);
+    
     _fileLength = st.st_size;
-    //_headers[Header::Content_Length] = itoa(st.st_size);
-    //_headers[Header::Last_Modified] = getGMTTime(STAT_MTIME(st));
+    setContentType(file);
+    _headers.append("Content-Length: ").append(itoa(_fileLength)).append(ONE_CRLF);
+    _headers.append("Last-Modified: ").append(getGMTTime(STAT_MTIME(st))).append(ONE_CRLF);
+    
+    return 0;//ResponseStatus::OK;
 }
 
 void Response::setContentType(const String &file) {
@@ -175,36 +135,87 @@ void Response::setContentType(const String &file) {
     if (p != String::npos) {
         subfix = file.substr(p + 1);
     }
-    String value;// = _headers[Header::Content_Type];
+    _headers.append("Content-Type: ");
     if (!strncasecmp(subfix.data(), "htm", 3)) {
-        value = "text/html";
+        _headers.append("text/html");
     } else if (!strncasecmp(subfix.data(), "js", 2)) {
-        value = "application/javascript";
+        _headers.append("application/javascript");
     } else if (!strncasecmp(subfix.data(), "jpg", 3) || !strncasecmp(subfix.data(), "jpeg", 4)) {
-        value = "image/jpeg";
+        _headers.append("image/jpeg");
     } else if (!strncasecmp(subfix.data(), "png", 3)) {
-        value = "image/png";
+        _headers.append("image/png)");
     } else if (!strncasecmp(subfix.data(), "gif", 3)) {
-        value = "image/gif";
+        _headers.append("image/gif)");
     } else {
-        //value = "text/" + subfix;
+        _headers.append("text/").append(subfix);
     }
-    value += "; charset=UTF-8";
+    _headers.append("; charset=UTF-8").append(ONE_CRLF);
 }
 
-void Response::reset() {
-    if (_fd > 0) {
-        close(_fd);
+void Response::setCommonHeaders(const Request *req) {
+    String value = req->getHeader("Connection");
+    if (!value.empty()) {
+        _headers.append("Connection: ").append(value).append(ONE_CRLF);
+        _connClose = value == "close";
+    }    
+    if (_code == OK) {
+        value = req->getHeader("Accept-Encoding");
+        if (value.find("gzip") != String::npos) {
+            _headers.append("Transfer-Encoding: chunked").append(ONE_CRLF);
+            _headers.append("Content-Encoding: gzip").append(ONE_CRLF);
+            eraseBetween(_headers, "Content-Length", ONE_CRLF);
+            _acceptGz = 1;
+        }
     }
-    _fd = -1;
-    _headers.clear();
-    _status = PARSE_REQUEST;
-    _filePos = 0;
-    _fileLength = 0;
-    _cgiBin = 0;
-    _connClose = 0;
-    _acceptGz = 0;
-    _reserve = 0;
+    _headers.append("Server: minihttpd/1.1.01").append(ONE_CRLF);
+    _headers.append("Date: ").append(getGMTTime(0)).append(TWO_CRLF);
+}
+
+bool Response::sendCompleted() const {
+    if (_code == Continue) {
+        return _headPos >= _headers.length();
+    } else {
+        return _headPos >= _headers.length() && _filePos >= _fileLength;
+    }
+}
+
+bool Response::sendResponse() {
+    if (_headPos < _headers.length()) {
+        ssize_t n = _conn->send(_headers);
+        if (n < 0) return false;
+        _headPos += n;
+    }
+    
+    if (_code != __status[Continue]._code) {
+        if (!_acceptGz && sendFile() < 0) {
+            return false;
+        }
+        GZip gzip(this);
+        if (!gzip.init() && sendFile() < 0) {
+            return false;
+        }
+        gzip.zip();
+    }
+    
+    return true;
+}
+
+ssize_t Response::sendFile() {
+    if (_fd > 0 && _filePos < _fileLength) {
+        off_t n = _fileLength - _filePos;
+#ifdef __linux__
+        sszie_t ret = sendfile(_conn->fd(), _fd, &_filePos, _fileLength - _filePos);
+#else
+        int ret = sendfile(_fd, _conn->fd(), _filePos, &n, NULL, 0);
+#endif
+        if (ret < 0 && errno != EAGAIN) {
+            return ret;
+        }
+        _filePos += n;
+        return n;
+    }
+    
+    return 0;
 }
 
 int Response::gzfill(void *buf, int len) {
@@ -215,12 +226,15 @@ bool Response::gzflush(const void *buf, int len, bool eof) {
     static char tailer[] = { CHAR_CR, CHAR_LF, '0', CHAR_CR, CHAR_LF, CHAR_CR, CHAR_LF, };
     char header[16] = { 0 };
     int hlen = sprintf(header, "%x%s", len, ONE_CRLF);
+    struct iovec iov[3];
+    iov[0].iov_base = header;
+    iov[0].iov_len = hlen;
+    iov[1].iov_base = (void*)buf;
+    iov[1].iov_len = len;
+    iov[2].iov_base = tailer;
+    iov[2].iov_len = eof ? 7 : 2;
 
-    //if (!_conn->send(header, hlen, buf, len, tailer, eof ? 7 : 2)) {
-     //   return false;
-    //}
-
-    return true;
+    return _conn->send(iov, 3) == hlen + len + (eof ? 7 : 2);
 }
 
 } /* namespace httpd */

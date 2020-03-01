@@ -13,10 +13,9 @@ public:
     BufferQueue(int capacity = BUFFER_SIZE): _readPos(0), _writePos(0), _capacity(capacity) { _buffer = memory::SimpleAlloc<char[]>::New(_capacity); }
     ~BufferQueue() { memory::SimpleAlloc<char[]>::Delete(_buffer, _capacity); }
     
-    bool enqueue(const void *buf, size_t size);
+    size_t enqueue(const void *buf, size_t size);
     
     size_t dequeue(void *buf, size_t size);
-    bool dequeueAll(String &buf);
     bool dequeueUntil(String &buf, const char *pattern, bool flush);
     
     int getWriteIov(struct iovec iov[2]);
@@ -29,6 +28,7 @@ public:
     bool full() const { return (_writePos + 1) % _capacity == _readPos; }
     size_t length() const { return _writePos >= _readPos ? _writePos - _readPos : _capacity - (_readPos - _writePos); }
     size_t capaticy() const { return _capacity; }
+    size_t index(size_t n) const { return  n % _capacity; }
     
 private:
     char *_buffer;//空出一字节空间判断空和满

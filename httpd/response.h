@@ -3,76 +3,45 @@
 
 #include "util/string.h"
 #include "httpd/gzip.h"
-#include <sys/stat.h>
-#include <map>
 
 namespace httpd {
 
 using util::String;
-using std::map;
 class Request;
 class Connection;
-
 class Response : public GCallback {
 public:
-    enum Status {
-        PARSE_REQUEST,
-        SEND_HEADERS,
-        SEND_CONTENT,
-        SEND_DONE,
-    };
-    Response() {
-        reset();
-    }
-    void parseRequest(const Request &request);
-    void setCommonHeaders(const Request &request);
-    String headers() const;
-    bool sendHeaders(Connection *conn);
-    bool sendContent(Connection *conn) {
-        return _acceptGz ? sendContentChunked(conn) : sendContentOriginal(conn);
-    }
-    bool connectionClose() const {
-        return _connClose;
-    }
-    bool is100Continue() const {
-        return _code == 100;//ResponseStatus::Continue;
-    }
-    Status status() const {
-        return _status;
-    }
-    bool inSendHeaders() const {
-        return _status == SEND_HEADERS;
-    }
-    bool inSendContent() const {
-        return _status == SEND_CONTENT;
-    }
-    void reset();
-
+    Response(Connection *conn = NULL):  _conn(conn), _filePos(0), _fileLength(0),
+        _code(0), _fd(-1), _headPos(0), _cgiBin(0), _connClose(0), _acceptGz(0), _reserve(0) {}
+    ~Response() { if (_fd > 0 ) { close(_fd); _fd = -1; } }
+    
+    void parseRequest(const Request *req);
+    bool sendResponse();
+    bool connectionClose() const { return _connClose; }
+    bool sendCompleted() const;
+    const String &headers() const { return _headers; }
+    
 private:
     void setStatusLine(int status, const String &version);
     String parseUri(const String &uri);
     int parseFile(const String &file);
-    void setContentInfo(const String &file, const struct stat &st);
     void setContentType(const String &file);
-    bool sendContentOriginal(Connection *conn);
-    bool sendContentChunked(Connection *conn);
+    void setCommonHeaders(const Request *req);
+    ssize_t sendFile();
     int gzfill(void *buf, int len);
     bool gzflush(const void *buf, int len, bool eof);
 
     Connection *_conn;
-    String _version;
-    int _code;
-    String _reason;
-    int _fd;
-    Status _status;
+    String _headers;
     off_t _filePos;
     off_t _fileLength;
+    int _code;
+    int _fd;
+    int _headPos;
     uint8_t _cgiBin: 1;
     uint8_t _connClose: 1;
     uint8_t _acceptGz: 1;
     uint8_t _reserve: 5;
-    typedef map<int, String>::const_iterator HeaderIt;
-    map<int, String> _headers;
 };
 
 } /* namespace httpd */
