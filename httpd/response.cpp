@@ -10,7 +10,7 @@
 #include <sys/stat.h>
 #include <stdio.h>
 
-#define WEB_ROOT    "./htdocs/html"
+#define WEB_ROOT    "../blog/html"
 #define CGI_BIN     "/cgi-bin"
 #define ROOT_PAGE   "/index.html"
 
@@ -25,16 +25,20 @@ enum EStatus {
     Continue,
     OK,
     Bad_Request,
+    Forbidden,
     Not_Found,
     Method_Not_Allowed,
+    Internal_Server_Error,
 };
 
 static const Status __status[] = {
     { 100, "Continue" },
     { 200, "OK" },
     { 400, "Bad Request" },
+    { 403, "Forbidden" },
     { 404, "Not Found" },
     { 405, "Method Not Allowed" },
+    { 500, "Internal Server Error" },
 };
 
 static String itoa(int i) {
@@ -81,9 +85,9 @@ void Response::parseRequest(const Request *req) {
 }
 
 void Response::setStatusLine(int status, const String &version) {
-    _code = __status[status]._code;
+    _code = status;
     _headers.append(version).append(CHAR_SP);
-    _headers.append(itoa(_code)).append(CHAR_SP);
+    _headers.append(itoa(__status[status]._code)).append(CHAR_SP);
     _headers.append(__status[status]._reason).append(ONE_CRLF);
 }
 
@@ -109,16 +113,16 @@ String Response::parseUri(const String &uri) {
 int Response::parseFile(const String &file) {
     struct stat st;
     if (stat(file.data(), &st)) {
-        return 1;//ResponseStatus::Not_Found;
+        return Not_Found;
     }
     _cgiBin = !strncasecmp(file.data(), CGI_BIN, strlen(CGI_BIN));
     int permit = S_IRUSR | S_IRGRP | S_IROTH | (_cgiBin ? S_IXUSR : 0);
     if (!(st.st_mode & permit)) {
-        return 1;//ResponseStatus::Forbidden;
+        return Forbidden;
     }
     _fd = open(file.data(), O_RDONLY | O_NONBLOCK);
     if (_fd < 0) {
-        return 1;//ResponseStatus::Internal_Server_Error;
+        return Internal_Server_Error;
     }
     
     _fileLength = st.st_size;
@@ -126,7 +130,7 @@ int Response::parseFile(const String &file) {
     _headers.append("Content-Length: ").append(itoa(_fileLength)).append(ONE_CRLF);
     _headers.append("Last-Modified: ").append(getGMTTime(STAT_MTIME(st))).append(ONE_CRLF);
     
-    return 0;//ResponseStatus::OK;
+    return OK;
 }
 
 void Response::setContentType(const String &file) {
@@ -186,7 +190,7 @@ bool Response::sendResponse() {
         _headPos += n;
     }
     
-    if (_code != __status[Continue]._code) {
+    if (_code != Continue) {
         if (!_acceptGz && sendFile() < 0) {
             return false;
         }

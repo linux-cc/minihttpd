@@ -56,17 +56,25 @@ size_t BufferQueue::dequeue(void *buf, size_t size) {
     return size1 + size2;
 }
 
-bool BufferQueue::dequeueUntil(String &buf, const char *pattern, bool flush) {
-    static uint16_t _move[128];
-    size_t plen = strlen(pattern);
-    for (int i = 0; i < 128; ++i) {
+static uint16_t *getMove(const char *pattern, size_t plen) {
+    static uint16_t _move[256];
+    
+    for (int i = 0; i < 256; ++i) {
         _move[i] = plen + 1;
     }
     for (int i = 0; i < plen; ++i) {
         _move[int(pattern[i])] = plen - i;
     }
+    
+    return _move;
+}
+
+bool BufferQueue::dequeueUntil(String &buf, const char *pattern, bool flush) {
+    size_t plen = strlen(pattern);
     size_t tlen = length();
+    uint16_t *move = getMove(pattern, plen);
     size_t s = 0, j;
+    
     while (s + plen <= tlen) {
         j = 0;
         size_t i = _readPos + s;
@@ -78,15 +86,15 @@ bool BufferQueue::dequeueUntil(String &buf, const char *pattern, bool flush) {
                 return true;
             }
         }
-        int mlen = _move[int(_buffer[index(i + plen)])];
-        buf.append(&_buffer[index(i)], mlen);
+        int mlen = move[int(_buffer[index(i + plen)])];
+        for (int k = 0; k < mlen && (s + k) < tlen; ++k) {
+            buf.append(_buffer[index(i + k)]);
+        }
         s += mlen;
     }
     if (flush) {
-        if (s < tlen) {
-            buf.append(&_buffer[index(_readPos + s)], tlen - s);
-        } else if (s > tlen) {
-            buf.erase(buf.length() - 1);
+        for (size_t i = s; i < tlen; ++i) {
+            buf.append(_buffer[index(_readPos + i)]);
         }
         setReadPos(tlen);
     } else {
