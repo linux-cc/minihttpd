@@ -65,7 +65,7 @@ void Worker::unlockAccept() {
 void Worker::run() {
     while (!_server.isQuit()) {
         bool holdLock = tryLockAccept();
-        EPollResult result = _poller.wait(200);
+        EPollResult result = _poller.wait(1000);
         for (EPollResult::Iterator it = result.begin(); it != result.end(); ++it) {
             if (it->isPollIn()) {
                 if (it->fd() == _server) {

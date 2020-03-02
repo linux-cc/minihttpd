@@ -50,9 +50,9 @@ size_t sundaySearch(const char *text, const char *pattern) {
 }
 
 size_t sundaySearch(const char *text, const char *pattern, size_t plen) {
-    static uint16_t _move[128];
+    static uint16_t _move[256];
     size_t tlen = strlen(text);
-    for (int i = 0; i < 128; ++i) {
+    for (int i = 0; i < 256; ++i) {
         _move[i] = plen + 1;
     }
     for (int i = 0; i < plen; ++i) {
@@ -60,7 +60,7 @@ size_t sundaySearch(const char *text, const char *pattern, size_t plen) {
     }
     
     int s = 0, j;
-    while (s <= tlen - plen) {
+    while (s + plen <= tlen) {
         j = 0;
         while (text[s+j] == pattern[j]) {
             ++j;

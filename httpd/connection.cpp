@@ -16,7 +16,7 @@ bool Connection::recv() {
     }
     _LOG_("[Connection::recv]iovcnt: %d, size: %lu\n", iovcnt, n);
     
-    return n >= 0 || (n < 0 && errno == EAGAIN);
+    return n > 0 || (n < 0 && errno == EAGAIN);
 }
 
 } /* namespace httpd */

@@ -13,19 +13,15 @@ String::String(const String &str, size_t pos, size_t length) {
 }
 
 String &String::erase(size_t pos, size_t length) {
-    if (!empty()) {
-        if (_ptr->hasRef()) {
-            _ptr = memory::SimpleAlloc<Value>::New(_ptr->_data, _ptr->_length);
-        }
-        size_t end = pos + length;
-        if (length == npos || end >= _ptr->_length) {
-            _ptr->_length = pos;
-            _ptr->_data[pos] = 0;
-        } else {
-            memmove(_ptr->_data + pos, _ptr->_data + end, _ptr->_length - end + 1);
-            _ptr->_length -= length;
-        }
+    makeCopy();
+    size_t end = pos + length;
+    if (length == npos || end >= _ptr->_length) {
+        _ptr->_length = pos;
+    } else {
+        memmove(_ptr->_data + pos, _ptr->_data + end, _ptr->_length - end);
+        _ptr->_length -= length;
     }
+    _ptr->_data[_ptr->_length] = 0;
     
     return *this;
 }
@@ -40,41 +36,61 @@ String &String::replace(size_t pos, size_t length, const String &str, size_t sub
 }
 
 String &String::replace(size_t pos, size_t length, const char *str, size_t strlen) {
-    if (appendEnabled(str, strlen)) {
-        size_t end = pos + length;
-        size_t oldLength = _ptr->_length;
-        if (length == npos || end > oldLength) {
-            end = oldLength;
-        }
-        _ptr->resize(oldLength - (end - pos) + strlen);
-        if (end < oldLength) {
-            memmove(_ptr->_data + pos + strlen, _ptr->_data + end, oldLength - end);
-        }
-        memcpy(_ptr->_data + pos, str, strlen);
+    makeCopy();
+    size_t end = pos + length;
+    size_t oldLength = _ptr->_length;
+    if (length == npos || end > oldLength) {
+        end = oldLength;
     }
+    _ptr->resize(oldLength - (end - pos) + strlen);
+    if (end < oldLength) {
+        memmove(_ptr->_data + pos + strlen, _ptr->_data + end, oldLength - end);
+    }
+    memcpy(_ptr->_data + pos, str, strlen);
     
     return *this;
 }
 
 String &String::append(const char *str, size_t length) {
-    if (appendEnabled(str, length)) {
-        size_t oldLength = _ptr->_length;
-        _ptr->resize(oldLength + length);
-        memcpy(_ptr->_data + oldLength, str, length);
-    }
+    makeCopy();
+    size_t oldLength = _ptr->_length;
+    _ptr->resize(oldLength + length);
+    memcpy(_ptr->_data + oldLength, str, length);
     
     return *this;
 }
 
-bool String::appendEnabled(const char *str, size_t length) {
-    if (empty()) {
-        _ptr = memory::SimpleAlloc<Value>::New(str, length);
-        return false;
-    } else {
-        if (_ptr->hasRef()) {
-            _ptr = memory::SimpleAlloc<Value>::New(_ptr->_data, _ptr->_length);
-        }
-        return true;
+String &String::append(char c) {
+    makeCopy();
+    size_t oldLength = _ptr->_length;
+    _ptr->resize(oldLength + 1);
+    _ptr->_data[oldLength] = c;
+    
+    return *this;
+}
+
+String &String::insert(size_t pos, const String &str, size_t subpos, size_t sublen) {
+    size_t subend = subpos + sublen;
+    if (sublen == npos || sublen > str.length()) {
+        subend = str.length();
+    }
+    
+    return insert(pos, &str[subpos], sublen);
+}
+
+String &String::insert(size_t pos, const char *str, size_t strlen) {
+    makeCopy();
+    size_t oldLength = _ptr->_length;
+    _ptr->resize(oldLength + strlen);
+    memmove(_ptr->_data + pos + strlen, _ptr->_data + pos, oldLength - pos);
+    memcpy(_ptr->_data + pos, str, strlen);
+    
+    return *this;
+}
+
+void String::makeCopy() {
+    if (_ptr->hasRef()) {
+        _ptr = memory::SimpleAlloc<Value>::New(_ptr->_data, _ptr->_length);
     }
 }
 

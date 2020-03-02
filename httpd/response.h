@@ -12,7 +12,7 @@ class Connection;
 class Response : public GCallback {
 public:
     Response(Connection *conn = NULL):  _conn(conn), _filePos(0), _fileLength(0),
-        _code(0), _fd(-1), _headPos(0), _cgiBin(0), _connClose(0), _acceptGz(0), _reserve(0) {}
+        _code(0), _fd(-1), _headPos(0), _cgiBin(0), _connClose(0), _acceptGz(0), _gzEof(0) {}
     ~Response() { if (_fd > 0 ) { close(_fd); _fd = -1; } }
     
     void parseRequest(const Request *req);
@@ -41,7 +41,7 @@ private:
     uint8_t _cgiBin: 1;
     uint8_t _connClose: 1;
     uint8_t _acceptGz: 1;
-    uint8_t _reserve: 5;
+    uint8_t _gzEof : 5;
 };
 
 } /* namespace httpd */

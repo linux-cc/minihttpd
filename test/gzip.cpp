@@ -1,10 +1,11 @@
 #include "httpd/gzip.h"
+#include <stdio.h>
 
 int main(int argc, char *argv[]) {
     using httpd::GZip;
     GZip zip;
     if (argc < 2) {
-        _LOG_("usage %s [-level] file\n", argv[0]);
+        printf("usage %s [-level] file\n", argv[0]);
         return -1;
     }
 

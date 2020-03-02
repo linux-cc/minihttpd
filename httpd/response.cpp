@@ -10,7 +10,7 @@
 #include <sys/stat.h>
 #include <stdio.h>
 
-#define WEB_ROOT    "../blog/html"
+#define WEB_ROOT    "/Users/linshaohua/workspace/code/blog/html"
 #define CGI_BIN     "/cgi-bin"
 #define ROOT_PAGE   "/index.html"
 
@@ -59,7 +59,7 @@ static String getGMTTime(time_t t) {
 static void eraseBetween(String &str, const char *delim1, const char *delim2) {
     size_t p1 = str.find(delim1);
     if (p1 != String::npos) {
-        size_t p2 = str.find(delim2, strlen(delim1));
+        size_t p2 = str.find(delim2, p1 + strlen(delim1));
         if (p2 != String::npos) {
             str.erase(p1, p2 + strlen(delim2) - p1);
         }
@@ -86,9 +86,11 @@ void Response::parseRequest(const Request *req) {
 
 void Response::setStatusLine(int status, const String &version) {
     _code = status;
-    _headers.append(version).append(CHAR_SP);
-    _headers.append(itoa(__status[status]._code)).append(CHAR_SP);
-    _headers.append(__status[status]._reason).append(ONE_CRLF);
+    String line;
+    line.append(version).append(CHAR_SP);
+    line.append(itoa(__status[status]._code)).append(CHAR_SP);
+    line.append(__status[status]._reason).append(ONE_CRLF);
+    _headers.insert(0, line);
 }
 
 String Response::parseUri(const String &uri) {
@@ -164,7 +166,7 @@ void Response::setCommonHeaders(const Request *req) {
     }    
     if (_code == OK) {
         value = req->getHeader("Accept-Encoding");
-        if (value.find("gzip") != String::npos) {
+        if (value.empty() || value.find("gzip") != String::npos) {
             _headers.append("Transfer-Encoding: chunked").append(ONE_CRLF);
             _headers.append("Content-Encoding: gzip").append(ONE_CRLF);
             eraseBetween(_headers, "Content-Length", ONE_CRLF);
@@ -176,11 +178,15 @@ void Response::setCommonHeaders(const Request *req) {
 }
 
 bool Response::sendCompleted() const {
-    if (_code == Continue) {
-        return _headPos >= _headers.length();
-    } else {
-        return _headPos >= _headers.length() && _filePos >= _fileLength;
+    if (_headPos >= _headers.length()) {
+        if (_code == Continue || _gzEof) {
+            return true;
+        }
+        
+        return _filePos >= _fileLength;
     }
+    
+    return false;
 }
 
 bool Response::sendResponse() {
@@ -191,12 +197,9 @@ bool Response::sendResponse() {
     }
     
     if (_code != Continue) {
-        if (!_acceptGz && sendFile() < 0) {
-            return false;
-        }
         GZip gzip(this);
-        if (!gzip.init() && sendFile() < 0) {
-            return false;
+        if (!_acceptGz || !gzip.init()) {
+            return sendFile() < 0;
         }
         gzip.zip();
     }
@@ -231,13 +234,15 @@ bool Response::gzflush(const void *buf, int len, bool eof) {
     char header[16] = { 0 };
     int hlen = sprintf(header, "%x%s", len, ONE_CRLF);
     struct iovec iov[3];
+    
     iov[0].iov_base = header;
     iov[0].iov_len = hlen;
     iov[1].iov_base = (void*)buf;
     iov[1].iov_len = len;
     iov[2].iov_base = tailer;
     iov[2].iov_len = eof ? 7 : 2;
-
+    _gzEof = eof;
+    
     return _conn->send(iov, 3) == hlen + len + (eof ? 7 : 2);
 }
 

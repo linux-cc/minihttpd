@@ -31,7 +31,7 @@ public:
     String &operator=(const char *str) { _ptr = memory::SimpleAlloc<Value>::New(str, strlen(str)); return *this; }
     
     void resize(size_t length) { _ptr->resize(length); }
-    bool empty() const { return !_ptr || _ptr->_length == 0; }
+    bool empty() const { return _ptr->_length == 0; }
     const char *data() const { return _ptr->_data; }
     size_t length() const { return _ptr->_length; }
     size_t capacity() const { return _ptr->_capacity; }
@@ -44,14 +44,19 @@ public:
     String &operator+=(char c) { return append(c); }
     
     String &append(const String &str) { return append(str.data(), str.length()); }
-    String &append(const char *str) { return append(str, strlen(str)); return *this; }
+    String &append(const char *str) { return append(str, strlen(str)); }
     String &append(const char *str, size_t length);
-    String &append(char c) { char data[2] = { c, 0 }; return append(data, 1); }
+    String &append(char c);
+    
+    String &insert(size_t pos, const String &str) { return insert(pos, str, 0, str.length()); }
+    String &insert(size_t pos, const String &str, size_t subpos, size_t sublen);
+    String &insert(size_t pos, const char *str) { return insert(pos, str, strlen(str)); }
+    String &insert(size_t pos, const char *str, size_t n);
     
     String &erase(size_t pos = 0, size_t length = npos);
     void clear() { erase(); }
     
-    String &replace(size_t pos, size_t length, const String &str) { return replace(pos, length, str, 0, npos); }
+    String &replace(size_t pos, size_t length, const String &str) { return replace(pos, length, str, 0, str.length()); }
     String &replace(size_t pos, size_t length, const String &str, size_t subpos, size_t sublen);
     String &replace(size_t pos, size_t length, const char *str) { return replace(pos, length, str, strlen(str)); }
     String &replace(size_t pos, size_t length, const char *str, size_t strlen);
@@ -68,7 +73,7 @@ public:
     int refCount() const { return empty() ? 0 : _ptr->refConut(); }
     
 private:
-    bool appendEnabled(const char *str, size_t length);
+    void makeCopy();
     
     class Value : public RefCounted<Value> {
     public:
