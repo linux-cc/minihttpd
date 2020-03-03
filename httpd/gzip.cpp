@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 
 #define H_SHIFT             5
 #define TOO_FAR             4096
@@ -48,9 +49,10 @@ _outcnt(0),
 _bytesIn(0),
 _strStart(0),
 _blkStart(0),
+_lookAhead(0),
 _insH(0),
-_infd(-1),
 _outfd(-1),
+_errno(0),
 _crc(0),
 _level(6),
 _eof(0) {
@@ -72,29 +74,24 @@ GZip::~GZip() {
     delete[] _outbuf;
 }
 
-bool GZip::init() {
+void GZip::init(int fileFd) {
     updateCrc(NULL, 0);
     memset((char*)_head, 0, WSIZE * sizeof(*_head));
-    _lookAhead = fill(_window, TWO_WSIZE);
-    if (_lookAhead <= 0) {
-        return false;
-    }
+    fillWindow(fileFd);
     for (int i = 0; i < MIN_MATCH - 1; i++) {
         updateHash(_window[i]);
     }
     _gtree->init();
-
-    return true;
 }
 
-bool GZip::init(const char *infile, const char *outfile) {
+void GZip::zip(const char *infile, const char *outfile) {
     struct stat sbuf;
     if (stat(infile, &sbuf) || !S_ISREG(sbuf.st_mode)) {
-        return false;
+        return;
     }
-    _infd = open(infile, O_RDONLY);
-    if (_infd < 0) {
-        return false;
+    int infd = open(infile, O_RDONLY);
+    if (infd < 0) {
+        return;
     }
     char _outfile[256];
     if (!outfile) {
@@ -102,13 +99,15 @@ bool GZip::init(const char *infile, const char *outfile) {
     }
     _outfd = open(_outfile, O_WRONLY|O_TRUNC|O_CREAT, sbuf.st_mode);
     if (_outfd < 0) {
-        return false;
+        return;
     }
 
-    return init();
+    zip(infd);
 }
 
-void GZip::zip() {
+void GZip::zip(int fileFd) {
+    init(fileFd);
+    if (_errno) return;
     _config = _configTable[_level];
     putByte(GZIP_MAGIC[0]);
     putByte(GZIP_MAGIC[1]);
@@ -117,13 +116,13 @@ void GZip::zip() {
     putLong(0); /* no timestamp */
     putByte(0); /* extra flags */
     putByte(3); /* os code assume Unix */
-    _level < 4 ? deflateFast() : deflate();
+    _level < 4 ? deflateFast(fileFd) : deflate(fileFd);
     putLong(_crc);
     putLong(_bytesIn);
     _callback->gzflush(_outbuf, _outcnt, true);
 }
 
-void GZip::deflate() {
+void GZip::deflate(int fileFd) {
     unsigned prevMatch;
     unsigned matchLength = MIN_MATCH - 1;
     bool matchAvailable = false;
@@ -167,7 +166,7 @@ void GZip::deflate() {
             _lookAhead--;
         }
         if (_lookAhead < MIN_LOOKAHEAD && !_eof) {
-            fillWindow();
+            fillWindow(fileFd);
         }
     }
     if (matchAvailable) {
@@ -177,7 +176,7 @@ void GZip::deflate() {
     _gtree->flushBlock(1);
 }
 
-void GZip::deflateFast() {
+void GZip::deflateFast(int fileFd) {
     unsigned matchLength = 0;
     _prevLength = MIN_MATCH - 1;
     
@@ -215,7 +214,7 @@ void GZip::deflateFast() {
             _blkStart = _strStart;
         }
         if (_lookAhead < MIN_LOOKAHEAD && !_eof) {
-            fillWindow();
+            fillWindow(fileFd);
         }
     }
 
@@ -260,7 +259,7 @@ unsigned GZip::longestMatch(unsigned hashHead) {
     return bestLen;
 }
 
-void GZip::fillWindow() {
+void GZip::fillWindow(int fileFd) {
     unsigned more = TWO_WSIZE - _lookAhead - _strStart;
 
     if (_strStart >= WSIZE + MAX_DIST) {
@@ -281,23 +280,17 @@ void GZip::fillWindow() {
     }
 
     if (!_eof) {
-        int n = fill(_window + _strStart + _lookAhead, more);
+        uint8_t *buf = _window + _strStart + _lookAhead;
+        int n = read(fileFd, buf, more);
         if (n <= 0) {
+            if (n < 0) _errno = errno;
             _eof = true;
         } else {
+            updateCrc(buf, n);
+            _bytesIn += n;
             _lookAhead += n;
         }
     }
-}
-
-int GZip::fill(void *buf, unsigned len) {
-    int n = _callback->gzfill(buf, len);
-    if (n > 0) {
-        updateCrc((uint8_t*)buf, n);
-        _bytesIn += n;
-    }
-
-    return n;
 }
 
 void GZip::putShort(uint16_t us) {
@@ -314,26 +307,16 @@ void GZip::putShort(uint16_t us) {
 void GZip::putByte(uint8_t uc) {
     _outbuf[_outcnt++] = uc;
     if (_outcnt == HALF_WSIZE) {
-        if (!_callback->gzflush(_outbuf, _outcnt, false)) {
-            abort();
-        }
-        _outcnt = 0;
-    }
-}
-
-bool GZip::gzflush(const void *buf, int len, bool eof) {
-    eof = false;
-    const char *pos = (const char*)buf;
-    while (len) {
-        int n = write(_outfd, pos, len);
+        ssize_t n = _callback->gzflush(_outbuf, _outcnt, false);
         if (n < 0) {
-            return false;
+            _errno = errno;
+            return;
         }
-        len -= n;
-        pos += n;
+        if (n < _outcnt) {
+            memmove(_outbuf, _outbuf + n, _outcnt - n);
+        }
+        _outcnt -= n;
     }
-
-    return true;
 }
 
 void GZip::updateCrc(uint8_t *in, uint32_t len) {

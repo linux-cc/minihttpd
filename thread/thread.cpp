@@ -19,9 +19,6 @@ Thread::~Thread() {
 }
 
 bool Thread::start() {
-    if (!onInit())
-        return false;
-
     pthread_attr_t attr;
 
     pthread_attr_init(&attr);
@@ -37,6 +34,8 @@ bool Thread::start() {
 void *Thread::threadFunc(void *arg) {
     Thread *thr = (Thread *)arg;
     //	pthread_cleanup_push(cleanup, thr);
+    if (!thr->onInit())
+        return NULL;
     thr->_run->run();
     thr->onCancel();
     //	pthread_cleanup_pop(0);

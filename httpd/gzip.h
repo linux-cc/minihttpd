@@ -12,39 +12,31 @@ class GTree;
 class GCallback {
 public:
     virtual ~GCallback() {}
-    virtual int gzfill(void *buf, int len) = 0;
-    virtual bool gzflush(const void *buf, int len, bool eof) = 0;
+    virtual ssize_t gzflush(const void *buf, size_t len, bool eof) = 0;
 };
 
 class GZip : public GCallback {
 public:
     GZip(GCallback *callback = NULL);
     ~GZip();
-    void setLevel(int level) {
-        _level = level;
-    }
-    bool init(const char *infile, const char *outfile = NULL);
-    bool init();
-    void zip();
+    void setLevel(int level) { _level = level; }
+    void zip(const char *infile, const char *outfile = NULL);
+    void zip(int fileFd);
+    int error() const { return _errno; }
 
 private:
-    void deflate();
-    void deflateFast();
-    void putLong(uint32_t ui) {
-        putShort(ui & 0xffff); putShort(ui >> 16);
-    }
+    void init(int fileFd);
+    void deflate(int fileFd);
+    void deflateFast(int fileFd);
+    void putLong(uint32_t ui) { putShort(ui & 0xffff); putShort(ui >> 16); }
     void putShort(uint16_t us);
     void putByte(uint8_t uc);
     void updateHash(uint8_t uc);
     unsigned insertString(unsigned pos);
     unsigned longestMatch(unsigned hashHead);
-    void fillWindow();
-    int fill(void *buf, unsigned len);
+    void fillWindow(int fileFd);
     void updateCrc(uint8_t *in, uint32_t len);
-    int gzfill(void *buf, int len) {
-        return (int)read(_infd, buf, len);
-    }
-    bool gzflush(const void *buf, int len, bool eof);
+    ssize_t gzflush(const void *buf, size_t len, bool eof) { return write(_outfd, buf, len); }
     
     GTree *_gtree;
     GCallback *_callback;
@@ -67,8 +59,8 @@ private:
     unsigned _insH;
     unsigned _prevLength;
     unsigned _matchStart;
-    int _infd;
     int _outfd;
+    int _errno;
     uint32_t _crc;
     uint8_t _level: 4;
     uint8_t _eof: 1;

@@ -197,11 +197,12 @@ bool Response::sendResponse() {
     }
     
     if (_code != Continue) {
-        GZip gzip(this);
-        if (!_acceptGz || !gzip.init()) {
+        if (!_acceptGz) {
             return sendFile() < 0;
         }
-        gzip.zip();
+
+        _gzip.zip(_fd);
+        return _gzip.error() == 0;
     }
     
     return true;
@@ -225,14 +226,10 @@ ssize_t Response::sendFile() {
     return 0;
 }
 
-int Response::gzfill(void *buf, int len) {
-    return read(_fd, buf, len);
-}
-
-bool Response::gzflush(const void *buf, int len, bool eof) {
+ssize_t Response::gzflush(const void *buf, size_t len, bool eof) {
     static char tailer[] = { CHAR_CR, CHAR_LF, '0', CHAR_CR, CHAR_LF, CHAR_CR, CHAR_LF, };
     char header[16] = { 0 };
-    int hlen = sprintf(header, "%x%s", len, ONE_CRLF);
+    int hlen = sprintf(header, "%lx%s", len, ONE_CRLF);
     struct iovec iov[3];
     
     iov[0].iov_base = header;
@@ -243,7 +240,7 @@ bool Response::gzflush(const void *buf, int len, bool eof) {
     iov[2].iov_len = eof ? 7 : 2;
     _gzEof = eof;
     
-    return _conn->send(iov, 3) == hlen + len + (eof ? 7 : 2);
+    return _conn->send(iov, 3);
 }
 
 } /* namespace httpd */
