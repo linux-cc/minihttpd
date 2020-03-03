@@ -166,7 +166,7 @@ void Response::setCommonHeaders(const Request *req) {
     }    
     if (_code == OK) {
         value = req->getHeader("Accept-Encoding");
-        if (value.empty() || value.find("gzip") != String::npos) {
+        if (value.find("gzip") != String::npos) {
             _headers.append("Transfer-Encoding: chunked").append(ONE_CRLF);
             _headers.append("Content-Encoding: gzip").append(ONE_CRLF);
             eraseBetween(_headers, "Content-Length", ONE_CRLF);

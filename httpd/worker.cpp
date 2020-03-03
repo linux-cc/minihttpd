@@ -145,28 +145,22 @@ void Worker::onRequest(EPollEvent &event) {
     while (true) {
         Request *last = conn->getRequest();
         ScopedPtr<Request> req(last ? last : SimpleAlloc<Request>::New(conn));
-        if (req->inParseHeaders()) {
-            if (!req->parseHeaders()) {
-                break;
-            }
-            _LOG_("fd: %d, Request headers:\n%s", conn->fd(), req->headers().data());
-            if (req->is100Continue()) {
+        if (!req->parseHeaders()) {
+            break;
+        }
+        _LOG_("fd: %d, Request headers:\n%s", conn->fd(), req->headers().data());
+        req->parseContent();
+        bool isContinue = req->is100Continue();
+        bool isCompleted = req->isCompleted();
+        write = isContinue || isCompleted;
+        if (isContinue || !isCompleted) {
+            if (isContinue) {
                 conn->addRequest(SimpleAlloc<Request>::New(*req));
-                conn->setRequest(req.release());
-                write = true;
-                break;
             }
+            conn->setRequest(req.release());
+            break;
         }
-        if (req->inParseContent()) {
-            req->parseContent();
-            if (req->isCompleted()) {
-                conn->addRequest(req.release());
-                write = true;
-            } else {
-                conn->setRequest(req.release());
-                break;
-            }
-        }
+        conn->addRequest(req.release());
     }
     _poller.mod(conn->fd(), conn, write);
     _server._eventQ.enqueue(Server::Item(conn));

@@ -12,33 +12,32 @@ static String extractBetween(const String &str, const String &delim1, const Stri
 static String extractBetween(const String &str, char delim1, char delim2, size_t pos = 0);
 
 bool Request::parseHeaders() {
-    if (!_ptr->_conn->recvUntil(_ptr->_headers, TWO_CRLF, false)) {
-        return false;
+    if (_ptr->_status == Parse_Header) {
+        if (!_ptr->_conn->recvUntil(_ptr->_headers, TWO_CRLF, false)) {
+            return false;
+        }
+        _ptr->_uri = extractBetween(_ptr->_headers, CHAR_SP, CHAR_SP);
+        size_t pos = _ptr->_headers.find("Content-Length");
+        if (pos != String::npos) {
+            String value = extractBetween(_ptr->_headers, STR_COLON, ONE_CRLF, pos);
+            _ptr->_contentLength = atoi(value.data());
+        }
+        
+        pos = _ptr->_headers.find("Expect");
+        if (pos != String::npos) {
+            String value = extractBetween(_ptr->_headers, STR_COLON, ONE_CRLF, pos);
+            _ptr->_is100Continue = value[0] == '1' && value[1] == '0' && value[2] == '0';
+        }
+        
+        pos = _ptr->_headers.find("multipart/form-data");
+        _ptr->_isMultipart = pos != String::npos;
+        if (_ptr->_isMultipart) {
+            _ptr->_boundary = String("--").append(extractBetween(_ptr->_headers, "boundary=", ONE_CRLF, pos));
+            _ptr->_content.clear();
+        } else if (_ptr->_contentLength > _ptr->_content.length()) {
+            _ptr->_content.resize(_ptr->_contentLength);
+        }
     }
-    _ptr->_uri = extractBetween(_ptr->_headers, CHAR_SP, CHAR_SP);
-    size_t pos = _ptr->_headers.find("Content-Length");
-    if (pos != String::npos) {
-        String value = extractBetween(_ptr->_headers, STR_COLON, ONE_CRLF, pos);
-        _ptr->_contentLength = atoi(value.data());
-    }
-    
-    pos = _ptr->_headers.find("Expect");
-    if (pos != String::npos) {
-        String value = extractBetween(_ptr->_headers, STR_COLON, ONE_CRLF, pos);
-        _ptr->_is100Continue = value[0] == '1' && value[1] == '0' && value[2] == '0';
-    }
-    
-    pos = _ptr->_headers.find("multipart/form-data");
-    _ptr->_isMultipart = pos != String::npos;
-    if (_ptr->_isMultipart) {
-        _ptr->_boundary = String("--").append(extractBetween(_ptr->_headers, "boundary=", ONE_CRLF, pos));
-        _ptr->_content.clear();
-        _ptr->_status = Parse_Form_Header;
-    } else if (_ptr->_contentLength > _ptr->_content.length()) {
-        _ptr->_content.resize(_ptr->_contentLength);
-        _ptr->_status = Parse_Content;
-    }
-    
     return true;
 }
 
@@ -58,9 +57,22 @@ String Request::getHeader(const char *field) const {
     return String();
 }
 
+bool Request::isCompleted() const {
+    if (_ptr->_is100Continue && _ptr->_status == Parse_Header) {
+        _ptr->_status = _ptr->_isMultipart ? Parse_Form_Header : _ptr->_status = Parse_Content;
+        return true;
+    }
+    
+    return _ptr->_contentPos >= _ptr->_contentLength;
+}
+
 void Request::parseContent() {
+    if (_ptr->_status == Parse_Header || _ptr->_status == Parse_Finish) {
+        return;
+    }
+
     if (_ptr->_isMultipart) {
-        while (!isCompleted()) {
+        while (_ptr->_contentPos < _ptr->_contentLength) {
             if (!parseFormHeader() || !parseFormContent()) {
                 break;
             }
