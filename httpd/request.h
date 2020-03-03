@@ -19,12 +19,12 @@ public:
     
     String getHttpVersion() const;
     String getHeader(const char *field) const;
-    bool isCompleted() const;
+    bool isCompleted() const { return _ptr->_contentPos >= _ptr->_contentLength; }
     const String &getUri() const { return _ptr->_uri; }
     const String &headers() const  { return _ptr->_headers; }
     bool isGet() const { return _ptr->_headers[0] == 'G' && _ptr->_headers[1] == 'E' && _ptr->_headers[2] == 'T'; }
     bool isPost() const { return _ptr->_headers[0] == 'P' && _ptr->_headers[1] == 'O' && _ptr->_headers[2] == 'S' && _ptr->_headers[3] == 'T'; }
-    bool is100Continue() const { return _ptr->_is100Continue && _ptr->_status < Parse_Form_Content; }
+    bool is100Continue() const { return _ptr->_is100Continue && _ptr->_status == Parse_Form_Header; }
     
 private:
     bool parseFormHeader();

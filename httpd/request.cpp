@@ -34,8 +34,10 @@ bool Request::parseHeaders() {
         if (_ptr->_isMultipart) {
             _ptr->_boundary = String("--").append(extractBetween(_ptr->_headers, "boundary=", ONE_CRLF, pos));
             _ptr->_content.clear();
+            _ptr->_status = Parse_Form_Header;
         } else if (_ptr->_contentLength > _ptr->_content.length()) {
             _ptr->_content.resize(_ptr->_contentLength);
+            _ptr->_status = _ptr->_status = Parse_Content;
         }
     }
     return true;
@@ -55,15 +57,6 @@ String Request::getHeader(const char *field) const {
     }
     
     return String();
-}
-
-bool Request::isCompleted() const {
-    if (_ptr->_is100Continue && _ptr->_status == Parse_Header) {
-        _ptr->_status = _ptr->_isMultipart ? Parse_Form_Header : _ptr->_status = Parse_Content;
-        return true;
-    }
-    
-    return _ptr->_contentPos >= _ptr->_contentLength;
 }
 
 void Request::parseContent() {
