@@ -33,7 +33,6 @@ static uint8_t extraBLBits[BL_CODES] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,7};
 
 GTree::GTree(GZip &gzip):
 _gzip(gzip) {
-    initTreeDesc();
     _heap = new int[HEAP_SIZE];
     _depth = new uint8_t[HEAP_SIZE];
     _blCount = new uint16_t[MAX_BITS + 1];
@@ -84,6 +83,7 @@ void GTree::initTreeDesc() {
 }
 
 void GTree::init() {
+    initTreeDesc();
     initLengthCode();
     initDistCode();
 

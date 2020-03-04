@@ -73,13 +73,13 @@ void Worker::run() {
                 if (it->fd() == _server) {
                     onAccept();
                 } else if (holdLock) {
-                    _eventList.push(&*it);
+                    _eventList.push_back(&*it);
                 } else {
                     onRequest(*it);
                 }
             } else if (it->isPollOut()) {
                 if (holdLock) {
-                    _eventList.push(&*it);
+                    _eventList.push_back(&*it);
                 } else {
                     onResponse(*it);
                 }
@@ -112,8 +112,8 @@ void Worker::onAccept() {
         client.setNoDelay();
         client.setNonblock();
         Connection *conn = SimpleAlloc<Connection>::New(client);
-        _connsList.push(conn);
-        _server._eventQ.enqueue(Server::Item(conn));
+        _connsList.push_back(conn);
+        //_server._eventQ.enqueue(Server::Item(conn));
         int error = _poller.add(client, conn);
         if (error) {
             _LOG_("poll add client error: %d:%s", errno, strerror(errno));
@@ -123,8 +123,9 @@ void Worker::onAccept() {
 }
 
 void Worker::onHandleEvent() {
-    EPollEvent *event;
-    while (_eventList.pop(event)) {
+    while (!_eventList.empty()) {
+        EPollEvent *event = _eventList.front();
+        _eventList.pop_front();
         if (event->isPollIn()) {
             onRequest(*event);
         } else if (event->isPollOut()) {
@@ -140,7 +141,7 @@ void Worker::onRequest(EPollEvent &event) {
     
     if (!conn->recv()) {
         close(conn);
-        _server._eventQ.enqueue(Server::Item(conn));
+        //_server._eventQ.enqueue(Server::Item(conn));
         return;
     }
     bool write = false;
@@ -165,7 +166,7 @@ void Worker::onRequest(EPollEvent &event) {
         conn->addRequest(req.release());
     }
     _poller.mod(conn->fd(), conn, write);
-    _server._eventQ.enqueue(Server::Item(conn));
+    //_server._eventQ.enqueue(Server::Item(conn));
 }
 
 void Worker::onResponse(EPollEvent &event) {
@@ -182,7 +183,7 @@ void Worker::onResponse(EPollEvent &event) {
             resp->parseRequest(req);
             SimpleAlloc<Request>::Delete(req);
         }
-        if (!resp->sendResponse()) {
+        if (!resp->sendResponse(_gzip)) {
             _LOG_("sendResponse error: %d:%s", errno, strerror(errno));
             close(conn);
             break;
@@ -203,7 +204,7 @@ void Worker::close(Connection *conn) {
     _poller.del(conn->fd());
     _LOG_("close connection: %p, fd: %d", conn, conn->fd());
     conn->close();
-    _connsList.erase(conn);
+    _connsList.remove(conn);
     memory::SimpleAlloc<Connection>::Delete(conn);
 }
 

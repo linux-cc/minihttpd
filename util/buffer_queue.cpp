@@ -56,25 +56,22 @@ size_t BufferQueue::dequeue(void *buf, size_t size) {
     return size1 + size2;
 }
 
-static uint16_t *getMove(const char *pattern, size_t plen) {
-    static uint16_t _move[256];
-    
+static void getMove(const char *pattern, size_t plen, uint16_t *move) {
     for (int i = 0; i < 256; ++i) {
-        _move[i] = plen + 1;
+        move[i] = plen + 1;
     }
     for (int i = 0; i < plen; ++i) {
-        _move[int(pattern[i])] = plen - i;
+        move[int(pattern[i])] = plen - i;
     }
-    
-    return _move;
 }
 
 bool BufferQueue::dequeueUntil(String &buf, const char *pattern, bool flush) {
+    uint16_t move[256];
     size_t plen = strlen(pattern);
     size_t tlen = length();
-    uint16_t *move = getMove(pattern, plen);
     size_t s = 0, j;
     
+    getMove(pattern, plen, move);
     while (s + plen <= tlen) {
         j = 0;
         size_t i = _readPos + s;

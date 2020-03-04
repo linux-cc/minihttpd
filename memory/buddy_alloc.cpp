@@ -69,7 +69,7 @@ void BuddyAlloc::init(int blocks, int blockSize, int pageSize) {
     for (int i = 1; i < nodes; ++i) {
         _tree[i] = _tree[parent(i)] - 1;
     }
-    _LOG_("blocksPow: %d(%d), blockShiftBit: %d(%d), buffer: %p, pageSize: %d", _blocksPow, blocks, _blockShiftBit, blockSize, _buffer, _pageSize);
+    LOG_DEBUG("blocksPow: %d(%d), blockShiftBit: %d(%d), buffer: %p, pageSize: %d", _blocksPow, blocks, _blockShiftBit, blockSize, _buffer, _pageSize);
 }
 
 void* BuddyAlloc::alloc(size_t size) {
@@ -89,7 +89,7 @@ void* BuddyAlloc::alloc(size_t size) {
     _tree[idx] = INVALID;
     
     int offset = (idx + 1) * (1 << p1) - (1 << _blocksPow);
-    _LOG_("size: %d, pow(size): %d(%d blocks), idx: %d, offset: %d, alloc: %p",
+    LOG_DEBUG("size: %d, pow(size): %d(%d blocks), idx: %d, offset: %d, alloc: %p",
           size, p1, 1 << p1, idx, offset, _buffer + offset * (1 << _blockShiftBit));
     while (idx) {
         idx = parent(idx);
@@ -109,7 +109,7 @@ void BuddyAlloc::free(const void *addr) {
         if (idx == 0) return;
     }
     _tree[idx] = n;
-    _LOG_("addr: %p, idx: %d, offset: %d", addr, idx, offset);
+    LOG_DEBUG("addr: %p, idx: %d, offset: %d", addr, idx, offset);
     while (idx) {
         idx = parent(idx);
         ++n;

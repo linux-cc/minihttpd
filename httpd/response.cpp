@@ -189,7 +189,7 @@ bool Response::sendCompleted() const {
     return false;
 }
 
-bool Response::sendResponse() {
+bool Response::sendResponse(GZip &gzip) {
     if (_headPos < _headers.length()) {
         ssize_t n = _conn->send(_headers);
         if (n < 0) return false;
@@ -198,11 +198,11 @@ bool Response::sendResponse() {
     
     if (_code != Continue) {
         if (!_acceptGz) {
-            return sendFile() < 0;
+            return sendFile() >= 0;
         }
 
-        _gzip.zip(_fd);
-        return _gzip.error() == 0;
+        gzip.zip(_fd, this);
+        return gzip.error() == 0;
     }
     
     return true;
@@ -239,8 +239,15 @@ ssize_t Response::gzflush(const void *buf, size_t len, bool eof) {
     iov[2].iov_base = tailer;
     iov[2].iov_len = eof ? 7 : 2;
     _gzEof = eof;
+    ssize_t n = _conn->send(iov, 3);
+    if (n <= hlen) {
+        return 0;
+    }
+    if (n <= hlen + len) {
+        return n - hlen;
+    }
     
-    return _conn->send(iov, 3);
+    return len;
 }
 
 } /* namespace httpd */

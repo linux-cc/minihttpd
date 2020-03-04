@@ -21,7 +21,7 @@ public:
     bool empty() const { return _head->_next == _head; }
     size_t size() const { return _size; }
     
-    bool push(const T &data) {
+    bool push_back(const T &data) {
         Node *n = memory::SimpleAlloc<Node>::New(data);
         if (!n) return false;
         
@@ -35,19 +35,18 @@ public:
         return true;
     }
     
-    bool pop(T &data) {
-        if (empty()) return false;
-        
+    T &front() const {
+        return _head->_next->_data;
+    }
+    
+    void pop_front() {
         Node *n = _head->_next;
         Node *prev = n->_prev;
         Node *next = n->_next;
         prev->_next = next;
         next->_prev = prev;
-        data = n->_data;
         memory::SimpleAlloc<Node>::Delete(n);
         --_size;
-        
-        return true;
     }
     
     bool find(const T &data) const {
@@ -62,7 +61,7 @@ public:
         return false;
     }
     
-    void erase(const T &data) {
+    void remove(const T &data) {
         Node *n = _head->_next;
         while (n != _head) {
             if (n->_data == data) {

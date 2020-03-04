@@ -36,7 +36,7 @@ void *SlabAlloc::alloc(size_t size) {
     if (!slab->free) {
         _free[idx] = slab->next;
     }
-    _LOG_("slab:{id: %02d, %p <- %p -> %p, alloc: %03d, free: %p}, size: %d, alloc: %p",
+    LOG_DEBUG("slab:{id: %02d, %p <- %p -> %p, alloc: %03d, free: %p}, size: %d, alloc: %p",
           idx, slab->prev, slab, slab->next, slab->allocated, slab->free, size, chunk);
 
     return chunk;
@@ -83,7 +83,7 @@ void SlabAlloc::free(const void* addr, size_t size) {
     chunk->next = slab->free;
     slab->free = chunk;
     --slab->allocated;
-    _LOG_("slab: {idx: %02d, %p <- %p -> %p, alloc: %03d, free: %p}, addr: %p, wasEmpty: %d",
+    LOG_DEBUG("slab: {idx: %02d, %p <- %p -> %p, alloc: %03d, free: %p}, addr: %p, wasEmpty: %d",
           SLAB_FREE_IDX(alignSize), slab->prev, slab, slab->next, slab->allocated, slab->free, addr, wasEmpty);
     if (wasEmpty || !slab->allocated) {
         SlabInfo *next = slab->next, *prev = slab->prev;

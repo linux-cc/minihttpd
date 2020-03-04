@@ -38,8 +38,8 @@ public:
     
     Request *getRequest() { return _req.release(); }
     void setRequest(Request *req) { _req.reset(req); }
-    void addRequest(Request *req) { _reqList.push(req); }
-    Request *popRequest() { Request *req; return _reqList.pop(req) ? req : NULL; }
+    void addRequest(Request *req) { _reqList.push_back(req); }
+    Request *popRequest();
     Response *getResponse() { return _resp.release(); }
     void setResponse(Response *resp) { _resp.reset(resp); }
     

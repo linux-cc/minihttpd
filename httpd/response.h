@@ -11,12 +11,12 @@ class Request;
 class Connection;
 class Response : public GCallback {
 public:
-    Response(Connection *conn = NULL):  _conn(conn), _gzip(this), _filePos(0), _fileLength(0),
+    Response(Connection *conn = NULL):  _conn(conn), _filePos(0), _fileLength(0),
         _code(0), _fd(-1), _headPos(0), _cgiBin(0), _connClose(0), _acceptGz(0), _gzEof(0) {}
     ~Response() { if (_fd > 0 ) { close(_fd); _fd = -1; } }
     
     void parseRequest(const Request *req);
-    bool sendResponse();
+    bool sendResponse(GZip &gzip);
     bool connectionClose() const { return _connClose; }
     bool sendCompleted() const;
     const String &headers() const { return _headers; }
@@ -32,7 +32,6 @@ private:
 
     Connection *_conn;
     String _headers;
-    GZip _gzip;
     off_t _filePos;
     off_t _fileLength;
     int _code;

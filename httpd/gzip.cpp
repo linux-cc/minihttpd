@@ -44,20 +44,9 @@ inline unsigned GZip::insertString(unsigned pos) {
     return _prev[pos & WMASK];
 }
 
-GZip::GZip(GCallback *callback):
-_outcnt(0),
-_bytesIn(0),
-_strStart(0),
-_blkStart(0),
-_lookAhead(0),
-_insH(0),
-_outfd(-1),
-_errno(0),
-_crc(0),
-_level(6),
-_eof(0) {
+GZip::GZip() {
+    clear();
     _gtree = new GTree(*this);
-    _callback = callback ? callback : this;
     _window = new uint8_t[TWO_WSIZE];
     _lbuf = new uint8_t[WSIZE];
     _dbuf = new uint16_t[WSIZE];
@@ -72,6 +61,21 @@ GZip::~GZip() {
     delete[] _dbuf;
     delete[] _prev;
     delete[] _outbuf;
+}
+
+void GZip::clear() {
+    _callback = NULL;
+    _outcnt = 0;
+    _bytesIn = 0;
+    _strStart = 0;
+    _blkStart = 0;
+    _lookAhead = 0;
+    _insH = 0;
+    _outfd = -1;
+    _errno = 0;
+    _crc = 0;
+    _level = 6;
+    _eof = 0;
 }
 
 void GZip::init(int fileFd) {
@@ -102,10 +106,11 @@ void GZip::zip(const char *infile, const char *outfile) {
         return;
     }
 
-    zip(infd);
+    zip(infd, this);
 }
 
-void GZip::zip(int fileFd) {
+void GZip::zip(int fileFd, GCallback *callback) {
+    _callback = callback;
     init(fileFd);
     if (_errno) return;
     _config = _configTable[_level];
@@ -120,6 +125,7 @@ void GZip::zip(int fileFd) {
     putLong(_crc);
     putLong(_bytesIn);
     _callback->gzflush(_outbuf, _outcnt, true);
+    clear();
 }
 
 void GZip::deflate(int fileFd) {

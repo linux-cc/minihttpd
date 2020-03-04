@@ -48,14 +48,14 @@ void Server::update() {
     while (_eventQ.dequeue(item) && item._conn) {
         if (_connIndex.find(item) && item._queueIndex != -1) {
             SimpleList<Item> &oldList = _timeoutQ.at(item._queueIndex);
-            oldList.erase(item);
+            oldList.remove(item);
         } else {
             item._queueIndex = newIndex;
-            _connIndex.push(item);
+            _connIndex.push_back(item);
         }
 
         SimpleList<Item> &newList = _timeoutQ.at(newIndex);
-        newList.push(item);
+        newList.push_back(item);
     }
 }
 

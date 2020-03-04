@@ -14,9 +14,18 @@ bool Connection::recv() {
             _recvQ.setWritePos(n);
         }
     }
-    _LOG_("[Connection::recv]iovcnt: %d, size: %lu\n", iovcnt, n);
     
     return n > 0 || (n < 0 && errno == EAGAIN);
+}
+
+Request *Connection::popRequest() {
+    if (_reqList.empty()) {
+        return NULL;
+    }
+    
+    Request *req = _reqList.front();
+    _reqList.pop_front();
+    return req;
 }
 
 } /* namespace httpd */

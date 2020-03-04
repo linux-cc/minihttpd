@@ -17,14 +17,15 @@ public:
 
 class GZip : public GCallback {
 public:
-    GZip(GCallback *callback = NULL);
+    GZip();
     ~GZip();
     void setLevel(int level) { _level = level; }
     void zip(const char *infile, const char *outfile = NULL);
-    void zip(int fileFd);
+    void zip(int fileFd, GCallback *callback);
     int error() const { return _errno; }
 
 private:
+    void clear();
     void init(int fileFd);
     void deflate(int fileFd);
     void deflateFast(int fileFd);

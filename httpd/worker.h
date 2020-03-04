@@ -5,6 +5,7 @@
 #include "thread/thread.h"
 #include "network/epoll.h"
 #include "memory/simple_alloc.h"
+#include "httpd/gzip.h"
 
 namespace httpd {
 
@@ -39,6 +40,7 @@ private:
     EPoller _poller; 
     SimpleList<Connection*> _connsList;
     SimpleList<EPollEvent*> _eventList;
+    GZip _gzip;
     int _actives;
     bool _acceptLock;
 };

@@ -67,8 +67,8 @@ public:
     size_t find(char c, size_t pos = 0) const { const char *p = strchr(data() + pos, c); return p ? p - data() : npos; }
     
     String substr(size_t pos = 0, size_t length = npos) const { return String(*this, pos, length); }
-    bool operator==(const String &str) const { return find(str) == 0 && length() == str.length(); }
-    bool operator==(const char *str) const { return find(str) == 0 && length() == strlen(str); }
+    bool operator==(const String &str) const { return length() == str.length() && find(str) == 0; }
+    bool operator==(const char *str) const { return length() == strlen(str) && find(str) == 0; }
     
     int refCount() const { return empty() ? 0 : _ptr->refConut(); }
     

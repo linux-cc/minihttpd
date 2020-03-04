@@ -2,6 +2,7 @@
 #define __CONFIG_H__
 
 #ifdef __DEBUG__
+#define LOG_DEBUG
 #define _LOG_(fmt, ...)         util::writeLog(__PRETTY_FUNCTION__, __LINE__, fmt, ##__VA_ARGS__)
 #else
 #define _LOG_(...)    

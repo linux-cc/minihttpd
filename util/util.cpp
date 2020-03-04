@@ -25,7 +25,7 @@ size_t kmpSearch(const char *text, const char *pattern) {
 }
 
 size_t kmpSearch(const char *text, const char *pattern, size_t plen) {
-    static uint16_t _next[256];
+    uint16_t _next[256];
     size_t tlen = strlen(text);
     getNext(_next, pattern, plen);
     size_t i = 0, k = 0;
@@ -50,7 +50,7 @@ size_t sundaySearch(const char *text, const char *pattern) {
 }
 
 size_t sundaySearch(const char *text, const char *pattern, size_t plen) {
-    static uint16_t _move[256];
+    uint16_t _move[256];
     size_t tlen = strlen(text);
     for (int i = 0; i < 256; ++i) {
         _move[i] = plen + 1;
@@ -112,7 +112,7 @@ void writeLog(const char *func, int line, const char *fmt, ...) {
     size_t p2 = sundaySearch(func + p1, "(");
     memcpy(buffer, func + p1 + 2, p2 - 2);
     buffer[p2 - 2] = 0;
-        printf("[%s:%d]", buffer, line);
+    printf("[%s:%d]", buffer, line);
     vprintf(fmt, vp);
     printf("\n");
     va_end(vp);
