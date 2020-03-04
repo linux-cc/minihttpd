@@ -1,4 +1,5 @@
 #include "util/config.h"
+#include "util/util.h"
 #include "network/epoll.h"
 #include <unistd.h>
 #include <errno.h>

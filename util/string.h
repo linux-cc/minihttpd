@@ -2,7 +2,7 @@
 #define __UTIL_STRING_H__
 
 #include "util/scoped_ref.h"
-#include "util/algorithm.h"
+#include "util/util.h"
 #include "memory/simple_alloc.h"
 #include <string.h>
 
@@ -75,7 +75,7 @@ public:
 private:
     void makeCopy();
     
-    class Value : public RefCounted<Value> {
+    class Value : public RefCountedThreadSafe<Value> {
     public:
         Value(const char *data, size_t length);
         void resize(size_t length);

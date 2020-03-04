@@ -16,17 +16,18 @@ public:
     void *alloc(size_t size) { return _slab.alloc(size); }
     void free(const void *addr, size_t size) { return _slab.free(addr, size); }
     
-    static void setLocalKey(pthread_key_t *localKey) { _localKey = localKey; }
-    static void setGlobalKey(pthread_key_t *globalKey) { _globalKey = globalKey; }
+    void *mutexAlloc(size_t size) { thread::AutoMutex m(_mutex); return alloc(size); }
+    void mutexFree(const void *addr, size_t size) { thread::AutoMutex m(_mutex); return free(addr, size); }
     
-    static pthread_key_t *getLocalKey() { return _localKey; }
-    static pthread_key_t *getGlobalKey() { return _globalKey; }
+    static pthread_key_t &getLocalKey() { return _localKey; }
+    static void createLocalKey() { pthread_key_create(&_localKey, NULL); }
+    static void deleteLocalKey() { pthread_key_delete(_localKey); }
     
 private:
     BuddyAlloc _buddy;
     SlabAlloc _slab;
-    static pthread_key_t *_localKey;
-    static pthread_key_t *_globalKey;
+    thread::Mutex _mutex;
+    static pthread_key_t _localKey;
 };
 
 void *allocate(size_t size);

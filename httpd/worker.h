@@ -4,6 +4,7 @@
 #include "util/simple_list.h"
 #include "thread/thread.h"
 #include "network/epoll.h"
+#include "memory/simple_alloc.h"
 
 namespace httpd {
 
@@ -11,12 +12,13 @@ using util::SimpleList;
 using thread::Thread;
 using network::EPoller;
 using network::EPollEvent;
+using memory::Allocater;
 class Server;
 class Connection;
 class Response;
 class Worker: public Thread {
 public:
-    Worker(Server &server): _server(server), _actives(0), _acceptLock(false) {}
+    Worker(Server &server): _server(server), _alloc(8192, 512), _actives(0), _acceptLock(false) {}
     bool onInit();
     void run();
     void close(Connection *conn);
@@ -33,6 +35,7 @@ private:
     void onResponse(Response *resp, Connection *conn);
 
     Server &_server;
+    Allocater _alloc;
     EPoller _poller; 
     SimpleList<Connection*> _connsList;
     SimpleList<EPollEvent*> _eventList;

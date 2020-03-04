@@ -1,5 +1,5 @@
 #include "util/config.h"
-#include "util/atomic.h"
+#include "util/util.h"
 #include "util/scoped_ptr.h"
 #include "httpd/worker.h"
 #include "httpd/server.h"
@@ -21,6 +21,8 @@ using network::Peername;
 static int __accept_lock = 0;
 
 bool Worker::onInit() {
+    pthread_setspecific(Allocater::getLocalKey(), &_alloc);
+    
     if (!_poller.create(MAX_WORKER_CONN)) {
         _LOG_("poller create false");
         return false;

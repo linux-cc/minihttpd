@@ -1,7 +1,7 @@
 #ifndef __UTIL_REF_COUNTED_H__
 #define __UTIL_REF_COUNTED_H__
 
-#include "util/atomic.h"
+#include "util/util.h"
 #include "memory/simple_alloc.h"
 
 namespace util {

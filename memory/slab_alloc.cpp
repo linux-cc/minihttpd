@@ -1,4 +1,5 @@
 #include "util/config.h"
+#include "util/util.h"
 #include "memory/slab_alloc.h"
 #include "memory/buddy_alloc.h"
 #include <stdio.h>

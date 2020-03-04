@@ -9,7 +9,7 @@ namespace httpd {
 
 using util::String;
 using util::ScopedRef;
-using util::RefCounted;
+using util::RefCountedThreadSafe;
 class Connection;
 class Request {
 public:
@@ -38,7 +38,7 @@ private:
         Parse_Finish,
     };
     
-    class Content : public RefCounted<Content> {
+    class Content : public RefCountedThreadSafe<Content> {
     public:
         Content(Connection *conn): _conn(conn), _contentPos(0), _contentLength(0), _formFd(-1),
             _is100Continue(0), _isMultipart(0), _status(Parse_Header) {}
