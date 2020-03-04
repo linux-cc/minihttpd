@@ -34,5 +34,6 @@
 #define MAX_WORKER_CONN     8
 #define CONN_TIMEOUT        10
 #define BUFFER_SIZE         8192
+#define MAX_IOV_CNT         8
 
 #endif /* ifndef __CONFIG_H__ */

@@ -28,9 +28,8 @@ public:
     bool recvUntil(String &buf, const char *pattern, bool flush) { return _recvQ.dequeueUntil(buf, pattern, flush); }
     
     ssize_t send(const String &buf) { return send(buf.data(), buf.length()); }
-    ssize_t send(const void *buf, size_t size) { return TcpSocket(_socket).send(buf, size); }
-    ssize_t send(const void *buf1, size_t size1, const void *buf2, size_t size2) { return TcpSocket(_socket).send(buf1, size1, buf2, size2); }
-    ssize_t send(struct iovec *iov, int iovcnt) { return TcpSocket(_socket).send(iov, iovcnt); }
+    ssize_t send(const void *buf, size_t size);
+    ssize_t send(struct iovec *iov, int iovcnt);
     void close() { TcpSocket(_socket).close(); }
 
     int fd() const { return _socket; }
@@ -46,6 +45,7 @@ public:
 private:
     int _socket;
     BufferQueue _recvQ;
+    BufferQueue _sendQ;
     ScopedPtr<Request> _req;
     ScopedPtr<Response> _resp;
     SimpleList<Request*> _reqList;
