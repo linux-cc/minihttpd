@@ -43,8 +43,20 @@ static inline int parent(int i) {
     return (i - 1) >> 1;
 }
 
+BuddyAlloc::BuddyAlloc(int blocks, int blockSize, int pageSize):
+_maddr(NULL),
+_buffer(NULL),
+_tree(0),
+_size(0),
+_blockShiftBit(0),
+_blocksPow(0) {
+    init(blocks, blockSize, pageSize);
+}
+
 BuddyAlloc::~BuddyAlloc() {
-    munmap(_maddr, _size);
+    if (_maddr) {
+        munmap(_maddr, _size);
+    }
 }
 
 void BuddyAlloc::init(int blocks, int blockSize, int pageSize) {
@@ -70,6 +82,14 @@ void BuddyAlloc::init(int blocks, int blockSize, int pageSize) {
         _tree[i] = _tree[parent(i)] - 1;
     }
     LOG_DEBUG("blocksPow: %d(%d), blockShiftBit: %d(%d), buffer: %p, pageSize: %d", _blocksPow, blocks, _blockShiftBit, blockSize, _buffer, _pageSize);
+}
+
+bool BuddyAlloc::contains(const void *addr) {
+    char *paddr = (char*)addr;
+    char *pbeg = (char*)_maddr;
+    char *pend = pbeg + _size;
+    
+    return paddr >= pbeg && paddr < pend;
 }
 
 void* BuddyAlloc::alloc(size_t size) {

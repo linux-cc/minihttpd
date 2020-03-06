@@ -76,3 +76,13 @@ void Server::run() {
 }
 
 } /* namespace httpd */
+
+int main(int argc, char *argv[]) {
+    memory::Allocater::createLocalKey();
+    httpd::Server svr;
+    svr.start("localhost", "9090");
+    svr.run();
+    memory::Allocater::deleteLocalKey();
+    
+    return 0;
+}

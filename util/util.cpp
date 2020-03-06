@@ -1,5 +1,6 @@
 #include "util/util.h"
 #include "util/string.h"
+#include <sys/time.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -106,13 +107,19 @@ String urlDecode(const String &str) {
 
 void writeLog(const char *func, int line, const char *fmt, ...) {
     char buffer[128];
+    struct timeval tv;
+    
     va_list vp;
     va_start(vp, fmt);
+    gettimeofday(&tv, NULL);
+    struct tm *tm = localtime(&tv.tv_sec);
+    size_t n = strftime(buffer, 128, "[%Y-%m-%d %H:%M:%S", tm);
+    n += sprintf(buffer + n, ".%06d][", tv.tv_usec);
     size_t p1 = sundaySearch(func, "::");
     size_t p2 = sundaySearch(func + p1, "(");
-    memcpy(buffer, func + p1 + 2, p2 - 2);
-    buffer[p2 - 2] = 0;
-    printf("[%s:%d]", buffer, line);
+    memcpy(buffer + n, func + p1 + 2, p2 - 2);
+    buffer[n + p2 - 2] = 0;
+    printf("%s]", buffer);
     vprintf(fmt, vp);
     printf("\n");
     va_end(vp);

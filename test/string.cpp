@@ -92,12 +92,11 @@ void testBufferQueue() {
     }
 }
 
+#ifdef __TEST__
 int main(int argc, char *argv[]) {
-    memory::Allocater::createLocalKey();
-    httpd::Server svr;
-    svr.start("localhost", "9090");
-    svr.run();
-    memory::Allocater::deleteLocalKey();
+    testString();
+    testBufferQueue();
     
     return 0;
 }
+#endif

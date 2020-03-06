@@ -7,18 +7,17 @@ namespace memory {
 
 class BuddyAlloc {
 public:
-    BuddyAlloc(int blocks, int blockSize, int pageSize = 4096):
-        _maddr(0), _buffer(0), _tree(0), _size(0), _blockShiftBit(0), _blocksPow(0) {
-        init(blocks, blockSize, pageSize);
-    }
+    BuddyAlloc(int blocks, int blockSize, int pageSize = 4096);
     ~BuddyAlloc();
+    
     void init(int blocks, int blockSize, int pageSize);
     void *alloc(size_t size);
     void free(const void *addr);
+    bool contains(const void *addr);
     size_t getPageSize() const { return _pageSize; }
-    char *dump();
     char *buffer() const { return _buffer; }
-
+    char *dump();
+    
 private:
     char *_maddr;
     char *_buffer;

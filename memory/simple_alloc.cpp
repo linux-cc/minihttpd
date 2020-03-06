@@ -8,7 +8,10 @@ static Allocater _galloc(4096 << 8, 512);
 void *allocate(size_t size) {
     Allocater *localAlloc = (Allocater*)pthread_getspecific(Allocater::getLocalKey());
     if (localAlloc) {
-        return localAlloc->alloc(size);
+        void *addr = localAlloc->alloc(size);
+        if (addr) {
+            return addr;
+        }
     }
 
     return _galloc.mutexAlloc(size);
@@ -16,7 +19,7 @@ void *allocate(size_t size) {
 
 void deallocate(const void *addr, size_t size) {
     Allocater *localAlloc = (Allocater*)pthread_getspecific(Allocater::getLocalKey());
-    if (localAlloc) {
+    if (localAlloc && localAlloc->contains(addr)) {
         return localAlloc->free(addr, size);
     }
 

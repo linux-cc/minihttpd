@@ -19,6 +19,8 @@ public:
     void *mutexAlloc(size_t size) { thread::AutoMutex m(_mutex); return alloc(size); }
     void mutexFree(const void *addr, size_t size) { thread::AutoMutex m(_mutex); return free(addr, size); }
     
+    bool contains(const void *addr) { return _buddy.contains(addr); }
+    
     static pthread_key_t &getLocalKey() { return _localKey; }
     static void createLocalKey() { pthread_key_create(&_localKey, NULL); }
     static void deleteLocalKey() { pthread_key_delete(_localKey); }
