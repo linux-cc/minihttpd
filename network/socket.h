@@ -37,6 +37,9 @@ public:
     operator int() const {
         return _socket;
     }
+    bool isClosed() const {
+        return _socket == -1;
+    }
 
 protected:
     explicit Socket(int socket): _socket(socket) {}

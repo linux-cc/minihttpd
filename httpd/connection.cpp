@@ -10,7 +10,7 @@ bool Connection::recv() {
         return false;
     }
     
-    ssize_t n = TcpSocket(_socket).recv(iov, iovcnt);
+    ssize_t n = _socket.recv(iov, iovcnt);
     if (n < 0 && errno != EAGAIN) {
         return false;
     }
@@ -25,7 +25,7 @@ ssize_t Connection::send(const void *buf, size_t size) {
     iov[iovcnt].iov_base = (void*)buf;
     iov[iovcnt].iov_len = size;
     iovcnt++;
-    ssize_t n = TcpSocket(_socket).send(iov, iovcnt);
+    ssize_t n = _socket.send(iov, iovcnt);
     if (n < 0 && errno != EAGAIN) {
         return n;
     }
@@ -53,7 +53,7 @@ ssize_t Connection::send(struct iovec *iov, int iovcnt) {
     _iovcnt += iovcnt;
     
     size_t slen = 0;
-    ssize_t n = TcpSocket(_socket).send(_iov, _iovcnt);
+    ssize_t n = _socket.send(_iov, _iovcnt);
     int i = 0;
     for (; i < _iovcnt; ++i) {
         slen += _iov[i].iov_len;

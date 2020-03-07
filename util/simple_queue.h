@@ -9,7 +9,7 @@ namespace util {
 template <typename T>
 class SimpleQueue {
 public:
-    SimpleQueue(int capacity): _capacity(capacity), _size(capacity), _head(0), _tail(0) { _queue = memory::SimpleAlloc<T[]>::New(_capacity); }
+    SimpleQueue(int capacity): _capacity(capacity), _size(0), _head(0), _tail(0) { _queue = memory::SimpleAlloc<T[]>::New(_capacity); }
     ~SimpleQueue() { memory::SimpleAlloc<T[]>::Delete(_queue, _capacity); }
     
     bool empty() const { return _size == 0; }

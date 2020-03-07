@@ -61,20 +61,24 @@ public:
         return false;
     }
     
-    void remove(const T &data) {
+    int remove(const T &data) {
         Node *n = _head->_next;
+        int cnt = 0;
         while (n != _head) {
-            if (n->_data == data) {
-                Node *prev = n->_prev;
-                Node *next = n->_next;
+            Node *tmp = n;
+            n = n->_next;
+            if (tmp->_data == data) {
+                Node *prev = tmp->_prev;
+                Node *next = tmp->_next;
                 prev->_next = next;
                 next->_prev = prev;
-                memory::SimpleAlloc<Node>::Delete(n);
+                memory::SimpleAlloc<Node>::Delete(tmp);
                 --_size;
-                return;
+                ++cnt;
             }
-            n = n->_next;
         }
+        
+        return cnt;
     }
     
     void clear() {

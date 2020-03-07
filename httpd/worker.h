@@ -37,8 +37,7 @@ private:
 
     Server &_server;
     Allocater _alloc;
-    EPoller _poller; 
-    SimpleList<Connection*> _connsList;
+    EPoller _poller;
     SimpleList<EPollEvent*> _eventList;
     GZip _gzip;
     int _actives;

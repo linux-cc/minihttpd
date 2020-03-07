@@ -67,7 +67,7 @@ void Worker::unlockAccept() {
 void Worker::run() {
     while (!_server.isQuit()) {
         bool holdLock = tryLockAccept();
-        EPollResult result = _poller.wait(1000);
+        EPollResult result = _poller.wait(100);
         for (EPollResult::Iterator it = result.begin(); it != result.end(); ++it) {
             if (it->isPollIn()) {
                 if (it->fd() == _server) {
@@ -104,16 +104,16 @@ void Worker::onAccept() {
             break;
         }
 
-        if (_connsList.size() >= MAX_WORKER_CONN) {
-            _LOG_("Connection is empty");
+        if (_actives >= MAX_WORKER_CONN) {
+            _LOG_("Connection is full");
             client.close();
             break;
         }
         client.setNoDelay();
         client.setNonblock();
         Connection *conn = SimpleAlloc<Connection>::New(client);
-        _connsList.push_back(conn);
-        //_server._eventQ.enqueue(Server::Item(conn));
+        _actives++;
+        _server.update(conn);
         int error = _poller.add(client, conn);
         if (error) {
             _LOG_("poll add client error: %d:%s", errno, strerror(errno));
@@ -133,6 +133,7 @@ void Worker::onHandleEvent() {
         } else {
             _LOG_("handle unknown event, fd: %d, connection: %p", event->fd(), event->data());
         }
+        _server.update((Connection*)event->data());
     }
 }
 
@@ -141,7 +142,6 @@ void Worker::onRequest(EPollEvent &event) {
     
     if (!conn->recv()) {
         close(conn);
-        //_server._eventQ.enqueue(Server::Item(conn));
         return;
     }
     bool write = false;
@@ -166,12 +166,11 @@ void Worker::onRequest(EPollEvent &event) {
         conn->addRequest(req.release());
     }
     _poller.mod(conn->fd(), conn, write);
-    //_server._eventQ.enqueue(Server::Item(conn));
 }
 
 void Worker::onResponse(EPollEvent &event) {
     Connection *conn = (Connection*)event.data();
-    
+
     while (true) {
         ScopedPtr<Response> last(conn->getResponse());
         Response _new(conn);
@@ -184,7 +183,6 @@ void Worker::onResponse(EPollEvent &event) {
             SimpleAlloc<Request>::Delete(req);
         }
         if (!resp->sendResponse(_gzip)) {
-            _LOG_("sendResponse error: %d:%s", errno, strerror(errno));
             close(conn);
             break;
         }
@@ -203,9 +201,10 @@ void Worker::onResponse(EPollEvent &event) {
 void Worker::close(Connection *conn) {
     _poller.del(conn->fd());
     _LOG_("close connection: %p, fd: %d", conn, conn->fd());
+    _server.update(conn, true);
     conn->close();
-    _connsList.remove(conn);
     memory::SimpleAlloc<Connection>::Delete(conn);
+    --_actives;
 }
 
 } /* namespace httpd */

@@ -26,26 +26,27 @@ public:
     operator int () { return _server; }
     void quit() { _quit = true; }
     bool isQuit() { return _quit; }
+    void update(Connection *conn, bool closed = false);
     
 private:
     void update();
     
     struct Item {
-        Item(Connection *conn = NULL): _conn(conn), _queueIndex(-1) {}
-        Connection *_conn;
-        int _queueIndex;
-        bool operator==(const Item &other) { return _conn == other._conn; }
+        Item(Connection *conn = NULL, bool closed = false);
+        int _fd;
+        int _oldIdx : 15;
+        int _newIdx : 15;
+        int _closed : 2;
+        bool operator==(const Item &r) {
+            return _fd == r._fd && _oldIdx == r._oldIdx && _newIdx == r._newIdx;
+        }
     };
-    
     TcpSocket _server;
     SimpleQueue<SimpleList<Item> > _timeoutQ;
     BlockQueue<Item> _eventQ;
-    SimpleList<Item> _connIndex;
     Worker *_workers[MAX_WORKER];
     int _curIndex;
     bool _quit;
-    
-    friend class Worker;
 };
 
 } /* namespace httpd */

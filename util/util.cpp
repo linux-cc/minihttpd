@@ -119,7 +119,7 @@ void writeLog(const char *func, int line, const char *fmt, ...) {
     size_t p2 = sundaySearch(func + p1, "(");
     memcpy(buffer + n, func + p1 + 2, p2 - 2);
     buffer[n + p2 - 2] = 0;
-    printf("%s]", buffer);
+    printf("%s:%d]", buffer, line);
     vprintf(fmt, vp);
     printf("\n");
     va_end(vp);
