@@ -1,5 +1,6 @@
 #include "httpd/gzip.h"
 #include "httpd/gtree.h"
+#include "memory/simple_alloc.h"
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -46,21 +47,21 @@ inline unsigned GZip::insertString(unsigned pos) {
 
 GZip::GZip() {
     clear();
-    _gtree = new GTree(*this);
-    _window = new uint8_t[TWO_WSIZE];
-    _lbuf = new uint8_t[WSIZE];
-    _dbuf = new uint16_t[WSIZE];
-    _prev = new uint16_t[TWO_WSIZE];
-    _outbuf = new uint8_t[HALF_WSIZE];
+    _gtree = memory::SimpleAlloc<GTree>::New(*this);
+    _window = memory::SimpleAlloc<uint8_t[]>::New(TWO_WSIZE);
+    _lbuf = memory::SimpleAlloc<uint8_t[]>::New(WSIZE);
+    _dbuf = memory::SimpleAlloc<uint16_t[]>::New(WSIZE);
+    _prev = memory::SimpleAlloc<uint16_t[]>::New(TWO_WSIZE);
+    _outbuf = memory::SimpleAlloc<uint8_t[]>::New(HALF_WSIZE);
 }
 
 GZip::~GZip() {
-    delete _gtree;
-    delete[] _window;
-    delete[] _lbuf;
-    delete[] _dbuf;
-    delete[] _prev;
-    delete[] _outbuf;
+    memory::SimpleAlloc<GTree>::Delete(_gtree);
+    memory::SimpleAlloc<uint8_t[]>::Delete(_window, TWO_WSIZE);
+    memory::SimpleAlloc<uint8_t[]>::Delete(_lbuf, WSIZE);
+    memory::SimpleAlloc<uint16_t[]>::Delete(_dbuf, WSIZE);
+    memory::SimpleAlloc<uint16_t[]>::Delete(_prev, TWO_WSIZE);
+    memory::SimpleAlloc<uint8_t[]>::Delete(_outbuf, HALF_WSIZE);
 }
 
 void GZip::clear() {

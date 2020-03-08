@@ -45,7 +45,7 @@ public:
     
     WeakRef getRef() const {
         if (!hasRef()) {
-            _flag = new WeakRef::Flag();
+            _flag = memory::SimpleAlloc<WeakRef::Flag>::New();
         }
         return WeakRef(_flag);
     }

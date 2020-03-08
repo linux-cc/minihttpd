@@ -61,6 +61,12 @@ public:
         return construct(util::IsTrivial<T>(), p, p1, p2);
     }
     
+    template <typename P1, typename P2>
+    static T *New(P1 &p1, P2 &p2) {
+        void *p = allocate(sizeof(T));
+        return construct(util::IsTrivial<T>(), p, p1, p2);
+    }
+    
     template <typename P1, typename P2, typename P3>
     static T *New(const P1 &p1, const P2 &p2, const P3 &p3) {
         void *p = allocate(sizeof(T));

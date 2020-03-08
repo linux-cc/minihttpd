@@ -3,6 +3,7 @@
 
 #include "closure/functor_traits.h"
 #include "closure/bind_state.h"
+#include "memory/simple_alloc.h"
 
 namespace closure {
 
@@ -20,7 +21,7 @@ bind(Functor functor) {
     typedef internal::BindState<RunnableType, RunType, void()> BindState;
 
     return Callback<typename BindState::UnboundRunType>(
-        new BindState(internal::MakeRunnable(functor)));
+        memory::SimpleAlloc<BindState>::New(internal::MakeRunnable(functor)));
 }
 
 template <typename Functor, typename P1>
@@ -46,7 +47,7 @@ bind(Functor functor, const P1& p1) {
         void(typename internal::CallbackParamTraits<P1>::StorageType)> BindState;
 
     return Callback<typename BindState::UnboundRunType>(
-        new BindState(internal::MakeRunnable(functor), p1));
+        memory::SimpleAlloc<BindState>::New(internal::MakeRunnable(functor), p1));
 }
 
 template <typename Functor, typename P1, typename P2>
@@ -77,7 +78,7 @@ bind(Functor functor, const P1& p1, const P2& p2) {
             typename internal::CallbackParamTraits<P2>::StorageType)> BindState;
 
     return Callback<typename BindState::UnboundRunType>(
-        new BindState(internal::MakeRunnable(functor), p1, p2));
+        memory::SimpleAlloc<BindState>::New(internal::MakeRunnable(functor), p1, p2));
 }
 
 template <typename Functor, typename P1, typename P2, typename P3>
@@ -113,7 +114,7 @@ bind(Functor functor, const P1& p1, const P2& p2, const P3& p3) {
             typename internal::CallbackParamTraits<P3>::StorageType)> BindState;
 
     return Callback<typename BindState::UnboundRunType>(
-        new BindState(internal::MakeRunnable(functor), p1, p2, p3));
+        memory::SimpleAlloc<BindState>::New(internal::MakeRunnable(functor), p1, p2, p3));
 }
 
 template <typename Functor, typename P1, typename P2, typename P3, typename P4>
@@ -154,7 +155,7 @@ bind(Functor functor, const P1& p1, const P2& p2, const P3& p3, const P4& p4) {
             typename internal::CallbackParamTraits<P4>::StorageType)> BindState;
 
     return Callback<typename BindState::UnboundRunType>(
-        new BindState(internal::MakeRunnable(functor), p1, p2, p3, p4));
+        memory::SimpleAlloc<BindState>::New(internal::MakeRunnable(functor), p1, p2, p3, p4));
 }
 
 template <typename Functor, typename P1, typename P2, typename P3, typename P4,
@@ -201,7 +202,7 @@ bind(Functor functor, const P1& p1, const P2& p2, const P3& p3, const P4& p4, co
             typename internal::CallbackParamTraits<P5>::StorageType)> BindState;
 
     return Callback<typename BindState::UnboundRunType>(
-        new BindState(internal::MakeRunnable(functor), p1, p2, p3, p4, p5));
+        memory::SimpleAlloc<BindState>::New(internal::MakeRunnable(functor), p1, p2, p3, p4, p5));
 }
 
 template <typename Functor, typename P1, typename P2, typename P3, typename P4,
@@ -254,7 +255,7 @@ bind(Functor functor, const P1& p1, const P2& p2, const P3& p3, const P4& p4,
             typename internal::CallbackParamTraits<P6>::StorageType)> BindState;
 
     return Callback<typename BindState::UnboundRunType>(
-        new BindState(internal::MakeRunnable(functor), p1, p2, p3, p4, p5, p6));
+        memory::SimpleAlloc<BindState>::New(internal::MakeRunnable(functor), p1, p2, p3, p4, p5, p6));
 }
 
 template <typename Functor, typename P1, typename P2, typename P3, typename P4,
@@ -312,7 +313,7 @@ bind(Functor functor, const P1& p1, const P2& p2, const P3& p3, const P4& p4,
             typename internal::CallbackParamTraits<P7>::StorageType)> BindState;
 
     return Callback<typename BindState::UnboundRunType>(
-        new BindState(internal::MakeRunnable(functor), p1, p2, p3, p4, p5, p6, p7));
+        memory::SimpleAlloc<BindState>::New(internal::MakeRunnable(functor), p1, p2, p3, p4, p5, p6, p7));
 }
 
 } /* namespace base */

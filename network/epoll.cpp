@@ -1,6 +1,7 @@
 #include "util/config.h"
 #include "util/util.h"
 #include "network/epoll.h"
+#include "memory/simple_alloc.h"
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
@@ -100,7 +101,7 @@ bool EPollEvent::isPollOut() const {
 
 EPoller::~EPoller() {
     if (_events) {
-        delete []_events;
+        memory::SimpleAlloc<EPollEvent[]>::Delete(_events, _size);
     }
     close(_fd);
 }
@@ -111,7 +112,7 @@ bool EPoller::create(int size) {
         return false;
     }
     _size = size;
-    _events = new EPollEvent[_size];
+    _events = memory::SimpleAlloc<EPollEvent[]>::New(size);
 
     return _events;
 }
