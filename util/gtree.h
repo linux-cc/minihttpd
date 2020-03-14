@@ -1,5 +1,5 @@
-#ifndef __HTTPD_GTREE_H__
-#define __HTTPD_GTREE_H__
+#ifndef __UTIL_GTREE_H__
+#define __UTIL_GTREE_H__
 
 #include <stdint.h>
 
@@ -7,7 +7,7 @@
 #define MAX_MATCH       258
 #define MIN_MATCH       3
 
-namespace httpd {
+namespace util {
 
 class GZip;
 
@@ -97,5 +97,5 @@ private:
     uint8_t _valid;
 };
 
-} /* namespace httpd */
-#endif /* ifndef __HTTPD_GTREE_H__ */
+} /* namespace util */
+#endif /* ifndef __UTIL_GTREE_H__ */

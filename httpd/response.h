@@ -2,11 +2,13 @@
 #define __HTTPD_RESPONSE_H__
 
 #include "util/string.h"
-#include "httpd/gzip.h"
+#include "util/gzip.h"
 
 namespace httpd {
 
 using util::String;
+using util::GCallback;
+using util::GZip;
 class Request;
 class Connection;
 class Response : public GCallback {

@@ -2,14 +2,15 @@
 #define __HTTPD_WORKER_H__
 
 #include "util/simple_list.h"
+#include "util/gzip.h"
 #include "thread/thread.h"
 #include "network/epoll.h"
 #include "memory/simple_alloc.h"
-#include "httpd/gzip.h"
 
 namespace httpd {
 
 using util::SimpleList;
+using util::GZip;
 using thread::Thread;
 using network::EPoller;
 using network::EPollEvent;

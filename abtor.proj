@@ -10,7 +10,6 @@ mysql_dir = '/Users/linshaohua/Applications/mysql/'
 
 all_headers = abtor_glob(abtor_path('./src/alc/source/amap_plog_engine/include'),'*.h',True)
 all_sources = abtor_glob(abtor_path('./closure'), '*.cpp')
-all_sources += abtor_glob(abtor_path('./fcgid'), '*.cpp')
 all_sources += abtor_glob(abtor_path('./memory'), '*.cpp')
 all_sources += abtor_glob(abtor_path('./mysql'), '*.cpp')
 all_sources += abtor_glob(abtor_path('./network'), '*.cpp')
@@ -20,7 +19,6 @@ all_sources += abtor_glob(abtor_path('./httpd'), '*.cpp')
 all_sources += abtor_glob(abtor_path('./test'), '*.cpp')
 
 all_headers = abtor_glob(abtor_path('./closure'), '*.h')
-all_headers += abtor_glob(abtor_path('./fcgid'), '*.h')
 all_headers += abtor_glob(abtor_path('./memory'), '*.h')
 all_headers += abtor_glob(abtor_path('./mysql'), '*.h')
 all_headers += abtor_glob(abtor_path('./network'), '*.h')

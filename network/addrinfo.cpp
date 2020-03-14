@@ -1,4 +1,5 @@
 #include "network/addrinfo.h"
+#include "memory/simple_alloc.h"
 #include <unistd.h>
 #include <stdio.h>
 
@@ -47,7 +48,7 @@ Addrinfo::~Addrinfo() {
         if (_hints.ai_family != PF_LOCAL) {
             freeaddrinfo(_result);
         } else {
-            free(_result);
+            memory::SimpleAlloc<char[]>::Delete((char*)_result, sizeof(addrinfo) + sizeof(sockaddr_un));
         }
     }
 }
@@ -56,7 +57,7 @@ int Addrinfo::getaddrinfo(const char *host, const char *service) {
     if (_hints.ai_family != PF_LOCAL) {
         return ::getaddrinfo(host, service, &_hints, &_result);
     }
-    _result = (addrinfo*)malloc(sizeof(addrinfo) + sizeof(sockaddr_un));
+    _result = (addrinfo*)memory::SimpleAlloc<char[]>::New(sizeof(addrinfo) + sizeof(sockaddr_un));
     if (!_result) {
         return -1;
     }

@@ -1,4 +1,4 @@
-#include "fcgid/fcgid.h"
+#include "fcgid/libfcgi.h"
 #include "httpd/connection.h"
 #include <unistd.h>
 #include <errno.h>

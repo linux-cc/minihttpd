@@ -1,11 +1,11 @@
-#ifndef __HTTPD_GZIP_H__
-#define __HTTPD_GZIP_H__
+#ifndef __UTIL_GZIP_H__
+#define __UTIL_GZIP_H__
 
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-namespace httpd {
+namespace util {
 
 class GTree;
 
@@ -72,5 +72,5 @@ private:
     friend class GTree;
 };
 
-} /* namespace httpd */
-#endif /* ifndef __HTTPD_GZIP_H__ */
+} /* namespace util */
+#endif /* ifndef __UTIL_GZIP_H__ */

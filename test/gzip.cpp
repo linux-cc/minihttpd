@@ -1,8 +1,8 @@
-#include "httpd/gzip.h"
+#include "util/gzip.h"
 #include <stdio.h>
 
 int main(int argc, char *argv[]) {
-    using httpd::GZip;
+    using util::GZip;
     GZip zip;
     if (argc < 2) {
         printf("usage %s [-level] file\n", argv[0]);
