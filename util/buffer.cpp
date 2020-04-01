@@ -1,9 +1,9 @@
-#include "util/buffer_queue.h"
+#include "util/buffer.h"
 #include "util/string.h"
 
 namespace util {
 
-ssize_t BufferQueue::write(const void *buf, size_t size) {
+ssize_t Buffer::write(const void *buf, size_t size) {
     size_t n1 = copyFrom(buf, size);
     _length += n1;
     _writePos = index(_writePos + n1);
@@ -22,7 +22,7 @@ ssize_t BufferQueue::write(const void *buf, size_t size) {
     return n1 + n2;
 }
 
-size_t BufferQueue::copyFrom(const void *buf, size_t size) {
+size_t Buffer::copyFrom(const void *buf, size_t size) {
     size_t n = MIN(_capacity - _length, size);
 
     for (size_t i = 0; i < n; i++) {
@@ -32,7 +32,7 @@ size_t BufferQueue::copyFrom(const void *buf, size_t size) {
     return n;
 }
 
-ssize_t BufferQueue::flush() {
+ssize_t Buffer::flush() {
     ssize_t n;
     if (_readPos < _writePos || _writePos == 0) {
         n = _source->overflow(_buffer + _readPos, _length);
@@ -47,7 +47,7 @@ ssize_t BufferQueue::flush() {
     return n;
 }
 
-ssize_t BufferQueue::read(void *buf, size_t size) {
+ssize_t Buffer::read(void *buf, size_t size) {
     size_t n1 = copyTo(buf, size);
     _length -= n1;
     _readPos = index(_readPos + n1);
@@ -66,7 +66,7 @@ ssize_t BufferQueue::read(void *buf, size_t size) {
     return n1 + n2;
 }
 
-size_t BufferQueue::copyTo(void *buf, size_t size) {
+size_t Buffer::copyTo(void *buf, size_t size) {
     size_t n = MIN(_length, size);
     
     for (size_t i = 0; i < n; i++) {
@@ -76,7 +76,7 @@ size_t BufferQueue::copyTo(void *buf, size_t size) {
     return n;
 }
 
-ssize_t BufferQueue::find(const char *pattern) {
+ssize_t Buffer::find(const char *pattern) {
     uint16_t move[256];
     size_t plen = strlen(pattern);
     size_t s = 0, j;
@@ -101,7 +101,7 @@ ssize_t BufferQueue::find(const char *pattern) {
     return -1;
 }
 
-ssize_t BufferQueue::refill() {
+ssize_t Buffer::refill() {
     ssize_t n;
     if (_writePos < _readPos || _readPos == 0) {
         n = _source->underflow(_buffer + _writePos, _capacity - _length);

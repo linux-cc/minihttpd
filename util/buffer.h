@@ -1,5 +1,5 @@
-#ifndef __UTIL_BUFFER_QUEUE_H__
-#define __UTIL_BUFFER_QUEUE_H__
+#ifndef __UTIL_BUFFER_H__
+#define __UTIL_BUFFER_H__
 
 #include "util/config.h"
 #include "memory/simple_alloc.h"
@@ -17,12 +17,12 @@ public:
     virtual ssize_t overflow(const void *buf1, size_t size1, const void *buf2, size_t size2) = 0;
 };
 
-class BufferQueue {
+class Buffer {
 public:
-    BufferQueue(IBuffer *source, int capacity = BUFFER_SIZE): _source(source), _readPos(0), _writePos(0), _length(0), _capacity(capacity) {
+    Buffer(IBuffer *source, int capacity = BUFFER_SIZE): _source(source), _readPos(0), _writePos(0), _length(0), _capacity(capacity) {
         _buffer = memory::SimpleAlloc<char[]>::New(_capacity);
     }
-    ~BufferQueue() { memory::SimpleAlloc<char[]>::Delete(_buffer, _capacity); }
+    ~Buffer() { memory::SimpleAlloc<char[]>::Delete(_buffer, _capacity); }
     
     ssize_t write(const void *buf, size_t size);
     ssize_t read(void *buf, size_t size);
