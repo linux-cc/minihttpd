@@ -19,13 +19,13 @@ using memory::SimpleAlloc;
 using network::TcpSocket;
 class Request;
 class Response;
-class Connection {
+class Connection : public util::IBuffer {
 public:
-    Connection(int socket = -1): _socket(socket), _toNewIdx(-1), _toOldIdx(-1) {}
+    Connection(int socket = -1): _recvQ(this), _sendQ(this), _socket(socket), _toNewIdx(-1), _toOldIdx(-1) {}
     bool recv();
-    size_t recv(void *buf, size_t size) { return _recvQ.dequeue(buf, size); }
-    bool recvLine(String &buf) { return _recvQ.dequeueUntil(buf, ONE_CRLF, false); }
-    bool recvUntil(String &buf, const char *pattern, bool flush) { return _recvQ.dequeueUntil(buf, pattern, flush); }
+    size_t recv(void *buf, size_t size) { return _recvQ.read(buf, size); }
+    //bool recvLine(String &buf) { return _recvQ.dequeueUntil(buf, ONE_CRLF, false); }
+    bool recvUntil(String &buf, const char *pattern, bool flush);
     
     ssize_t send(const String &buf) { return send(buf.data(), buf.length()); }
     ssize_t send(const void *buf, size_t size);
@@ -49,6 +49,11 @@ public:
     int getOldIdx() const { return _toOldIdx; }
     
 private:
+    ssize_t underflow(void *buf, size_t size) { return _socket.recv(buf, size); }
+    ssize_t underflow(void *buf1, size_t size1, void *buf2, size_t size2) { return _socket.recv(buf1, size1, buf2, size2); }
+    ssize_t overflow(const void *buf, size_t size) { return _socket.send(buf, size); }
+    ssize_t overflow(const void *buf1, size_t size1, const void *buf2, size_t size2) { return _socket.send(buf1, size1, buf2, size2); }
+    
     BufferQueue _recvQ;
     BufferQueue _sendQ;
     ScopedPtr<Request> _req;

@@ -1,167 +1,119 @@
 #include "util/buffer_queue.h"
 #include "util/string.h"
-#include <sys/uio.h>
 
 namespace util {
 
-size_t BufferQueue::enqueue(const void *buf, size_t size) {
-    if (full()) {
-        return 0;
+ssize_t BufferQueue::write(const void *buf, size_t size) {
+    size_t n1 = copyFrom(buf, size);
+    _length += n1;
+    _writePos = index(_writePos + n1);
+    if (n1 == size) {
+        return n1;
     }
-    if (_writePos >= _readPos) {
-        size_t size1 = _capacity - _writePos - (_readPos ? 0 : 1);
-        if (size <= size1) {
-            memcpy(_buffer + _writePos, buf, size);
-            _writePos = index(_writePos + size);
-            return size;
-        }
-        size_t size2 = MIN(size - size1, _readPos - (_readPos ? 1 : 0));
-        memcpy(_buffer + _writePos, buf, size1);
-        memcpy(_buffer, (char*)buf + size1, size2);
-        _writePos = size2;
-        return size1 + size2;
-    }
-    
-    size_t size1 = MIN(_readPos - _writePos - 1, size);
-    memcpy(_buffer + _writePos, buf, size1);
-    _writePos = index(_writePos + size1);
 
-    return size1;
-}
-
-size_t BufferQueue::dequeue(void *buf, size_t size) {
-    if (empty()) {
-        return 0;
-    }
-    
-    if (_readPos < _writePos) {
-        size_t n = MIN(_writePos - _readPos, size);
-        memcpy(buf, _buffer + _readPos, n);
-        _readPos = index(_readPos + n);
+    ssize_t n = flush();
+    if (n < 0) {
         return n;
     }
     
-    size_t size1 = _capacity - _readPos;
-    if (size <= size1) {
-        memcpy(buf, _buffer + _readPos, size);
-        _readPos = index(_readPos + size);
-        return size;
-    }
-    
-    size_t size2 = MIN(size - size1, _writePos);
-    memcpy(buf, _buffer + _readPos, size1);
-    memcpy((char*)buf + size1, _buffer, size2);
-    _readPos = size2;
-    
-    return size1 + size2;
+    size_t n2 = copyFrom((char*)buf + n1, size - n1);
+    _length += n2;
+    _writePos = index(_writePos + n2);
+    return n1 + n2;
 }
 
-static void getMove(const char *pattern, size_t plen, uint16_t *move) {
+size_t BufferQueue::copyFrom(const void *buf, size_t size) {
+    size_t n = MIN(_capacity - _length, size);
+
+    for (size_t i = 0; i < n; i++) {
+        _buffer[index(_writePos + i)] = *((char*)buf + i);
+    }
+
+    return n;
+}
+
+ssize_t BufferQueue::flush() {
+    ssize_t n;
+    if (_readPos < _writePos || _writePos == 0) {
+        n = _source->overflow(_buffer + _readPos, _length);
+    } else {
+        n = _source->overflow(_buffer + _readPos, _capacity - _readPos, _buffer, _writePos);
+    }
+    if (n > 0) {
+        _readPos = index(_readPos + n);
+        _length -= n;
+    }
+    
+    return n;
+}
+
+ssize_t BufferQueue::read(void *buf, size_t size) {
+    size_t n1 = copyTo(buf, size);
+    _length -= n1;
+    _readPos = index(_readPos + n1);
+    if (n1 == size) {
+        return n1;
+    }
+
+    ssize_t n = refill();
+    if (n < 0) {
+        return n;
+    }
+    
+    size_t n2 = copyTo((char*)buf + n1, size - n1);
+    _length -= n2;
+    _readPos = index(_readPos + n2);
+    return n1 + n2;
+}
+
+size_t BufferQueue::copyTo(void *buf, size_t size) {
+    size_t n = MIN(_length, size);
+    
+    for (size_t i = 0; i < n; i++) {
+        *((char*)buf + i) = _buffer[index(_readPos + i)];
+    }
+    
+    return n;
+}
+
+ssize_t BufferQueue::find(const char *pattern) {
+    uint16_t move[256];
+    size_t plen = strlen(pattern);
+    size_t s = 0, j;
+    
     for (int i = 0; i < 256; ++i) {
         move[i] = plen + 1;
     }
     for (int i = 0; i < plen; ++i) {
         move[int(pattern[i])] = plen - i;
     }
-}
-
-bool BufferQueue::dequeueUntil(String &buf, const char *pattern, bool flush) {
-    uint16_t move[256];
-    size_t plen = strlen(pattern);
-    size_t tlen = length();
-    size_t s = 0, j;
     
-    getMove(pattern, plen, move);
-    while (s + plen <= tlen) {
+    while (s + plen <= _length) {
         j = 0;
-        size_t i = _readPos + s;
-        while (_buffer[index(i + j)] == pattern[j]) {
-            ++j;
-            if (j >= plen) {
-                buf.append(pattern);
-                setReadPos(s + plen);
-                return true;
+        while (_buffer[index(_readPos + s + j)] == pattern[j]) {
+            if (++j >= plen) {
+                return s;
             }
         }
-        int mlen = move[int(_buffer[index(i + plen)])];
-        for (int k = 0; k < mlen && (s + k) < tlen; ++k) {
-            buf.append(_buffer[index(i + k)]);
-        }
-        s += mlen;
+        s += move[int(_buffer[index(_readPos + s + plen)])];
     }
-    if (flush) {
-        for (size_t i = s; i < tlen; ++i) {
-            buf.append(_buffer[index(_readPos + i)]);
-        }
-        setReadPos(tlen);
+    
+    return -1;
+}
+
+ssize_t BufferQueue::refill() {
+    ssize_t n;
+    if (_writePos < _readPos || _readPos == 0) {
+        n = _source->underflow(_buffer + _writePos, _capacity - _length);
     } else {
-        buf.clear();
+        n = _source->underflow(_buffer + _writePos, _capacity - _writePos, _buffer, _readPos);
     }
-    
-    return false;
-}
-
-int BufferQueue::getWriteIov(struct iovec iov[2]) {
-    if (full()) {
-        return 0;
-    }
-    
-    if (_writePos < _readPos) {
-        iov[0].iov_base = _buffer + _writePos;
-        iov[0].iov_len = _readPos - _writePos - 1;
-        return 1;
-    }
-    
-    iov[0].iov_base = _buffer + _writePos;
-    iov[0].iov_len = _capacity - _writePos - (_readPos ? 0 : 1);
-    iov[1].iov_base = _buffer;
-    iov[1].iov_len = _readPos - (_readPos ? 1 : 0);
-    return _readPos > 1 ? 2 : 1;
-}
-
-void BufferQueue::setWritePos(size_t n) {
-    if (_writePos <= _readPos) {
+    if (n > 0) {
         _writePos = index(_writePos + n);
-    } else {
-        size_t size1 = _capacity - _writePos;
-        if (n < size1) {
-            _writePos = index(_writePos + n);
-        } else {
-            _writePos = n - size1;
-        }
-    }
-}
-
-int BufferQueue::getReadIov(struct iovec iov[2]) {
-    if (empty()) {
-        return 0;
+        _length += n;
     }
     
-    if (_readPos < _writePos) {
-        iov[0].iov_base = _buffer + _readPos;
-        iov[0].iov_len = _writePos - _readPos;
-        return 1;
-    }
-    
-    iov[0].iov_base = _buffer + _readPos;
-    iov[0].iov_len = _capacity - _readPos;
-    iov[1].iov_base = _buffer;
-    iov[1].iov_len = _writePos;
-    
-    return _writePos ? 2 : 1;
-}
-
-void BufferQueue::setReadPos(size_t n) {
-    if (_readPos < _writePos) {
-        _readPos = index(_readPos + n);
-    } else {
-        size_t size1 = _capacity - _readPos;
-        if (n < size1) {
-            _readPos = index(_readPos + n);
-        } else {
-            _readPos = n - size1;
-        }
-    }
+    return n;
 }
 
 }
