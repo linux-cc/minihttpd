@@ -2,7 +2,7 @@
 #define __HTTPD_SERVER_H__
 
 #include "util/config.h"
-#include "util/simple_list.h"
+#include "util/list.h"
 #include "util/simple_queue.h"
 #include "network/socket.h"
 
@@ -10,7 +10,7 @@ namespace httpd {
 
 using util::SimpleQueue;
 using util::BlockQueue;
-using util::SimpleList;
+using util::List;
 using network::TcpSocket;
 class Worker;
 class Connection;
@@ -42,7 +42,7 @@ private:
         }
     };
     TcpSocket _server;
-    SimpleQueue<SimpleList<Item> > _timeoutQ;
+    SimpleQueue<List<Item> > _timeoutQ;
     BlockQueue<Item> _eventQ;
     Worker *_workers[MAX_WORKER];
     int _curIndex;

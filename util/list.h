@@ -6,14 +6,14 @@
 namespace util {
 
 template <typename T>
-class SimpleList {
+class List {
 public:
-    SimpleList(): _size(0) {
+    List(): _size(0) {
         _head = memory::SimpleAlloc<Node>::New();
         _head->_prev = _head->_next = _head;
     }
     
-    ~SimpleList() {
+    ~List() {
         clear();
         memory::SimpleAlloc<Node>::Delete(_head);
     }
@@ -21,7 +21,7 @@ public:
     bool empty() const { return _head->_next == _head; }
     size_t size() const { return _size; }
     
-    bool push_back(const T &data) {
+    bool pushBack(const T &data) {
         Node *n = memory::SimpleAlloc<Node>::New(data);
         if (!n) return false;
         
@@ -35,18 +35,29 @@ public:
         return true;
     }
     
-    T &front() const {
-        return _head->_next->_data;
+    bool pushFront(const T &data) {
+        Node *n = memory::SimpleAlloc<Node>::New(data);
+        if (!n) return false;
+        
+        Node *head = _head->_next;
+        n->_next = head;
+        head->_prev = n;
+        n->_prev = _head;
+        _head->_next = n;
+        ++_size;
+        
+        return true;
     }
     
-    void pop_front() {
-        Node *n = _head->_next;
-        Node *prev = n->_prev;
-        Node *next = n->_next;
-        prev->_next = next;
-        next->_prev = prev;
-        memory::SimpleAlloc<Node>::Delete(n);
-        --_size;
+    T &front() const { return _head->_next->_data; }
+    T &back() const { return _head->_prev->_data; }
+    
+    void popFront() {
+        pop(_head->_next);
+    }
+    
+    void popBack() {
+        pop(_head->_prev);
     }
     
     bool find(const T &data) const {
@@ -91,6 +102,16 @@ public:
     }
     
 private:
+    struct Node;
+    void pop(Node *n) {
+        Node *prev = n->_prev;
+        Node *next = n->_next;
+        prev->_next = next;
+        next->_prev = prev;
+        memory::SimpleAlloc<Node>::Delete(n);
+        --_size;
+    }
+    
     struct Node {
         Node() {}
         Node (const T &data): _data(data) {}

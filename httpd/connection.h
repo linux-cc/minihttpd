@@ -3,7 +3,7 @@
 
 #include "util/buffer.h"
 #include "util/string.h"
-#include "util/simple_list.h"
+#include "util/list.h"
 #include "util/scoped_ptr.h"
 #include "memory/simple_alloc.h"
 #include "network/socket.h"
@@ -12,7 +12,7 @@
 
 namespace httpd {
 
-using util::SimpleList;
+using util::List;
 using util::Buffer;
 using util::ScopedPtr;
 using memory::SimpleAlloc;
@@ -24,7 +24,7 @@ public:
     Connection(int socket = -1): _recvBuf(this), _sendBuf(this), _socket(socket), _toNewIdx(-1), _toOldIdx(-1) {}
     bool recv();
     size_t recv(void *buf, size_t size) { return _recvBuf.read(buf, size); }
-    //bool recvLine(String &buf) { return _recvQ.dequeueUntil(buf, ONE_CRLF, false); }
+    bool recvLine(String &buf) { return recvUntil(buf, ONE_CRLF, false); }
     bool recvUntil(String &buf, const char *pattern, bool flush);
     
     ssize_t send(const String &buf) { return send(buf.data(), buf.length()); }
@@ -38,7 +38,7 @@ public:
     
     Request *getRequest() { return _req.release(); }
     void setRequest(Request *req) { _req.reset(req); }
-    void addRequest(Request *req) { _reqList.push_back(req); }
+    void addRequest(Request *req) { _reqList.pushBack(req); }
     Request *popRequest();
     Response *getResponse() { return _resp.release(); }
     void setResponse(Response *resp) { _resp.reset(resp); }
@@ -58,7 +58,7 @@ private:
     Buffer _sendBuf;
     ScopedPtr<Request> _req;
     ScopedPtr<Response> _resp;
-    SimpleList<Request*> _reqList;
+    List<Request*> _reqList;
     TcpSocket _socket;
     int _toNewIdx;
     int _toOldIdx;

@@ -73,13 +73,13 @@ void Worker::run() {
                 if (it->fd() == _server) {
                     onAccept();
                 } else if (holdLock) {
-                    _eventList.push_back(&*it);
+                    _eventList.pushBack(&*it);
                 } else {
                     onRequest(*it);
                 }
             } else if (it->isPollOut()) {
                 if (holdLock) {
-                    _eventList.push_back(&*it);
+                    _eventList.pushBack(&*it);
                 } else {
                     onResponse(*it);
                 }
@@ -125,7 +125,7 @@ void Worker::onAccept() {
 void Worker::onHandleEvent() {
     while (!_eventList.empty()) {
         EPollEvent *event = _eventList.front();
-        _eventList.pop_front();
+        _eventList.popFront();
         if (event->isPollIn()) {
             onRequest(*event);
         } else if (event->isPollOut()) {

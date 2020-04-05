@@ -1,7 +1,7 @@
 #ifndef __HTTPD_WORKER_H__
 #define __HTTPD_WORKER_H__
 
-#include "util/simple_list.h"
+#include "util/list.h"
 #include "util/gzip.h"
 #include "thread/thread.h"
 #include "network/epoll.h"
@@ -9,7 +9,7 @@
 
 namespace httpd {
 
-using util::SimpleList;
+using util::List;
 using util::GZip;
 using thread::Thread;
 using network::EPoller;
@@ -39,7 +39,7 @@ private:
     Server &_server;
     Allocater _alloc;
     EPoller _poller;
-    SimpleList<EPollEvent*> _eventList;
+    List<EPollEvent*> _eventList;
     GZip _gzip;
     int _actives;
     bool _acceptLock;

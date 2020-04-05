@@ -78,7 +78,7 @@ Request *Connection::popRequest() {
     }
     
     Request *req = _reqList.front();
-    _reqList.pop_front();
+    _reqList.popFront();
     return req;
 }
 

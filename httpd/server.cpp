@@ -1,7 +1,9 @@
 #include "httpd/server.h"
 #include "httpd/worker.h"
 #include "httpd/connection.h"
+#include "util/rbtree.h"
 #include <errno.h>
+#include <stdio.h>
 
 namespace httpd {
 
@@ -66,9 +68,9 @@ void Server::update() {
             continue;
         }
 
-        SimpleList<Item> &newList = _timeoutQ.at(item._newIdx);
+        List<Item> &newList = _timeoutQ.at(item._newIdx);
         if (!newList.find(item)) {
-            newList.push_back(item);
+            newList.pushBack(item);
             _LOG_("timeout push_back item: { %d, %d, %d, %d }", item._fd, item._oldIdx, item._newIdx, item._closed);
         }
     }
@@ -80,12 +82,12 @@ void Server::run() {
     while (!_quit) {
         update();
         if (++tick == 20) {
-            SimpleList<Item> &curList = _timeoutQ.at(_curIndex);
+            List<Item> &curList = _timeoutQ.at(_curIndex);
             while (!curList.empty()) {
                 Item &item = curList.front();
                 _LOG_("timeout fd: %d, old: %d, new: %d, closed: %d", item._fd, item._oldIdx, item._newIdx, item._closed);
                 TcpSocket(item._fd).close();
-                curList.pop_front();
+                curList.popFront();
             }
             tick = 0;
             if (++_curIndex == _timeoutQ.capacity()) {
@@ -112,11 +114,56 @@ Server::Item::Item(Connection *conn, bool closed) {
 } /* namespace httpd */
 
 int main(int argc, char *argv[]) {
-    memory::Allocater::createLocalKey();
-    httpd::Server svr;
-    svr.start("localhost", "9090");
-    svr.run();
-    memory::Allocater::deleteLocalKey();
-    
+    using util::RBTree;
+    //memory::Allocater::createLocalKey();
+    //httpd::Server svr;
+    //svr.start("localhost", "9090");
+    //svr.run();
+    //memory::Allocater::deleteLocalKey();
+    typedef RBTree<int, int>::Iterator Iter;
+    RBTree<int, int> rbt, rbt2;
+    Iter it0;
+    it0 = rbt.insert(50, 500);
+    it0 = rbt.insert(30, 300);
+    it0 = rbt.insert(45, 450);
+    it0 = rbt.insert(40, 400);
+    it0 = rbt.insert(20, 200);
+    it0 = rbt.insert(25, 250);
+    it0 = rbt.insert(35, 350);
+    it0 = rbt.insert(80, 800);
+    it0 = rbt.insert(85, 850);
+    it0 = rbt.insert(90, 900);
+    it0 = rbt.insert(95, 950);
+    it0 = rbt.insert(65, 650);
+    it0 = rbt.insert(60, 600);
+    it0 = rbt2.insert2(50, 500);
+    it0 = rbt2.insert2(30, 300);
+    it0 = rbt2.insert2(45, 450);
+    it0 = rbt2.insert2(40, 400);
+    it0 = rbt2.insert2(20, 200);
+    it0 = rbt2.insert2(25, 250);
+    it0 = rbt2.insert2(35, 350);
+    it0 = rbt2.insert2(80, 800);
+    it0 = rbt2.insert2(85, 850);
+    it0 = rbt2.insert2(90, 900);
+    it0 = rbt2.insert2(95, 950);
+    it0 = rbt2.insert2(65, 650);
+    it0 = rbt2.insert2(60, 600);
+    //rbt[100] = 101;
+    //rbt2[100] = 101;
+    for (Iter it = rbt.begin(); it != rbt.end(); it++) {
+        printf("key: %d, value: %d\n", it.key(), it.value());
+        Iter it2 = rbt2.find(it.key());
+        if (it2 == rbt2.end()) {
+            printf("rbt2 not found: %d\n", it.key());
+            continue;
+        }
+        if (it2.value() != it.value() || it2.color() != it.color()) {
+            printf("it2 not equals it: {%d, %d} <-> {%d, %d}\n", it2.value(), it2.color(), it.value(), it.color());
+        } else {
+            printf("it2 equals it: {%d, %d} <-> {%d, %d}\n", it2.value(), it2.color(), it.value(), it.color());
+        }
+    }
+
     return 0;
 }
