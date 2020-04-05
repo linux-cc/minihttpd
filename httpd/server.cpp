@@ -2,6 +2,7 @@
 #include "httpd/worker.h"
 #include "httpd/connection.h"
 #include "util/rbtree.h"
+#include "util/rbtree_stack.h"
 #include <errno.h>
 #include <stdio.h>
 
@@ -112,58 +113,81 @@ Server::Item::Item(Connection *conn, bool closed) {
 }
 
 } /* namespace httpd */
+using util::RBTree;
+using util::RBTreeT;
 
-int main(int argc, char *argv[]) {
-    using util::RBTree;
-    //memory::Allocater::createLocalKey();
-    //httpd::Server svr;
-    //svr.start("localhost", "9090");
-    //svr.run();
-    //memory::Allocater::deleteLocalKey();
-    typedef RBTree<int, int>::Iterator Iter;
-    RBTree<int, int> rbt, rbt2;
-    Iter it0;
-    it0 = rbt.insert(50, 500);
-    it0 = rbt.insert(30, 300);
-    it0 = rbt.insert(45, 450);
-    it0 = rbt.insert(40, 400);
-    it0 = rbt.insert(20, 200);
-    it0 = rbt.insert(25, 250);
-    it0 = rbt.insert(35, 350);
-    it0 = rbt.insert(80, 800);
-    it0 = rbt.insert(85, 850);
-    it0 = rbt.insert(90, 900);
-    it0 = rbt.insert(95, 950);
-    it0 = rbt.insert(65, 650);
-    it0 = rbt.insert(60, 600);
-    it0 = rbt2.insert2(50, 500);
-    it0 = rbt2.insert2(30, 300);
-    it0 = rbt2.insert2(45, 450);
-    it0 = rbt2.insert2(40, 400);
-    it0 = rbt2.insert2(20, 200);
-    it0 = rbt2.insert2(25, 250);
-    it0 = rbt2.insert2(35, 350);
-    it0 = rbt2.insert2(80, 800);
-    it0 = rbt2.insert2(85, 850);
-    it0 = rbt2.insert2(90, 900);
-    it0 = rbt2.insert2(95, 950);
-    it0 = rbt2.insert2(65, 650);
-    it0 = rbt2.insert2(60, 600);
-    //rbt[100] = 101;
-    //rbt2[100] = 101;
-    for (Iter it = rbt.begin(); it != rbt.end(); it++) {
-        printf("key: %d, value: %d\n", it.key(), it.value());
-        Iter it2 = rbt2.find(it.key());
-        if (it2 == rbt2.end()) {
-            printf("rbt2 not found: %d\n", it.key());
-            continue;
-        }
-        if (it2.value() != it.value() || it2.color() != it.color()) {
-            printf("it2 not equals it: {%d, %d} <-> {%d, %d}\n", it2.value(), it2.color(), it.value(), it.color());
-        } else {
-            printf("it2 equals it: {%d, %d} <-> {%d, %d}\n", it2.value(), it2.color(), it.value(), it.color());
+typedef RBTree<int, int>::Iterator Iter1;
+typedef RBTreeT<int, int>::Iterator Iter2;
+
+void printRBTree(RBTree<int, int> &rbt1, RBTreeT<int, int> &rbt2) {
+    Iter1 it1 = rbt1.begin();
+    for (Iter2 it2 = rbt2.begin(); it2 != rbt2.end(); it2++, it1++) {
+        if (it2.value() != it1.value() || it2.color() != it1.color() || it1.key() != it2.key()) {
+            printf("it2 not equals it: {%d, %d} <-> {%d, %d}\n", it2.value(), it2.color(), it1.value(), it1.color());
+            abort();
         }
     }
+}
+
+#define INSERT(k, v)    rbt1.insert(k, v);rbt2.insert(k, v);printRBTree(rbt1, rbt2)
+#define ASSIGN(k, v)    rbt1[k] = v;rbt2[k] = v;printRBTree(rbt1, rbt2)
+#define ERASE(k)        rbt1.erase(k);rbt2.erase(k);printRBTree(rbt1, rbt2)
+
+void testRBTree() {
+    RBTree<int, int> rbt1;
+    RBTreeT<int, int> rbt2;
+
+    INSERT(50, 500);
+    INSERT(30, 300);
+    INSERT(45, 450);
+    INSERT(40, 400);
+    INSERT(20, 200);
+    INSERT(25, 250);
+    INSERT(35, 350);
+    INSERT(80, 800);
+    INSERT(85, 850);
+    INSERT(90, 900);
+    INSERT(95, 950);
+    INSERT(65, 650);
+    INSERT(60, 600);
+    
+    ERASE(35);
+    ASSIGN(35, 350);
+    ASSIGN(70, 700);
+    ASSIGN(30, 333);
+    ERASE(25);
+    ERASE(95);
+    ERASE(20);
+    ERASE(50);
+    ERASE(30);
+    ERASE(40);
+    ERASE(45);
+    ERASE(35);
+    ERASE(70);
+    ERASE(80);
+    ERASE(85);
+    ERASE(90);
+    ERASE(65);
+    ERASE(60);
+    
+    int keys[1000];
+    for (int i = 0; i < 1000; i++) {
+        srand(i+1);
+        int r = rand();
+        INSERT(r, r);
+        keys[i] = r;
+    }
+    for (int i = 0; i < 1000; i++) {
+        ERASE(keys[i]);
+    }
+}
+
+int main(int argc, char *argv[]) {
+    memory::Allocater::createLocalKey();
+    httpd::Server svr;
+    svr.start("localhost", "9090");
+    svr.run();
+    memory::Allocater::deleteLocalKey();
 
     return 0;
 }

@@ -50,15 +50,9 @@ public:
     }
     
     T &front() const { return _head->_next->_data; }
+    void popFront() { pop(_head->_next); }
     T &back() const { return _head->_prev->_data; }
-    
-    void popFront() {
-        pop(_head->_next);
-    }
-    
-    void popBack() {
-        pop(_head->_prev);
-    }
+    void popBack() { pop(_head->_prev); }
     
     bool find(const T &data) const {
         Node *n = _head->_next;
@@ -123,6 +117,25 @@ private:
     Node *_head;
     size_t _size;
 };
+
+template <typename T>
+class Stack {
+public:
+    bool push(const T &data) { return _list.pushFront(data); }
+    
+    T pop() {
+        T data = _list.front();
+        _list.popFront();
+        return data;
+    }
+    
+    bool empty() const { return _list.empty(); }
+    size_t size() const { return _list.size(); }
+    
+private:
+    List<T> _list;
+};
+
 
 }
 

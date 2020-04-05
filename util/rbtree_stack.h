@@ -1,7 +1,8 @@
 #ifndef __UTIL_RBTREE_STACK_H__
 #define __UTIL_RBTREE_STACK_H__
 
-#include "utils/scoped_ref.h"
+#include "util/scoped_ref.h"
+#include "util/list.h"
 
 namespace util {
 
@@ -11,10 +12,10 @@ class RBTreeT {
 public:
     class Iterator;
     
-    RBTree(): _root(0) {}
+    RBTreeT(): _root(0) {}
     
     Iterator find(const Key &key) const { return find(_root, key); }
-    Iterator begin() { return Iterator(_root); }
+    Iterator begin() { return Iterator(_root, true); }
     Iterator end() { return Iterator(0); }
     
     Value &operator[](const Key &key) { return insert(key, Value()).value(); }
@@ -37,13 +38,13 @@ private:
             return n = new Node(key, value);
         }
 
-        Node *_n = n;
+        Node *_n;
         if (key < n->_key) {
             _n = insert(key, value, n->_left);
         } else if (n->_key < key) {
             _n = insert(key, value, n->_right);
         } else {
-            _n->_value = value;
+            (_n = n)->_value = value;
         }
         if (isRed(n->_right)) {
             n = rotateLeft(n);
@@ -64,7 +65,7 @@ private:
             }
             n->_left = remove(n->_left, key);
         } else {
-            if (isRed(n->_right)) {
+            if (isRed(n->_left)) {
                 n = rotateRight(n);
             }
             if (!(n->_key < key) && !n->_right) {
@@ -76,7 +77,7 @@ private:
             if (n->_key < key) {
                 n->_right = remove(n->_right, key);
             } else {
-                n->_key = leftMost()->_key;
+                n->_key = leftMost(n->_right)->_key;
                 n->_value = find(n->_right, n->_key)->_value;
                 n->_right = removeMin(n->_right);
             }
@@ -106,7 +107,7 @@ private:
         if (!isRed(n->_left) && !isRed(n->_left->_left)) {
             n = moveRedLeft(n);
         }
-        n->_left = deleteMin(n->_left);
+        n->_left = removeMin(n->_left);
         
         return fixUp(n);
     }
@@ -167,7 +168,7 @@ private:
     
     Node *moveRedRight(Node *n) {
         colorFlip(n);
-        if (isRed(n->left->_left)) {
+        if (isRed(n->_left->_left)) {
             n = rotateRight(n);
             colorFlip(n);
         }
@@ -186,8 +187,7 @@ private:
         return n;
     }
     
-    Node *leftMost() const {
-        Node *n = _root;
+    Node *leftMost(Node *n) const {
         while (n && n->_left) {
             n = n->_left;
         }
@@ -195,8 +195,7 @@ private:
         return n;
     }
     
-    Node *rightMost() const {
-        Node *n = _root;
+    Node *rightMost(Node *n) const {
         while (n && n->_right) {
             n = n->_right;
         }
@@ -227,7 +226,7 @@ struct RBTreeT<Key, Value>::Node {
 template <typename Key, typename Value>
 class RBTreeT<Key, Value>::Iterator {
 public:
-    Iterator(): _n(0) {}
+    Iterator():_n(0) {}
     Iterator &operator++() { increment(); return *this; }
     Iterator operator++(int) {
         Iterator it = *this;
@@ -250,47 +249,40 @@ public:
     bool color() { return _n->_color; }
     
 private:
-    Iterator(Node *n): _n(n) {}
+    Iterator(Node *n, bool travel = false): _n(n) {
+        if (travel) {
+            _ref = memory::SimpleAlloc<RefData>::New();
+            pushLeft(n);
+            increment();
+        }
+    }
+    
+    void pushLeft(Node *n) {
+        while (n) {
+            _ref->_stack.push(n);
+            n = n->_left;
+        }
+    }
     
     void increment() {
-        if (_n->_right) {
-            _n = _n->_right;
-            while (_n->_left) {
-                _n = _n->_left;
-            }
+        if (_ref->_stack.empty()) {
+            _n = 0;
         } else {
-            Node *p = _n->_parent;
-            while (_n == p->_right) {
-                _n = p;
-                p = p->_parent;
-            }
-            if (_n->_right != p) {
-                _n = p;
-            }
+            _n = _ref->_stack.pop();
+            pushLeft(_n->_right);
         }
     }
     
     void decrement() {
-        if (_n->_color == RBTree::RED && _n->_parent->_parent == _n) {
-            _n = _n->_right;
-        } else if (_n->_left) {
-            Node *l = _n->_left;
-            while (l->_right) {
-                l = l->_right;
-            }
-            _n = l;
-        } else {
-            Node *p = _n->_parent;
-            while (_n == p->_left) {
-                _n = p;
-                p = p->_parent;
-            }
-            _n = p;
-        }
+
     }
     
+    struct RefData : public RefCountedThreadSafe<RefData> {
+        Stack<Node*> _stack;
+    };
+    ScopedRef<RefData> _ref;
     Node *_n;
-    friend class RBTree;
+    friend class RBTreeT;
 };
 
 }

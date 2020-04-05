@@ -1,6 +1,8 @@
 #ifndef __UTIL_RBTREE_H__
 #define __UTIL_RBTREE_H__
 
+#include "memory/simple_alloc.h"
+
 namespace util {
 
 template <typename Key, typename Value>
@@ -10,11 +12,12 @@ public:
     class Iterator;
     
     RBTree() {
-        _header = new Node();
+        _header = memory::SimpleAlloc<Node>::New();
         root() = 0;
         leftMost() = _header;
         rightMost() = _header;
     }
+    ~RBTree() { memory::SimpleAlloc<Node>::Delete(); }
     
     Iterator find(const Key &key) const { return find(root(), key); }
     Iterator begin() { return leftMost(); }
@@ -27,37 +30,15 @@ public:
         return n;
     }
     
-    Iterator insert2(const Key &key, const Value &value) {
-        Node *n = insertRecusion(key, value, root(), _header);
-        root()->_color = BLACK;
-        return n;
+    void erase(const Iterator &it) { erase(it.key()); }
+    void erase(const Key &key) {
+        root() = remove(root(), key);
+        if (root()) {
+            root()->_color = BLACK;
+        }
     }
     
 private:
-    Node *insertRecusion(const Key &key, const Value &value, Node *n, Node *p) {
-        if (!n) {
-            return getNode(key, value, p);
-        }
-        if (key < n->_key) {
-            n->_left = insertRecusion(key, value, n->_left, n);
-        } else if (n->_key < key) {
-            n->_right = insertRecusion(key, value, n->_right, n);
-        } else {
-            n->_value = value;
-        }
-        if (isRed(n->_right)) {
-            n = rotateLeft(n);
-        }
-        if (isRed(n->_left) && isRed(n->_left->_left)) {
-            n = rotateRight(n);
-        }
-        if (isRed(n->_left) && isRed(n->_right)) {
-            colorFlip(n);
-        }
-        
-        return n;
-    }
-    
     Node *insert(const Key &key, const Value &value, Node *&n, Node *p) {
         if (!n) {
             return n = getNode(key, value, p);
@@ -90,10 +71,11 @@ private:
             }
             n->_left = remove(n->_left, key);
         } else {
-            if (isRed(n->_right)) {
+            if (isRed(n->_left)) {
                 n = rotateRight(n);
             }
             if (!(n->_key < key) && !n->_right) {
+                removeNode(n);
                 return 0;
             }
             if (!isRed(n->_right) && !isRed(n->_right->_left)) {
@@ -102,7 +84,7 @@ private:
             if (n->_key < key) {
                 n->_right = remove(n->_right, key);
             } else {
-                n->_key = leftMost()->_key;
+                n->_key = leftMost(n->_right)->_key;
                 n->_value = find(n->_right, n->_key)->_value;
                 n->_right = removeMin(n->_right);
             }
@@ -127,18 +109,28 @@ private:
     
     Node *removeMin(Node *n) {
         if (!n->_left) {
+            removeNode(n);
             return 0;
         }
         if (!isRed(n->_left) && !isRed(n->_left->_left)) {
             n = moveRedLeft(n);
         }
-        n->_left = deleteMin(n->_left);
+        n->_left = removeMin(n->_left);
         
         return fixUp(n);
     }
     
+    void removeNode(Node *n) {
+        if (n == leftMost()) {
+            leftMost() = n->_parent;
+        } else if (n == rightMost()) {
+            rightMost() = n->_parent;
+        }
+        memory::SimpleAlloc<Node>::Delete(n);
+    }
+    
     Node *getNode(const Key &key, const Value &value, Node *p) {
-        Node *n = new Node(p, key, value);
+        Node *n = memory::SimpleAlloc<Node>::New(p, key, value);
         if (p == _header) {
             root() = leftMost() = rightMost() = n;
         } else if (key < p->_key && p == leftMost()) {
@@ -162,21 +154,9 @@ private:
         if (x->_left) {
             x->_left->_parent = y;
         }
-        x->_parent = y->_parent;
-        
-        if (y == root()) {
-            root() = x;
-        } else if (y == y->_parent->_left) {
-            y->_parent->_left = x;
-        } else {
-            y->_parent->_right = x;
-        }
         x->_left = y;
-        x->_color = y->_color;
-        y->_color = RED;
-        y->_parent = x;
         
-        return x;
+        return fixRorate(x, y);
     }
     /*
                 y                x
@@ -191,8 +171,12 @@ private:
         if (x->_right) {
             x->_right->_parent = y;
         }
-        x->_parent = y->_parent;
+        x->_right = y;
         
+        return fixRorate(x, y);
+    }
+    
+    Node *fixRorate(Node *x, Node *y) {
         if (y == root()) {
             root() = x;
         } else if (y == y->_parent->_left) {
@@ -200,9 +184,9 @@ private:
         } else {
             y->_parent->_right = x;
         }
-        x->_right = y;
         x->_color = y->_color;
         y->_color = RED;
+        x->_parent = y->_parent;
         y->_parent = x;
         
         return x;
@@ -230,7 +214,7 @@ private:
     
     Node *moveRedRight(Node *n) {
         colorFlip(n);
-        if (isRed(n->left->_left)) {
+        if (isRed(n->_left->_left)) {
             n = rotateRight(n);
             colorFlip(n);
         }
@@ -249,6 +233,13 @@ private:
         return n;
     }
     
+    Node *leftMost(Node *n) const {
+        while (n && n->_left) {
+            n = n->_left;
+        }
+        
+        return n;
+    }
     Node *&leftMost() const { return _header->_left; }
     Node *&rightMost() const { return _header->_right; }
     Node *&root() const { return _header->_parent; }
@@ -294,9 +285,9 @@ public:
     bool operator==(const Iterator &other) const { return _n == other._n; }
     bool operator!=(const Iterator &other) const { return _n != other._n; }
     
-    Key key() { return _n->_key; }
-    Value &value() { return _n->_value; }
-    bool color() { return _n->_color; }
+    Key key() const { return _n->_key; }
+    Value &value() const { return _n->_value; }
+    bool color() const { return _n->_color; }
     
 private:
     Iterator(Node *n): _n(n) {}
