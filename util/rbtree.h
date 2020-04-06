@@ -11,33 +11,40 @@ class RBTree {
 public:
     class Iterator;
     
-    RBTree() {
-        _header = memory::SimpleAlloc<Node>::New();
-        root() = 0;
-        leftMost() = _header;
-        rightMost() = _header;
-    }
-    ~RBTree() { memory::SimpleAlloc<Node>::Delete(_header); }
+    RBTree() { _header = memory::SimpleAlloc<Node>::New(); initial(); }
+    ~RBTree() { clear(); memory::SimpleAlloc<Node>::Delete(_header); }
     
     Iterator find(const Key &key) const { return find(root(), key); }
     Iterator begin() { return leftMost(); }
     Iterator end() { return _header; }
+    bool empty() const { return _size == 0; }
+    size_t size() const { return _size; }
     
     Iterator insert(const Key &key, bool unique = false) {
         Node *n = insert(key, root(), _header, unique);
         root()->_color = BLACK;
+        ++_size;
         return n;
     }
     
-    void erase(const Iterator &it) { erase(it.key()); }
+    void clear() { erase(root()); initial(); }
+    void erase(const Iterator &it) { erase(*it); }
     void erase(const Key &key) {
         root() = remove(root(), key);
         if (root()) {
             root()->_color = BLACK;
         }
+        --_size;
     }
     
 private:
+    void initial() {
+        _size = 0;
+        root() = 0;
+        leftMost() = _header;
+        rightMost() = _header;
+    }
+    
     Node *insert(const Key &key, Node *&n, Node *p, bool unique) {
         if (!n) {
             return n = getNode(key, p);
@@ -89,6 +96,15 @@ private:
         }
         
         return fixUp(n);
+    }
+    
+    void erase(Node *n) {
+        if (!n) {
+            return;
+        }
+        erase(n->_left);
+        erase(n->_right);
+        memory::SimpleAlloc<Node>::Delete(n);
     }
     
     Node *find(Node *n, const Key &key) const {
@@ -244,6 +260,7 @@ private:
     bool isRed(Node *n) const { return n && n->_color == RED; }
     
     Node *_header;
+    size_t _size;
     enum Color {
         RED,
         BLACK,
