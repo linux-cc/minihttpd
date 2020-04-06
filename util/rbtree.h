@@ -5,7 +5,7 @@
 
 namespace util {
 
-template <typename Key, typename Value>
+template <typename Key>
 class RBTree {
     struct Node;
 public:
@@ -17,15 +17,14 @@ public:
         leftMost() = _header;
         rightMost() = _header;
     }
-    ~RBTree() { memory::SimpleAlloc<Node>::Delete(); }
+    ~RBTree() { memory::SimpleAlloc<Node>::Delete(_header); }
     
     Iterator find(const Key &key) const { return find(root(), key); }
     Iterator begin() { return leftMost(); }
     Iterator end() { return _header; }
     
-    Value &operator[](const Key &key) { return insert(key, Value()).value(); }
-    Iterator insert(const Key &key, const Value &value) {
-        Node *n = insert(key, value, root(), _header);
+    Iterator insert(const Key &key, bool unique = false) {
+        Node *n = insert(key, root(), _header, unique);
         root()->_color = BLACK;
         return n;
     }
@@ -39,19 +38,19 @@ public:
     }
     
 private:
-    Node *insert(const Key &key, const Value &value, Node *&n, Node *p) {
+    Node *insert(const Key &key, Node *&n, Node *p, bool unique) {
         if (!n) {
-            return n = getNode(key, value, p);
+            return n = getNode(key, p);
         }
 
-        Node *_n;
-        if (key < n->_key) {
-            _n = insert(key, value, n->_left, n);
-        } else if (n->_key < key) {
-            _n = insert(key, value, n->_right, n);
-        } else {
-            (_n = n)->_value = value;
+        if (!(key < n->_key) && !(n->_key < key)) {
+            if (!unique) {
+                n->_key = key;
+            }
+            return n;
         }
+        
+        Node *_n = insert(key, key < n->_key ? n->_left : n->_right, n, unique);
         if (isRed(n->_right)) {
             n = rotateLeft(n);
         }
@@ -85,7 +84,6 @@ private:
                 n->_right = remove(n->_right, key);
             } else {
                 n->_key = leftMost(n->_right)->_key;
-                n->_value = find(n->_right, n->_key)->_value;
                 n->_right = removeMin(n->_right);
             }
         }
@@ -129,8 +127,8 @@ private:
         memory::SimpleAlloc<Node>::Delete(n);
     }
     
-    Node *getNode(const Key &key, const Value &value, Node *p) {
-        Node *n = memory::SimpleAlloc<Node>::New(p, key, value);
+    Node *getNode(const Key &key, Node *p) {
+        Node *n = memory::SimpleAlloc<Node>::New(p, key);
         if (p == _header) {
             root() = leftMost() = rightMost() = n;
         } else if (key < p->_key && p == leftMost()) {
@@ -251,21 +249,19 @@ private:
         BLACK,
     };
 };
-template <typename Key, typename Value>
-struct RBTree<Key, Value>::Node {
+template <typename Key>
+struct RBTree<Key>::Node {
     Node *_parent;
     Node *_left;
     Node *_right;
     bool _color;
     Key _key;
-    Value _value;
     Node(): _parent(0), _left(0), _right(0), _color(RED) {}
-    Node(Node *parent, const Key &key, const Value &value):
-    _parent(parent), _left(0), _right(0), _color(RED), _key(key), _value(value) {}
+    Node(Node *parent, const Key &key): _parent(parent), _left(0), _right(0), _color(RED), _key(key) {}
 };
 
-template <typename Key, typename Value>
-class RBTree<Key, Value>::Iterator {
+template <typename Key>
+class RBTree<Key>::Iterator {
 public:
     Iterator(): _n(0) {}
     Iterator &operator++() { increment(); return *this; }
@@ -282,11 +278,10 @@ public:
         return it;
     }
     
+    Key &operator*() const { return _n->_key; }
+    Key *operator->() const { return &(operator*()); }
     bool operator==(const Iterator &other) const { return _n == other._n; }
     bool operator!=(const Iterator &other) const { return _n != other._n; }
-    
-    Key key() const { return _n->_key; }
-    Value &value() const { return _n->_value; }
     bool color() const { return _n->_color; }
     
 private:

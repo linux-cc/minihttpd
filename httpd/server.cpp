@@ -116,45 +116,41 @@ Server::Item::Item(Connection *conn, bool closed) {
 using util::RBTree;
 using util::RBTreeT;
 
-typedef RBTree<int, int>::Iterator Iter1;
-typedef RBTreeT<int, int>::Iterator Iter2;
+typedef RBTree<int>::Iterator Iter1;
+typedef RBTreeT<int>::Iterator Iter2;
 
-void printRBTree(RBTree<int, int> &rbt1, RBTreeT<int, int> &rbt2) {
+void printRBTree(RBTree<int> &rbt1, RBTreeT<int> &rbt2) {
     Iter1 it1 = rbt1.begin();
     for (Iter2 it2 = rbt2.begin(); it2 != rbt2.end(); it2++, it1++) {
-        if (it2.value() != it1.value() || it2.color() != it1.color() || it1.key() != it2.key()) {
-            printf("it2 not equals it: {%d, %d} <-> {%d, %d}\n", it2.value(), it2.color(), it1.value(), it1.color());
+        if (*it2 != *it1 || it2.color() != it1.color()) {
+            printf("it2 not equals it: {%d, %d} <-> {%d, %d}\n", *it2, it2.color(), *it1, it1.color());
             abort();
         }
     }
+    printf("Done\n");
 }
 
-#define INSERT(k, v)    rbt1.insert(k, v);rbt2.insert(k, v);printRBTree(rbt1, rbt2)
-#define ASSIGN(k, v)    rbt1[k] = v;rbt2[k] = v;printRBTree(rbt1, rbt2)
-#define ERASE(k)        rbt1.erase(k);rbt2.erase(k);printRBTree(rbt1, rbt2)
+#define INSERT(k)    rbt1.insert(k);rbt2.insert(k);printRBTree(rbt1, rbt2)
+#define ERASE(k)     rbt1.erase(k);rbt2.erase(k);printRBTree(rbt1, rbt2)
 
 void testRBTree() {
-    RBTree<int, int> rbt1;
-    RBTreeT<int, int> rbt2;
+    RBTree<int> rbt1;
+    RBTreeT<int> rbt2;
 
-    INSERT(50, 500);
-    INSERT(30, 300);
-    INSERT(45, 450);
-    INSERT(40, 400);
-    INSERT(20, 200);
-    INSERT(25, 250);
-    INSERT(35, 350);
-    INSERT(80, 800);
-    INSERT(85, 850);
-    INSERT(90, 900);
-    INSERT(95, 950);
-    INSERT(65, 650);
-    INSERT(60, 600);
+    INSERT(50);
+    INSERT(30);
+    INSERT(45);
+    INSERT(40);
+    INSERT(20);
+    INSERT(25);
+    INSERT(35);
+    INSERT(80);
+    INSERT(85);
+    INSERT(90);
+    INSERT(95);
+    INSERT(65);
+    INSERT(60);
     
-    ERASE(35);
-    ASSIGN(35, 350);
-    ASSIGN(70, 700);
-    ASSIGN(30, 333);
     ERASE(25);
     ERASE(95);
     ERASE(20);
@@ -163,7 +159,6 @@ void testRBTree() {
     ERASE(40);
     ERASE(45);
     ERASE(35);
-    ERASE(70);
     ERASE(80);
     ERASE(85);
     ERASE(90);
@@ -174,7 +169,7 @@ void testRBTree() {
     for (int i = 0; i < 1000; i++) {
         srand(i+1);
         int r = rand();
-        INSERT(r, r);
+        INSERT(r);
         keys[i] = r;
     }
     for (int i = 0; i < 1000; i++) {
@@ -184,10 +179,11 @@ void testRBTree() {
 
 int main(int argc, char *argv[]) {
     memory::Allocater::createLocalKey();
-    httpd::Server svr;
-    svr.start("localhost", "9090");
-    svr.run();
-    memory::Allocater::deleteLocalKey();
-
+    //httpd::Server svr;
+    //svr.start("localhost", "9090");
+    //svr.run();
+    //memory::Allocater::deleteLocalKey();
+    testRBTree();
+    
     return 0;
 }
