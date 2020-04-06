@@ -6,7 +6,7 @@
 
 namespace util {
 
-template <typename Key>
+template <typename Key, typename Value, typename KeyOfValue>
 class RBTreeT {
     struct Node;
 public:
@@ -18,8 +18,8 @@ public:
     Iterator begin() { return Iterator(_root, true); }
     Iterator end() { return Iterator(0); }
     
-    Iterator insert(const Key &key, bool unique = false) {
-        Node *n = insert(key, _root, unique);
+    Iterator insert(const Value &value, bool unique = false) {
+        Node *n = insert(value, _root, unique);
         _root->_color = BLACK;
         return n;
     }
@@ -32,19 +32,20 @@ public:
     }
     
 private:
-    Node *insert(const Key &key, Node *&n, bool unique) {
+    Node *insert(const Value &value, Node *&n, bool unique) {
         if (!n) {
-            return n = memory::SimpleAlloc<Node>::New(key);
+            return n = memory::SimpleAlloc<Node>::New(value);
         }
 
-        if (!(key < n->_key) && !(n->_key < key)) {
+        const Key &key = KeyOfValue()(value);
+        if (!(key < n->key()) && !(n->key() < key)) {
             if (!unique) {
-                n->_key = key;
+                n->_value = value;
             }
             return n;
         }
         
-        Node *_n = insert(key, key < n->_key ? n->_left : n->_right, unique);
+        Node *_n = insert(value, key < n->key() ? n->_left : n->_right, unique);
         if (isRed(n->_right)) {
             n = rotateLeft(n);
         }
@@ -58,7 +59,7 @@ private:
     }
     
     Node *remove(Node *n, const Key &key) {
-        if (key < n->_key) {
+        if (key < n->key()) {
             if (!isRed(n->_left) && !isRed(n->_left->_left)) {
                 n = moveRedLeft(n);
             }
@@ -67,17 +68,17 @@ private:
             if (isRed(n->_left)) {
                 n = rotateRight(n);
             }
-            if (!(n->_key < key) && !n->_right) {
+            if (!(n->key() < key) && !n->_right) {
                 memory::SimpleAlloc<Node>::Delete(n);
                 return 0;
             }
             if (!isRed(n->_right) && !isRed(n->_right->_left)) {
                 n = moveRedRight(n);
             }
-            if (n->_key < key) {
+            if (n->key() < key) {
                 n->_right = remove(n->_right, key);
             } else {
-                n->_key = leftMost(n->_right)->_key;
+                n->_value = leftMost(n->_right)->_value;
                 n->_right = removeMin(n->_right);
             }
         }
@@ -211,18 +212,19 @@ private:
         BLACK,
     };
 };
-template <typename Key>
-struct RBTreeT<Key>::Node {
+template <typename Key, typename Value, typename KeyOfValue>
+struct RBTreeT<Key, Value, KeyOfValue>::Node {
     Node *_left;
     Node *_right;
     bool _color;
-    Key _key;
+    Value _value;
+    const Key &key() const { return KeyOfValue()(_value); }
     Node(): _left(0), _right(0), _color(RED) {}
-    Node(const Key &key): _left(0), _right(0), _color(RED), _key(key) {}
+    Node(const Value &value): _left(0), _right(0), _color(RED), _value(value) {}
 };
 
-template <typename Key>
-class RBTreeT<Key>::Iterator {
+template <typename Key, typename Value, typename KeyOfValue>
+class RBTreeT<Key, Value, KeyOfValue>::Iterator {
 public:
     Iterator():_n(0) {}
     Iterator &operator++() { increment(); return *this; }
@@ -239,8 +241,8 @@ public:
         return it;
     }
     
-    Key &operator*() const { return _n->_key; }
-    Key *operator->() const { return &(operator*()); }
+    Value &operator*() const { return _n->_value; }
+    Value *operator->() const { return &(operator*()); }
     bool operator==(const Iterator &other) const { return _n == other._n; }
     bool operator!=(const Iterator &other) const { return _n != other._n; }
     bool color() { return _n->_color; }

@@ -5,7 +5,7 @@
 
 namespace util {
 
-template <typename Key>
+template <typename Key, typename Value, typename KeyOfValue>
 class RBTree {
     struct Node;
 public:
@@ -20,8 +20,8 @@ public:
     bool empty() const { return _size == 0; }
     size_t size() const { return _size; }
     
-    Iterator insert(const Key &key, bool unique = false) {
-        Node *n = insert(key, root(), _header, unique);
+    Iterator insert(const Value &value, bool unique) {
+        Node *n = insert(value, root(), _header, unique);
         root()->_color = BLACK;
         ++_size;
         return n;
@@ -45,19 +45,20 @@ private:
         rightMost() = _header;
     }
     
-    Node *insert(const Key &key, Node *&n, Node *p, bool unique) {
+    Node *insert(const Value &value, Node *&n, Node *p, bool unique) {
+        const Key &key = KeyOfValue()(value);
         if (!n) {
-            return n = getNode(key, p);
+            return n = getNode(key, value, p);
         }
 
-        if (!(key < n->_key) && !(n->_key < key)) {
+        if (!(key < n->key()) && !(n->key() < key)) {
             if (!unique) {
-                n->_key = key;
+                n->_value = value;
             }
             return n;
         }
         
-        Node *_n = insert(key, key < n->_key ? n->_left : n->_right, n, unique);
+        Node *_n = insert(value, key < n->key() ? n->_left : n->_right, n, unique);
         if (isRed(n->_right)) {
             n = rotateLeft(n);
         }
@@ -71,7 +72,7 @@ private:
     }
     
     Node *remove(Node *n, const Key &key) {
-        if (key < n->_key) {
+        if (key < n->key()) {
             if (!isRed(n->_left) && !isRed(n->_left->_left)) {
                 n = moveRedLeft(n);
             }
@@ -80,17 +81,17 @@ private:
             if (isRed(n->_left)) {
                 n = rotateRight(n);
             }
-            if (!(n->_key < key) && !n->_right) {
+            if (!(n->key() < key) && !n->_right) {
                 removeNode(n);
                 return 0;
             }
             if (!isRed(n->_right) && !isRed(n->_right->_left)) {
                 n = moveRedRight(n);
             }
-            if (n->_key < key) {
+            if (n->key() < key) {
                 n->_right = remove(n->_right, key);
             } else {
-                n->_key = leftMost(n->_right)->_key;
+                n->_value = leftMost(n->_right)->_value;
                 n->_right = removeMin(n->_right);
             }
         }
@@ -143,13 +144,13 @@ private:
         memory::SimpleAlloc<Node>::Delete(n);
     }
     
-    Node *getNode(const Key &key, Node *p) {
-        Node *n = memory::SimpleAlloc<Node>::New(p, key);
+    Node *getNode(const Key &key, const Value &value, Node *p) {
+        Node *n = memory::SimpleAlloc<Node>::New(p, value);
         if (p == _header) {
             root() = leftMost() = rightMost() = n;
-        } else if (key < p->_key && p == leftMost()) {
+        } else if (key < p->key() && p == leftMost()) {
             leftMost() = n;
-        } else if (p->_key < key && p == rightMost()) {
+        } else if (p->key() < key && p == rightMost()) {
             rightMost() = n;
         }
         
@@ -266,19 +267,20 @@ private:
         BLACK,
     };
 };
-template <typename Key>
-struct RBTree<Key>::Node {
+template <typename Key, typename Value, typename KeyOfValue>
+struct RBTree<Key, Value, KeyOfValue>::Node {
     Node *_parent;
     Node *_left;
     Node *_right;
     bool _color;
-    Key _key;
+    Value _value;
+    const Key &key() const { return KeyOfValue()(_value); }
     Node(): _parent(0), _left(0), _right(0), _color(RED) {}
-    Node(Node *parent, const Key &key): _parent(parent), _left(0), _right(0), _color(RED), _key(key) {}
+    Node(Node *parent, const Value &value): _parent(parent), _left(0), _right(0), _color(RED), _value(value) {}
 };
 
-template <typename Key>
-class RBTree<Key>::Iterator {
+template <typename Key, typename Value, typename KeyOfValue>
+class RBTree<Key, Value, KeyOfValue>::Iterator {
 public:
     Iterator(): _n(0) {}
     Iterator &operator++() { increment(); return *this; }
@@ -295,8 +297,8 @@ public:
         return it;
     }
     
-    Key &operator*() const { return _n->_key; }
-    Key *operator->() const { return &(operator*()); }
+    Value &operator*() const { return _n->_value; }
+    Value *operator->() const { return &(operator*()); }
     bool operator==(const Iterator &other) const { return _n == other._n; }
     bool operator!=(const Iterator &other) const { return _n != other._n; }
     bool color() const { return _n->_color; }

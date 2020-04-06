@@ -116,10 +116,17 @@ Server::Item::Item(Connection *conn, bool closed) {
 using util::RBTree;
 using util::RBTreeT;
 
-typedef RBTree<int>::Iterator Iter1;
-typedef RBTreeT<int>::Iterator Iter2;
+template <typename T>
+struct Identity {
+    const T &operator()(const T &data) { return data; }
+};
 
-void printRBTree(RBTree<int> &rbt1, RBTreeT<int> &rbt2) {
+typedef RBTree<int, int, Identity<int> > RBTree1;
+typedef RBTreeT<int, int, Identity<int> > RBTree2;
+typedef RBTree1::Iterator Iter1;
+typedef RBTree2::Iterator Iter2;
+
+void printRBTree(RBTree1 &rbt1, RBTree2 &rbt2) {
     Iter1 it1 = rbt1.begin();
     for (Iter2 it2 = rbt2.begin(); it2 != rbt2.end(); it2++, it1++) {
         if (*it2 != *it1 || it2.color() != it1.color()) {
@@ -130,12 +137,12 @@ void printRBTree(RBTree<int> &rbt1, RBTreeT<int> &rbt2) {
     printf("Done\n");
 }
 
-#define INSERT(k)    rbt1.insert(k);rbt2.insert(k);printRBTree(rbt1, rbt2)
+#define INSERT(k)    rbt1.insert(k, false);rbt2.insert(k, false);printRBTree(rbt1, rbt2)
 #define ERASE(k)     rbt1.erase(k);rbt2.erase(k);printRBTree(rbt1, rbt2)
 
 void testRBTree() {
-    RBTree<int> rbt1;
-    RBTreeT<int> rbt2;
+    RBTree1 rbt1;
+    RBTree2 rbt2;
 
     INSERT(50);
     INSERT(30);
