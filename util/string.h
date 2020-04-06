@@ -69,6 +69,7 @@ public:
     String substr(size_t pos = 0, size_t length = npos) const { return String(*this, pos, length); }
     bool operator==(const String &str) const { return length() == str.length() && find(str) == 0; }
     bool operator==(const char *str) const { return length() == strlen(str) && find(str) == 0; }
+    bool operator<(const String &str) const { return strncmp(data(), str.data(), str.length()) < 0; }
     
     int refCount() const { return empty() ? 0 : _ptr->refConut(); }
     

@@ -3,8 +3,12 @@
 #include "httpd/connection.h"
 #include "util/rbtree.h"
 #include "util/rbtree_stack.h"
+#include "util/map.h"
+#include "util/set.h"
 #include <errno.h>
 #include <stdio.h>
+#include <map>
+#include <set>
 
 namespace httpd {
 
@@ -134,7 +138,6 @@ void printRBTree(RBTree1 &rbt1, RBTree2 &rbt2) {
             abort();
         }
     }
-    printf("Done\n");
 }
 
 #define INSERT(k)    rbt1.insert(k, false);rbt2.insert(k, false);printRBTree(rbt1, rbt2)
@@ -184,6 +187,80 @@ void testRBTree() {
     }
 }
 
+typedef std::map<int, int> StdMap;
+typedef util::Map<int, int> MyMap;
+typedef StdMap::iterator StdIt;
+typedef MyMap::Iterator MyIt;
+
+void diffMap(StdMap &m1, MyMap &m2) {
+    MyIt it2 = m2.begin();
+    for (StdIt it1 = m1.begin(); it1 != m1.end(); it1++, it2++) {
+        if (it1->first != it2->first || it1->second != it2->second) {
+            printf("diff: {%d, %d} -> {%d, %d}\n", it1->first, it1->second, it2->first, it2->second);
+            abort();
+        }
+    }
+}
+
+void testMap() {
+    StdMap m1;
+    MyMap m2;
+    
+    int keys[10000];
+    for (int i = 0; i < 10000; i++) {
+        srand(i+1);
+        int k = rand();
+        keys[i] = k;
+        m1.insert(std::make_pair(k, k));
+        m2.insert(util::makePair(k, k));
+        diffMap(m1, m2);
+    }
+    for (int i = 0; i < 10000; i++) {
+        int k = keys[i];
+        m1.erase(k);
+        m2.erase(k);
+        diffMap(m1, m2);
+    }
+    for (int i = 0; i < 10000; i++) {
+        srand(10000 + i+1);
+        int k = rand();
+        keys[i] = k;
+        m1[k] = k;
+        m2[k] = k;
+        diffMap(m1, m2);
+    }
+}
+
+void diffSet(std::set<int> &s1, util::Set<int> &s2) {
+    util::Set<int>::Iterator it2 = s2.begin();
+    for (std::set<int>::iterator it1 = s1.begin(); it1 != s1.end(); it1++, it2++) {
+        if (*it1 != *it2) {
+            printf("diff: {%d} -> {%d}\n", *it1, *it2);
+            abort();
+        }
+    }
+}
+
+void testSet() {
+    std::set<int> s1;
+    util::Set<int> s2;
+    int keys[10000];
+    for (int i = 0; i < 10000; i++) {
+        srand(i+1);
+        int k = rand();
+        keys[i] = k;
+        s1.insert(k);
+        s2.insert(k);
+        diffSet(s1, s2);
+    }
+    for (int i = 0; i < 10000; i++) {
+        int k = keys[i];
+        s1.erase(k);
+        s2.erase(k);
+        diffSet(s1, s2);
+    }
+}
+
 int main(int argc, char *argv[]) {
     memory::Allocater::createLocalKey();
     //httpd::Server svr;
@@ -191,6 +268,7 @@ int main(int argc, char *argv[]) {
     //svr.run();
     //memory::Allocater::deleteLocalKey();
     testRBTree();
+    testMap();
     
     return 0;
 }
