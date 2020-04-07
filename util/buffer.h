@@ -7,10 +7,13 @@
 
 namespace util {
 
+using memory::SimpleAlloc;
+
 class String;
 
 class IBuffer {
 public:
+    virtual ~IBuffer() {}
     virtual ssize_t underflow(void *buf, size_t size) = 0;
     virtual ssize_t underflow(void *buf1, size_t size1, void *buf2, size_t size2) = 0;
     virtual ssize_t overflow(const void *buf, size_t size) = 0;
@@ -20,9 +23,9 @@ public:
 class Buffer {
 public:
     Buffer(IBuffer *source, int capacity = BUFFER_SIZE): _source(source), _readPos(0), _writePos(0), _length(0), _capacity(capacity) {
-        _buffer = memory::SimpleAlloc<char[]>::New(_capacity);
+        _buffer = SimpleAlloc<char[]>::New(_capacity);
     }
-    ~Buffer() { memory::SimpleAlloc<char[]>::Delete(_buffer, _capacity); }
+    ~Buffer() { SimpleAlloc<char[]>::Delete(_buffer, _capacity); }
     
     ssize_t write(const void *buf, size_t size);
     ssize_t read(void *buf, size_t size);

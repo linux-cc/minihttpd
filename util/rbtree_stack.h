@@ -6,6 +6,8 @@
 
 namespace util {
 
+using memory::SimpleAlloc;
+
 template <typename Key, typename Value, typename KeyOfValue>
 class RBTreeT {
     struct Node;
@@ -34,7 +36,7 @@ public:
 private:
     Node *insert(const Value &value, Node *&n, bool unique) {
         if (!n) {
-            return n = memory::SimpleAlloc<Node>::New(value);
+            return n = SimpleAlloc<Node>::New(value);
         }
 
         const Key &key = KeyOfValue()(value);
@@ -69,7 +71,7 @@ private:
                 n = rotateRight(n);
             }
             if (!(n->key() < key) && !n->_right) {
-                memory::SimpleAlloc<Node>::Delete(n);
+                SimpleAlloc<Node>::Delete(n);
                 return 0;
             }
             if (!isRed(n->_right) && !isRed(n->_right->_left)) {
@@ -102,7 +104,7 @@ private:
     
     Node *removeMin(Node *n) {
         if (!n->_left) {
-            memory::SimpleAlloc<Node>::Delete(n);
+            SimpleAlloc<Node>::Delete(n);
             return 0;
         }
         if (!isRed(n->_left) && !isRed(n->_left->_left)) {
@@ -250,7 +252,7 @@ public:
 private:
     Iterator(Node *n, bool travel = false): _n(n) {
         if (travel) {
-            _ref = memory::SimpleAlloc<RefData>::New();
+            _ref = SimpleAlloc<RefData>::New();
             pushLeft(n);
             increment();
         }

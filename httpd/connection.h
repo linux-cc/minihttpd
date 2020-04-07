@@ -15,7 +15,6 @@ namespace httpd {
 using util::List;
 using util::Buffer;
 using util::ScopedPtr;
-using memory::SimpleAlloc;
 using network::TcpSocket;
 class Request;
 class Response;

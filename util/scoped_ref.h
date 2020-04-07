@@ -6,6 +6,8 @@
 
 namespace util {
 
+using memory::SimpleAlloc;
+
 class RefCountedBase {
 public:
     bool hasRef() const { return _count > 1; }
@@ -70,7 +72,7 @@ public:
 protected:
     ~RefCounted() {}
     
-    static void deleteInternal(const T *x) { memory::SimpleAlloc<T>::Delete(x); }
+    static void deleteInternal(const T *x) { SimpleAlloc<T>::Delete(x); }
     
     friend struct DefaultRefCountedTraits<T>;
     
@@ -99,7 +101,7 @@ public:
 protected:
     ~RefCountedThreadSafe() {}
 
-    static void deleteInternal(const T *x) { memory::SimpleAlloc<T>::Delete(x); }
+    static void deleteInternal(const T *x) { SimpleAlloc<T>::Delete(x); }
     
     friend struct DefaultRefCountedThreadSafeTraits<T>;
     

@@ -5,6 +5,8 @@
 
 namespace network { 
 
+using memory::SimpleAlloc;
+
 Peername::Peername(const Sockaddr &addr) {
     const void *inaddr;
     int family = addr.family();
@@ -48,7 +50,7 @@ Addrinfo::~Addrinfo() {
         if (_hints.ai_family != PF_LOCAL) {
             freeaddrinfo(_result);
         } else {
-            memory::SimpleAlloc<char[]>::Delete((char*)_result, sizeof(addrinfo) + sizeof(sockaddr_un));
+            SimpleAlloc<char[]>::Delete((char*)_result, sizeof(addrinfo) + sizeof(sockaddr_un));
         }
     }
 }
@@ -57,7 +59,7 @@ int Addrinfo::getaddrinfo(const char *host, const char *service) {
     if (_hints.ai_family != PF_LOCAL) {
         return ::getaddrinfo(host, service, &_hints, &_result);
     }
-    _result = (addrinfo*)memory::SimpleAlloc<char[]>::New(sizeof(addrinfo) + sizeof(sockaddr_un));
+    _result = (addrinfo*)SimpleAlloc<char[]>::New(sizeof(addrinfo) + sizeof(sockaddr_un));
     if (!_result) {
         return -1;
     }

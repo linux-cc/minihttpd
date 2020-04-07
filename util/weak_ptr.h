@@ -6,6 +6,8 @@
 
 namespace util {
 
+using memory::SimpleAlloc;
+
 template <typename T> class SupportsWeakPtr;
 template <typename T> class WeakPtr;
 
@@ -26,7 +28,7 @@ public:
         
         bool _isValid;
 
-        friend class memory::SimpleAlloc<Flag>;
+        friend class SimpleAlloc<Flag>;
     };
     
     WeakRef() {}
@@ -45,7 +47,7 @@ public:
     
     WeakRef getRef() const {
         if (!hasRef()) {
-            _flag = memory::SimpleAlloc<WeakRef::Flag>::New();
+            _flag = SimpleAlloc<WeakRef::Flag>::New();
         }
         return WeakRef(_flag);
     }

@@ -5,14 +5,16 @@
 
 namespace util {
 
+using memory::SimpleAlloc;
+
 template <typename Key, typename Value, typename KeyOfValue>
 class RBTree {
     struct Node;
 public:
     class Iterator;
     
-    RBTree() { _header = memory::SimpleAlloc<Node>::New(); initial(); }
-    ~RBTree() { clear(); memory::SimpleAlloc<Node>::Delete(_header); }
+    RBTree() { _header = SimpleAlloc<Node>::New(); initial(); }
+    ~RBTree() { clear(); SimpleAlloc<Node>::Delete(_header); }
     
     Iterator find(const Key &key) const { return find(root(), key); }
     Iterator begin() { return leftMost(); }
@@ -105,7 +107,7 @@ private:
         }
         erase(n->_left);
         erase(n->_right);
-        memory::SimpleAlloc<Node>::Delete(n);
+        SimpleAlloc<Node>::Delete(n);
     }
     
     Node *find(Node *n, const Key &key) const {
@@ -141,11 +143,11 @@ private:
         } else if (n == rightMost()) {
             rightMost() = n->_parent;
         }
-        memory::SimpleAlloc<Node>::Delete(n);
+        SimpleAlloc<Node>::Delete(n);
     }
     
     Node *getNode(const Key &key, const Value &value, Node *p) {
-        Node *n = memory::SimpleAlloc<Node>::New(p, value);
+        Node *n = SimpleAlloc<Node>::New(p, value);
         if (p == _header) {
             root() = leftMost() = rightMost() = n;
         } else if (key < p->key() && p == leftMost()) {

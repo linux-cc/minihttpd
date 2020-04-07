@@ -38,6 +38,18 @@ void deallocate(const void *addr, size_t size);
 template <typename T>
 class SimpleAlloc {
 public:
+    static void Construct(void *p) {
+        construct(util::IsTrivial<T>(), p, T());
+    }
+    
+    static void Construct(void *p, const T &t) {
+        construct(util::IsTrivial<T>(), p, t);
+    }
+    
+    static void Destruct(const T *addr) {
+        destruct(util::IsTrivial<T>(), addr);
+    }
+    
     static T *New() {
         void *p = allocate(sizeof(T));
         return construct(util::IsTrivial<T>(), p);
@@ -101,11 +113,29 @@ private:
     static T *construct(util::FalseType, void *p, const P1 &p1, const P2 &p2, const P3 &p3, const P4 &p4) { return new (p) T(p1, p2, p3, p4); }
     static void destruct(util::TrueType, const T* p) { }
     static void destruct(util::FalseType, const T* p) { p->~T(); }
+    
+    friend class SimpleAlloc<T[]>;
 };
 
 template <typename T>
 class SimpleAlloc<T[]> {
 public:
+    static void Construct(T *p, size_t size) {
+        for (size_t i = 0; i < size; i++) {
+            SimpleAlloc<T>::construct(util::IsTrivial<T>(), p + i, T());
+        }
+    }
+    
+    static void Construct(T *p, const T &t, size_t size) {
+        for (size_t i = 0; i < size; i++) {
+            SimpleAlloc<T>::construct(util::IsTrivial<T>(), p + i, t);
+        }
+    }
+    
+    static void Destruct(const T *p, size_t size) {
+        destruct(util::IsTrivial<T>(), p, size);
+    }
+    
     static T *New(size_t size) {
         void *p = allocate(sizeof(T) * size);
         return construct(util::IsTrivial<T>(), p, size);
@@ -122,8 +152,7 @@ private:
     static void destruct(util::TrueType, const T* p, size_t size) { }
     static void destruct(util::FalseType, const T* p, size_t size) {
         for (size_t i = 0; i < size; i++) {
-            const T *pi = p + i;
-            pi->~T();
+            SimpleAlloc<T>::destruct(util::IsTrivial<T>(), p + i);
         }
     }
 };

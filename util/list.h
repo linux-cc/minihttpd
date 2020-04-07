@@ -5,24 +5,26 @@
 
 namespace util {
 
+using memory::SimpleAlloc;
+
 template <typename T>
 class List {
 public:
     List(): _size(0) {
-        _head = memory::SimpleAlloc<Node>::New();
+        _head = SimpleAlloc<Node>::New();
         _head->_prev = _head->_next = _head;
     }
     
     ~List() {
         clear();
-        memory::SimpleAlloc<Node>::Delete(_head);
+        SimpleAlloc<Node>::Delete(_head);
     }
     
     bool empty() const { return _head->_next == _head; }
     size_t size() const { return _size; }
     
     bool pushBack(const T &data) {
-        Node *n = memory::SimpleAlloc<Node>::New(data);
+        Node *n = SimpleAlloc<Node>::New(data);
         if (!n) return false;
         
         Node *tail = _head->_prev;
@@ -36,7 +38,7 @@ public:
     }
     
     bool pushFront(const T &data) {
-        Node *n = memory::SimpleAlloc<Node>::New(data);
+        Node *n = SimpleAlloc<Node>::New(data);
         if (!n) return false;
         
         Node *head = _head->_next;
@@ -77,7 +79,7 @@ public:
                 Node *next = tmp->_next;
                 prev->_next = next;
                 next->_prev = prev;
-                memory::SimpleAlloc<Node>::Delete(tmp);
+                SimpleAlloc<Node>::Delete(tmp);
                 --_size;
                 ++cnt;
             }
@@ -91,7 +93,7 @@ public:
         while (n != _head) {
             Node *p = n;
             n = n->_next;
-            memory::SimpleAlloc<Node>::Delete(p);
+            SimpleAlloc<Node>::Delete(p);
         }
     }
     
@@ -102,7 +104,7 @@ private:
         Node *next = n->_next;
         prev->_next = next;
         next->_prev = prev;
-        memory::SimpleAlloc<Node>::Delete(n);
+        SimpleAlloc<Node>::Delete(n);
         --_size;
     }
     

@@ -8,6 +8,8 @@
 
 namespace network {
 
+using memory::SimpleAlloc;
+
 #ifdef __linux__
 inline void epoll_set_event(int fd, int events, void *data, epoll_event &ev) {
     ev.events = events;
@@ -101,7 +103,7 @@ bool EPollEvent::isPollOut() const {
 
 EPoller::~EPoller() {
     if (_events) {
-        memory::SimpleAlloc<EPollEvent[]>::Delete(_events, _size);
+        SimpleAlloc<EPollEvent[]>::Delete(_events, _size);
     }
     close(_fd);
 }
@@ -112,7 +114,7 @@ bool EPoller::create(int size) {
         return false;
     }
     _size = size;
-    _events = memory::SimpleAlloc<EPollEvent[]>::New(size);
+    _events = SimpleAlloc<EPollEvent[]>::New(size);
 
     return _events;
 }

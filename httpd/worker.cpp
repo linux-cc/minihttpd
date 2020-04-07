@@ -203,7 +203,7 @@ void Worker::close(Connection *conn) {
     _LOG_("close connection: %p, fd: %d", conn, conn->fd());
     _server.update(conn, true);
     conn->close();
-    memory::SimpleAlloc<Connection>::Delete(conn);
+    SimpleAlloc<Connection>::Delete(conn);
     --_actives;
 }
 

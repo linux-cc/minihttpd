@@ -7,13 +7,14 @@
 
 namespace httpd {
 
+using memory::SimpleAlloc;
 using util::String;
 using util::ScopedRef;
 using util::RefCountedThreadSafe;
 class Connection;
 class Request {
 public:
-    Request(Connection *conn = NULL) { _ptr = memory::SimpleAlloc<Content>::New(conn); }
+    Request(Connection *conn = NULL) { _ptr = SimpleAlloc<Content>::New(conn); }
     bool parseHeaders();
     void parseContent();
     
@@ -55,7 +56,7 @@ private:
         uint8_t _status : 6;
     private:
         ~Content() {}
-        friend class memory::SimpleAlloc<Content>;
+        friend class SimpleAlloc<Content>;
     };
     
     ScopedRef<Content> _ptr;

@@ -5,7 +5,8 @@
 #include "memory/simple_alloc.h"
 
 namespace util {
-    
+
+using memory::SimpleAlloc;
 class RefCountedBase;
 class RefCountedThreadSafeBase;
 
@@ -17,7 +18,7 @@ struct DefaultDeleter {
         COMPILE_ASSERT((IsConvertible<U*, T*>::value), U_ptr_must_implicitly_convert_to_T_ptr);
     }
     inline void operator()(T* ptr) const {
-        memory::SimpleAlloc<T>::Delete(ptr);
+        SimpleAlloc<T>::Delete(ptr);
     }
 };
 

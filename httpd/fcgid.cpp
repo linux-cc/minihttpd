@@ -5,6 +5,8 @@
 
 namespace httpd {
 
+using memory::SimpleAlloc;
+
 static bool showHelp(const char *appname) {
     _LOG_("Usage: %s [options] [arguments]", appname);
     _LOG_("-a <address> bind to unix domain socket address (default localhost)");
@@ -84,7 +86,7 @@ static char **_envp = NULL;
 
 int fcgiAccept() {
     if (!_client) {
-        _client = memory::SimpleAlloc<Connection>::New();
+        _client = SimpleAlloc<Connection>::New();
     }
     _client->close();
     int fd = TcpSocket(STDIN_FILENO).accept();

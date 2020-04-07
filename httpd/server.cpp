@@ -12,19 +12,20 @@
 
 namespace httpd {
 
+using memory::SimpleAlloc;
+
 Server::Server():
 _timeoutQ(CONN_TIMEOUT),
-_eventQ(MAX_WORKER * MAX_WORKER_CONN),
 _curIndex(0),
 _quit(false) {
     for (int i = 0; i < MAX_WORKER; ++i) {
-        _workers[i] = memory::SimpleAlloc<Worker>::New(*this);
+        _workers[i] = SimpleAlloc<Worker>::New(*this);
     }
 }
 
 Server::~Server() {
     for (int i = 0; i < MAX_WORKER; ++i) {
-        memory::SimpleAlloc<Worker>::Delete(_workers[i]);
+        SimpleAlloc<Worker>::Delete(_workers[i]);
     }
 }
 
@@ -55,12 +56,12 @@ void Server::update(Connection *conn, bool closed) {
         }
         conn->setNewIdx(newIdx);
     }
-    _eventQ.enqueue(Item(conn, closed));
+    _eventQ.pushBack(Item(conn, closed));
 }
 
 void Server::update() {
-    Item item;
-    while (_eventQ.dequeue(item)) {
+    while (!_eventQ.empty()) {
+        Item &item = _eventQ.front();
         if (item._oldIdx != -1) {
             int n = _timeoutQ.at(item._oldIdx).remove(item);
             _LOG_("timeout remove %d item: { %d, %d, %d, %d }", n, item._fd, item._oldIdx, item._newIdx, item._closed);
@@ -78,6 +79,7 @@ void Server::update() {
             newList.pushBack(item);
             _LOG_("timeout push_back item: { %d, %d, %d, %d }", item._fd, item._oldIdx, item._newIdx, item._closed);
         }
+        _eventQ.popFront();
     }
 }
 

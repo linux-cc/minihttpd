@@ -9,7 +9,7 @@ String::String(const String &str, size_t pos, size_t length) {
     if (length == npos) {
         length = str.length() - pos;
     }
-    _ptr = memory::SimpleAlloc<Value>::New(data, length);
+    _ptr = SimpleAlloc<Value>::New(data, length);
 }
 
 String &String::erase(size_t pos, size_t length) {
@@ -90,7 +90,7 @@ String &String::insert(size_t pos, const char *str, size_t strlen) {
 
 void String::makeCopy() {
     if (_ptr->hasRef()) {
-        _ptr = memory::SimpleAlloc<Value>::New(_ptr->_data, _ptr->_length);
+        _ptr = SimpleAlloc<Value>::New(_ptr->_data, _ptr->_length);
     }
 }
 
@@ -99,7 +99,7 @@ String::Value::Value(const char *data, size_t length) {
     if (_capacity < 8) {
         _capacity = 32;
     }
-    _data = memory::SimpleAlloc<char[]>::New(_capacity);
+    _data = SimpleAlloc<char[]>::New(_capacity);
     memcpy(_data, data, _length);
     _data[_length] = 0;
 }
@@ -107,9 +107,9 @@ String::Value::Value(const char *data, size_t length) {
 void String::Value::resize(size_t length) {
     if (length >= _capacity) {
         size_t newCapacity = length <= 128 ? (length << 1) : (((length << 2) - length) >> 1);
-        char *newData = memory::SimpleAlloc<char[]>::New(newCapacity);
+        char *newData = SimpleAlloc<char[]>::New(newCapacity);
         memcpy(newData, _data, _length);
-        memory::SimpleAlloc<char[]>::Delete(_data, _capacity);
+        SimpleAlloc<char[]>::Delete(_data, _capacity);
         _data = newData;
         _capacity = newCapacity;
     }
@@ -118,7 +118,7 @@ void String::Value::resize(size_t length) {
 }
 
 String::CharProxy &String::CharProxy::operator=(char c) {
-    _str._ptr = memory::SimpleAlloc<Value>::New(_str.data(), _str.length());
+    _str._ptr = SimpleAlloc<Value>::New(_str.data(), _str.length());
     _str._ptr->_data[_index] = c;
     return *this;
 }

@@ -27,6 +27,8 @@
 
 namespace util {
 
+using memory::SimpleAlloc;
+
 static uint8_t blOrder[BL_CODES] = {16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15};
 static uint8_t extraLBits[LENGTH_CODES] = {0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0};
 static uint8_t extraDBits[D_CODES] = {0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13};
@@ -34,48 +36,48 @@ static uint8_t extraBLBits[BL_CODES] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,7};
 
 GTree::GTree(GZip &gzip):
 _gzip(gzip) {
-    _heap = memory::SimpleAlloc<int[]>::New(HEAP_SIZE);
-    _depth = memory::SimpleAlloc<uint8_t[]>::New(HEAP_SIZE);
-    _blCount = memory::SimpleAlloc<uint16_t[]>::New(MAX_BITS + 1);
-    _lcode = memory::SimpleAlloc<uint8_t[]>::New(MAX_MATCH-MIN_MATCH+1);
-    _dcode = memory::SimpleAlloc<uint8_t[]>::New(2 * LITERALS);
-    _baseL = memory::SimpleAlloc<int[]>::New(LENGTH_CODES);
-    _baseD = memory::SimpleAlloc<int[]>::New(D_CODES);
-    _flagBuf = memory::SimpleAlloc<uint8_t[]>::New(WSIZE/CHAR_BITS);
-    _gbit = memory::SimpleAlloc<GBit>::New(_gzip);
+    _heap = SimpleAlloc<int[]>::New(HEAP_SIZE);
+    _depth = SimpleAlloc<uint8_t[]>::New(HEAP_SIZE);
+    _blCount = SimpleAlloc<uint16_t[]>::New(MAX_BITS + 1);
+    _lcode = SimpleAlloc<uint8_t[]>::New(MAX_MATCH-MIN_MATCH+1);
+    _dcode = SimpleAlloc<uint8_t[]>::New(2 * LITERALS);
+    _baseL = SimpleAlloc<int[]>::New(LENGTH_CODES);
+    _baseD = SimpleAlloc<int[]>::New(D_CODES);
+    _flagBuf = SimpleAlloc<uint8_t[]>::New(WSIZE/CHAR_BITS);
+    _gbit = SimpleAlloc<GBit>::New(_gzip);
 }
 
 GTree::~GTree() {
-    memory::SimpleAlloc<Tree[]>::Delete(_lDesc._tree, 2*L_CODES+1);
-    memory::SimpleAlloc<Tree[]>::Delete(_dDesc._tree, 2*D_CODES+1);
-    memory::SimpleAlloc<Tree[]>::Delete(_blDesc._tree, 2*BL_CODES+1);
-    memory::SimpleAlloc<int[]>::Delete(_heap, HEAP_SIZE);
-    memory::SimpleAlloc<uint8_t[]>::Delete(_depth, HEAP_SIZE);
-    memory::SimpleAlloc<uint16_t[]>::Delete(_blCount, MAX_BITS + 1);
-    memory::SimpleAlloc<uint8_t[]>::Delete(_lcode, MAX_MATCH-MIN_MATCH+1);
-    memory::SimpleAlloc<uint8_t[]>::Delete(_dcode, 2 * LITERALS);
-    memory::SimpleAlloc<int[]>::Delete(_baseL, LENGTH_CODES);
-    memory::SimpleAlloc<int[]>::Delete(_baseD, D_CODES);
-    memory::SimpleAlloc<uint8_t[]>::Delete(_flagBuf, WSIZE/CHAR_BITS);
-    memory::SimpleAlloc<GBit>::Delete(_gbit);
+    SimpleAlloc<Tree[]>::Delete(_lDesc._tree, 2*L_CODES+1);
+    SimpleAlloc<Tree[]>::Delete(_dDesc._tree, 2*D_CODES+1);
+    SimpleAlloc<Tree[]>::Delete(_blDesc._tree, 2*BL_CODES+1);
+    SimpleAlloc<int[]>::Delete(_heap, HEAP_SIZE);
+    SimpleAlloc<uint8_t[]>::Delete(_depth, HEAP_SIZE);
+    SimpleAlloc<uint16_t[]>::Delete(_blCount, MAX_BITS + 1);
+    SimpleAlloc<uint8_t[]>::Delete(_lcode, MAX_MATCH-MIN_MATCH+1);
+    SimpleAlloc<uint8_t[]>::Delete(_dcode, 2 * LITERALS);
+    SimpleAlloc<int[]>::Delete(_baseL, LENGTH_CODES);
+    SimpleAlloc<int[]>::Delete(_baseD, D_CODES);
+    SimpleAlloc<uint8_t[]>::Delete(_flagBuf, WSIZE/CHAR_BITS);
+    SimpleAlloc<GBit>::Delete(_gbit);
 }
 
 void GTree::initTreeDesc() {
-    _lDesc._tree = memory::SimpleAlloc<Tree[]>::New(2*L_CODES+1);
+    _lDesc._tree = SimpleAlloc<Tree[]>::New(2*L_CODES+1);
     _lDesc._extraBits = extraLBits;
     _lDesc._extraBase = LITERALS+1;
     _lDesc._elems = L_CODES;
     _lDesc._maxLength = MAX_BITS;
     _lDesc._maxCode = 0;
 
-    _dDesc._tree = memory::SimpleAlloc<Tree[]>::New(2*D_CODES+1);
+    _dDesc._tree = SimpleAlloc<Tree[]>::New(2*D_CODES+1);
     _dDesc._extraBits = extraDBits;
     _dDesc._extraBase = 0;
     _dDesc._elems = D_CODES;
     _dDesc._maxLength = MAX_BITS;
     _dDesc._maxCode = 0;
 
-    _blDesc._tree = memory::SimpleAlloc<Tree[]>::New(2*BL_CODES+1);
+    _blDesc._tree = SimpleAlloc<Tree[]>::New(2*BL_CODES+1);
     _blDesc._extraBits = extraBLBits;
     _blDesc._extraBase = 0;
     _blDesc._elems = BL_CODES;

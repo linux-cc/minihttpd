@@ -8,6 +8,8 @@
 
 namespace util {
 
+using memory::SimpleAlloc;
+
 class String {
 public:
     static const size_t npos;
@@ -26,9 +28,9 @@ public:
     };
     
     String(const char *str = "") { *this = str; }
-    String(const char *str, size_t length) { _ptr = memory::SimpleAlloc<Value>::New(str, length); }
+    String(const char *str, size_t length) { _ptr = SimpleAlloc<Value>::New(str, length); }
     String(const String &str, size_t pos, size_t length = npos);
-    String &operator=(const char *str) { _ptr = memory::SimpleAlloc<Value>::New(str, strlen(str)); return *this; }
+    String &operator=(const char *str) { _ptr = SimpleAlloc<Value>::New(str, strlen(str)); return *this; }
     
     void resize(size_t length) { _ptr->resize(length); }
     bool empty() const { return _ptr->_length == 0; }
@@ -85,8 +87,8 @@ private:
         size_t _length;
         size_t _capacity;
     private:
-        ~Value() { memory::SimpleAlloc<char[]>::Delete(_data, _capacity); }
-        friend class memory::SimpleAlloc<Value>;
+        ~Value() { SimpleAlloc<char[]>::Delete(_data, _capacity); }
+        friend class SimpleAlloc<Value>;
     };
     
     ScopedRef<Value> _ptr;

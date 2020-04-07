@@ -3,13 +3,12 @@
 
 #include "util/config.h"
 #include "util/list.h"
-#include "util/simple_queue.h"
+#include "util/vector.h"
 #include "network/socket.h"
 
 namespace httpd {
 
-using util::SimpleQueue;
-using util::BlockQueue;
+using util::Vector;
 using util::List;
 using network::TcpSocket;
 class Worker;
@@ -42,8 +41,8 @@ private:
         }
     };
     TcpSocket _server;
-    SimpleQueue<List<Item> > _timeoutQ;
-    BlockQueue<Item> _eventQ;
+    Vector<List<Item> > _timeoutQ;
+    List<Item> _eventQ;
     Worker *_workers[MAX_WORKER];
     int _curIndex;
     bool _quit;

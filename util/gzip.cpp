@@ -19,6 +19,8 @@
 
 namespace util {
 
+using memory::SimpleAlloc;
+
 GZip::Config GZip::_configTable[] = {
     /*      good lazy nice chain */
     /* 0 */ {0,    0,  0,    0},  /* store only */
@@ -47,21 +49,21 @@ inline unsigned GZip::insertString(unsigned pos) {
 
 GZip::GZip() {
     clear();
-    _gtree = memory::SimpleAlloc<GTree>::New(*this);
-    _window = memory::SimpleAlloc<uint8_t[]>::New(TWO_WSIZE);
-    _lbuf = memory::SimpleAlloc<uint8_t[]>::New(WSIZE);
-    _dbuf = memory::SimpleAlloc<uint16_t[]>::New(WSIZE);
-    _prev = memory::SimpleAlloc<uint16_t[]>::New(TWO_WSIZE);
-    _outbuf = memory::SimpleAlloc<uint8_t[]>::New(HALF_WSIZE);
+    _gtree = SimpleAlloc<GTree>::New(*this);
+    _window = SimpleAlloc<uint8_t[]>::New(TWO_WSIZE);
+    _lbuf = SimpleAlloc<uint8_t[]>::New(WSIZE);
+    _dbuf = SimpleAlloc<uint16_t[]>::New(WSIZE);
+    _prev = SimpleAlloc<uint16_t[]>::New(TWO_WSIZE);
+    _outbuf = SimpleAlloc<uint8_t[]>::New(HALF_WSIZE);
 }
 
 GZip::~GZip() {
-    memory::SimpleAlloc<GTree>::Delete(_gtree);
-    memory::SimpleAlloc<uint8_t[]>::Delete(_window, TWO_WSIZE);
-    memory::SimpleAlloc<uint8_t[]>::Delete(_lbuf, WSIZE);
-    memory::SimpleAlloc<uint16_t[]>::Delete(_dbuf, WSIZE);
-    memory::SimpleAlloc<uint16_t[]>::Delete(_prev, TWO_WSIZE);
-    memory::SimpleAlloc<uint8_t[]>::Delete(_outbuf, HALF_WSIZE);
+    SimpleAlloc<GTree>::Delete(_gtree);
+    SimpleAlloc<uint8_t[]>::Delete(_window, TWO_WSIZE);
+    SimpleAlloc<uint8_t[]>::Delete(_lbuf, WSIZE);
+    SimpleAlloc<uint16_t[]>::Delete(_dbuf, WSIZE);
+    SimpleAlloc<uint16_t[]>::Delete(_prev, TWO_WSIZE);
+    SimpleAlloc<uint8_t[]>::Delete(_outbuf, HALF_WSIZE);
 }
 
 void GZip::clear() {
